@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Place extends Model
+{
+    use HasFactory;
+
+    // Kolom mana saja yang boleh diisi secara massal
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'image',
+        'video_url',
+        'gallery',
+        'address',
+        'facilities',
+        'open_days',
+        'open_hours',
+        'opening_hours',
+        'created_by',
+    ];
+
+    // Ubah data JSON/Array menjadi tipe data PHP otomatis
+    protected $casts = [
+        'opening_hours' => 'array',
+    ];
+
+    // Relasi: Setiap Place "milik" satu User (author)
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+}
