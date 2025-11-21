@@ -31,6 +31,14 @@ class Place extends Model
         'opening_hours' => 'array',
     ];
 
+    /**
+     * Relasi: Place memiliki banyak ulasan.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(PlaceReview::class);
+    }
+
     // Relasi: Setiap Place "milik" satu User (author)
     public function author(): BelongsTo
     {

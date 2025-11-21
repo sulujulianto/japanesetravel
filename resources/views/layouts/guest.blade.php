@@ -6,11 +6,22 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Japan Travel') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    @includeIf('partials.theme-script')
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Manrope', system-ui, -apple-system, sans-serif; }</style>
 </head>
-<body class="text-gray-900 antialiased">
+<body class="text-gray-900 antialiased bg-gray-50 dark:bg-gray-900">
     
+    <div class="absolute top-4 right-4 flex items-center gap-2">
+        <div class="flex space-x-2 text-xs font-bold">
+            <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
+            <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
+        </div>
+        <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
+            <span class="text-lg" aria-hidden="true">🌗</span>
+        </button>
+    </div>
+
     <div class="min-h-screen flex flex-col sm:flex-row">
         
         <div class="hidden sm:flex sm:w-1/2 bg-cover bg-center relative" 

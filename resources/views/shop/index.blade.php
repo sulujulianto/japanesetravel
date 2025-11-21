@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Toko Oleh-oleh') }} - Japan Travel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    @includeIf('partials.theme-script')
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Manrope', system-ui, -apple-system, sans-serif; }</style>
 </head>
 <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
@@ -22,17 +23,20 @@
                         <a href="{{ route('shop.index') }}" class="text-sm font-bold text-sky-600 border-b-2 border-sky-600 pb-1">{{ __('Toko Oleh-oleh') }}</a>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
                      <a href="{{ route('cart.index') }}" class="relative p-2 text-gray-600 hover:text-sky-600 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                     </a>
 
-                    <div class="flex space-x-1 text-xs font-bold">
-                        <a href="{{ route('lang.switch', 'id') }}" class="px-2 py-1 rounded {{ App::getLocale() == 'id' ? 'bg-sky-100 text-sky-700' : 'text-gray-500 hover:bg-gray-100' }}">ID</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="px-2 py-1 rounded {{ App::getLocale() == 'en' ? 'bg-sky-100 text-sky-700' : 'text-gray-500 hover:bg-gray-100' }}">EN</a>
+                    <div class="flex space-x-2 text-xs font-bold">
+                        <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
                     </div>
+                    <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
+                        <span class="text-lg" aria-hidden="true">🌗</span>
+                    </button>
                     
                     @auth
                         <a href="{{ url('/dashboard') }}" class="bg-sky-100 text-sky-700 px-4 py-2 rounded-full text-sm font-bold hover:bg-sky-200 transition">{{ __('Dashboard') }}</a>

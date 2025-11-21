@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Japan Travel') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    @includeIf('partials.theme-script')
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Manrope', system-ui, -apple-system, sans-serif; }</style>
 </head>
 <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
@@ -22,16 +23,20 @@
                     </a>
                 </div>
 
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-6">
                     <a href="{{ route('home') }}" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition">{{ __('Beranda') }}</a>
                     <a href="{{ route('shop.index') }}" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition">{{ __('Oleh-oleh') }}</a>
                     
                     <div class="h-5 w-px bg-gray-300 dark:bg-gray-700"></div>
 
-                    <div class="flex space-x-1 text-xs font-bold">
-                        <a href="{{ route('lang.switch', 'id') }}" class="px-2 py-1 rounded {{ App::getLocale() == 'id' ? 'bg-sky-100 text-sky-700' : 'text-gray-500 hover:bg-gray-100' }}">ID</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="px-2 py-1 rounded {{ App::getLocale() == 'en' ? 'bg-sky-100 text-sky-700' : 'text-gray-500 hover:bg-gray-100' }}">EN</a>
+                    <div class="flex items-center gap-2 text-xs font-bold">
+                        <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
                     </div>
+
+                    <button onclick="toggleTheme()" class="ml-2 w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
+                        <span class="text-lg" aria-hidden="true">🌗</span>
+                    </button>
 
                     @if (Route::has('login'))
                         @auth

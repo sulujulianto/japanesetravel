@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Shopping Cart - Japan Travel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @includeIf('partials.theme-script')
 </head>
 <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
@@ -17,10 +18,14 @@
                     </a>
                     <span class="text-xl font-bold text-sky-500 dark:text-red-500">🇯🇵 Japan Travel Shop</span>
                 </div>
-                <div class="flex items-center space-x-2 text-sm font-medium">
-                    <a href="{{ route('lang.switch', 'id') }}" class="{{ App::getLocale() == 'id' ? 'text-sky-600 font-bold' : 'text-gray-500' }}">ID</a>
-                    <span>|</span>
-                    <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'text-sky-600 font-bold' : 'text-gray-500' }}">EN</a>
+                <div class="flex items-center space-x-3 text-sm font-medium">
+                    <div class="flex space-x-2 text-xs font-bold">
+                        <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
+                    </div>
+                    <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
+                        <span class="text-lg" aria-hidden="true">🌗</span>
+                    </button>
                 </div>
             </div>
         </div>
