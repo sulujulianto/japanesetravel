@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware Web (Jalan di semua halaman website)
         $middleware->web(append: [
             \App\Http\Middleware\Localization::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

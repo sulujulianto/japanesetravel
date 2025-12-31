@@ -1,185 +1,162 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Japan Travel') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @includeIf('partials.theme-script')
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Manrope', system-ui, -apple-system, sans-serif; }</style>
-</head>
-<body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+@extends('layouts.site')
 
-    <nav x-data="{ scrolled: false }" @scroll.window="scrolled = (window.pageYOffset > 20)" :class="{ 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-md': scrolled, 'bg-transparent': !scrolled }" class="fixed w-full top-0 z-50 transition-all duration-300 border-b border-transparent">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="flex items-center gap-2 group">
-                        <span class="text-3xl group-hover:scale-110 transition transform duration-300">🇯🇵</span>
-                        <span class="text-2xl font-extrabold text-sky-600 dark:text-white tracking-tight group-hover:text-sky-500 transition">
-                            Japan<span class="text-gray-800 dark:text-gray-300 font-light">Travel</span>
-                        </span>
-                    </a>
-                </div>
+@section('title', __('Japan Travel') . ' · ' . __('Portal Wisata Jepang'))
 
-                <div class="hidden md:flex items-center space-x-6">
-                    <a href="{{ route('home') }}" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition">{{ __('Beranda') }}</a>
-                    <a href="{{ route('shop.index') }}" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition">{{ __('Oleh-oleh') }}</a>
-                    
-                    <div class="h-5 w-px bg-gray-300 dark:bg-gray-700"></div>
-
-                    <div class="flex items-center gap-2 text-xs font-bold">
-                        <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
-                    </div>
-
-                    <button onclick="toggleTheme()" class="ml-2 w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
-                        <span class="text-lg" aria-hidden="true">🌗</span>
-                    </button>
-
-                    @if (Route::has('login'))
-                        @auth
-                            <a href="{{ url('/dashboard') }}" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                                {{ __('Dashboard') }}
-                            </a>
-                        @else
-                            <a href="{{ route('login') }}" class="text-gray-700 dark:text-white font-semibold hover:text-sky-600 transition">{{ __('Masuk') }}</a>
-                            <a href="{{ route('register') }}" class="bg-gray-900 dark:bg-white dark:text-black text-white px-5 py-2 rounded-full font-semibold text-sm transition">{{ __('Daftar') }}</a>
-                        @endauth
-                    @endif
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="relative h-[600px] flex items-center justify-center overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" alt="Japan Background" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-gray-50 dark:to-gray-900"></div>
-        </div>
-
-        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
-            <span class="inline-block py-1 px-3 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-300 text-sm font-bold mb-4 backdrop-blur-sm animate-bounce">
-                🚀 {{ __('Petualangan Menantimu!') }}
-            </span>
-            <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight drop-shadow-lg">
-                {{ __('Jelajahi Keajaiban') }} <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-indigo-300">{{ __('Jepang') }}</span>
-            </h1>
-            <p class="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto font-light">
-                {{ __('Temukan destinasi...') }}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#explore" class="bg-sky-500 hover:bg-sky-600 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-xl">
-                    {{ __('Mulai Eksplorasi') }}
-                </a>
-                <a href="{{ route('shop.index') }}" class="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg transition">
-                    {{ __('Beli Oleh-oleh') }}
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="py-16 bg-white dark:bg-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div class="p-6 rounded-2xl bg-gray-50 dark:bg-gray-700 hover:shadow-lg transition">
-                    <div class="text-4xl mb-4">⛩️</div>
-                    <h3 class="text-xl font-bold mb-2">{{ __('Destinasi Ikonik') }}</h3>
-                    <p class="text-gray-500 dark:text-gray-300 text-sm">{{ __('Akses ke tempat...') }}</p>
-                </div>
-                <div class="p-6 rounded-2xl bg-gray-50 dark:bg-gray-700 hover:shadow-lg transition">
-                    <div class="text-4xl mb-4">🛍️</div>
-                    <h3 class="text-xl font-bold mb-2">{{ __('Oleh-oleh Asli') }}</h3>
-                    <p class="text-gray-500 dark:text-gray-300 text-sm">{{ __('Belanja souvenir...') }}</p>
-                </div>
-                <div class="p-6 rounded-2xl bg-gray-50 dark:bg-gray-700 hover:shadow-lg transition">
-                    <div class="text-4xl mb-4">💬</div>
-                    <h3 class="text-xl font-bold mb-2">{{ __('Komunitas Travel') }}</h3>
-                    <p class="text-gray-500 dark:text-gray-300 text-sm">{{ __('Baca ulasan...') }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="explore" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="flex justify-between items-end mb-10">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ __('Destinasi Populer') }}</h2>
-                <p class="text-gray-500 mt-2">{{ __('Jangan lewatkan...') }}</p>
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            @forelse($places as $place)
-            <a href="{{ route('place.show', $place->slug) }}" class="group block bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition duration-500 overflow-hidden border border-gray-100 dark:border-gray-700">
-                <div class="relative h-64 overflow-hidden">
-                    @if($place->image)
-                        <img src="{{ asset('storage/' . $place->image) }}" alt="{{ $place->name }}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
-                    @else
-                        <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
-                    @endif
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80"></div>
-                    <div class="absolute bottom-4 left-4 text-white">
-                        <h3 class="text-xl font-bold group-hover:text-sky-300 transition">{{ $place->name }}</h3>
-                        <p class="text-sm opacity-90 flex items-center mt-1">
-                            <span>📍 {{ Str::limit($place->address, 30) }}</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-                        {{ Str::limit($place->description, 120) }}
+@section('content')
+    <section class="relative">
+        <div class="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+            <div class="grid items-center gap-12 lg:grid-cols-2">
+                <div class="space-y-6">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 animate-rise">
+                        🗺️ {{ __('Petualangan Menantimu!') }}
+                    </span>
+                    <h1 class="font-display text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl animate-rise" style="animation-delay: 0.1s;">
+                        {{ __('Jelajahi Keajaiban') }}
+                        <span class="text-rose-500">{{ __('Jepang') }}</span>
+                        {{ __('tanpa ribet.') }}
+                    </h1>
+                    <p class="max-w-xl text-base text-slate-600 dark:text-slate-300 sm:text-lg animate-rise" style="animation-delay: 0.2s;">
+                        {{ __('Temukan destinasi otentik, ulasan jujur, dan rekomendasi oleh-oleh yang benar-benar dibutuhkan traveler modern.') }}
                     </p>
-                    <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <span class="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full dark:bg-gray-700 dark:text-sky-300">{{ __('Jepang') }}</span>
-                        <span class="text-xs text-gray-400">{{ $place->created_at->diffForHumans() }}</span>
+                    <div class="flex flex-wrap gap-3 animate-rise" style="animation-delay: 0.3s;">
+                        <a href="#explore" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 dark:bg-white dark:text-slate-900">
+                            {{ __('Mulai Eksplorasi') }}
+                        </a>
+                        <a href="{{ route('shop.index') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200">
+                            {{ __('Beli Oleh-oleh') }}
+                        </a>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-3 animate-rise" style="animation-delay: 0.4s;">
+                        <div>
+                            <p class="text-2xl font-semibold text-slate-900 dark:text-white">{{ number_format($summary['places'] ?? 0) }}</p>
+                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Destinasi') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-semibold text-slate-900 dark:text-white">{{ number_format($summary['reviews'] ?? 0) }}</p>
+                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Ulasan') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-semibold text-slate-900 dark:text-white">{{ number_format($summary['souvenirs'] ?? 0) }}</p>
+                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Souvenir') }}</p>
+                        </div>
                     </div>
                 </div>
-            </a>
-            @empty
-            <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-300">
-                <div class="text-6xl mb-4">📭</div>
-                <p class="text-lg font-medium">{{ __('Belum ada destinasi...') }}</p>
+
+                <div class="relative">
+                    <x-ui.card class="overflow-hidden p-0">
+                        <div class="grid gap-6 p-8 sm:grid-cols-2">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.3em] text-slate-400">{{ __('Insight') }}</p>
+                                <h3 class="mt-2 text-xl font-semibold text-slate-900 dark:text-white">{{ __('Rencana perjalanan lebih presisi') }}</h3>
+                                <p class="mt-3 text-sm text-slate-500 dark:text-slate-300">{{ __('Semua destinasi, ulasan, dan produk disusun agar Anda bisa fokus menikmati momen terbaik di Jepang.') }}</p>
+                            </div>
+                            <div class="rounded-2xl bg-slate-900 p-6 text-white">
+                                <p class="text-xs uppercase tracking-[0.3em] text-rose-300">{{ __('Highlight') }}</p>
+                                <p class="mt-2 text-3xl font-semibold">24/7</p>
+                                <p class="mt-2 text-sm text-rose-100">{{ __('Akses rekomendasi kapan saja dari perangkat Anda.') }}</p>
+                            </div>
+                        </div>
+                    </x-ui.card>
+                </div>
             </div>
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-6 md:grid-cols-3">
+            <x-ui.card>
+                <div class="text-3xl">⛩️</div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Destinasi Ikonik') }}</h3>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">{{ __('Rute populer dan hidden gem yang siap membuat itinerary Anda berkesan.') }}</p>
+            </x-ui.card>
+            <x-ui.card>
+                <div class="text-3xl">🛍️</div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Oleh-oleh Kurasi') }}</h3>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">{{ __('Pilihan souvenir otentik dengan stok real-time dan harga transparan.') }}</p>
+            </x-ui.card>
+            <x-ui.card>
+                <div class="text-3xl">💬</div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Komunitas Traveler') }}</h3>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">{{ __('Ulasan terbaru membantu Anda memilih destinasi paling cocok.') }}</p>
+            </x-ui.card>
+        </div>
+    </section>
+
+    <section id="explore" class="mx-auto mt-16 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Destinasi Populer') }}</p>
+                <h2 class="text-3xl font-semibold text-slate-900 dark:text-white">{{ __('Temukan spot terbaik') }}</h2>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">{{ __('Filter sesuai gaya perjalanan Anda, lalu simpan favorit untuk itinerary.') }}</p>
+            </div>
+            <form method="GET" class="grid w-full gap-3 sm:grid-cols-3 lg:w-auto">
+                <x-ui.input name="search" value="{{ $search }}" placeholder="{{ __('Cari destinasi, kota, atau aktivitas') }}" />
+                <x-ui.select name="rating">
+                    <option value="">{{ __('Semua Rating') }}</option>
+                    <option value="4.5" @selected($rating == '4.5')>4.5+</option>
+                    <option value="4" @selected($rating == '4')>4+</option>
+                    <option value="3" @selected($rating == '3')>3+</option>
+                </x-ui.select>
+                <x-ui.select name="sort">
+                    <option value="latest" @selected($sort === 'latest')>{{ __('Terbaru') }}</option>
+                    <option value="rating" @selected($sort === 'rating')>{{ __('Rating Tertinggi') }}</option>
+                    <option value="reviews" @selected($sort === 'reviews')>{{ __('Ulasan Terbanyak') }}</option>
+                </x-ui.select>
+                <div class="sm:col-span-3">
+                    <x-ui.button type="submit" class="w-full">{{ __('Terapkan') }}</x-ui.button>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            @forelse($places as $place)
+                @php
+                    $ratingValue = $place->reviews_avg_rating ? number_format($place->reviews_avg_rating, 1) : '0.0';
+                    $reviewCount = $place->reviews_count ?? 0;
+                @endphp
+                <a href="{{ route('place.show', $place->slug) }}" class="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+                    <div class="relative h-52 overflow-hidden bg-slate-200 dark:bg-slate-800">
+                        @if($place->image)
+                            <img src="{{ asset('storage/' . $place->image) }}" alt="{{ $place->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        @else
+                            <img src="{{ asset('demo/place-placeholder.svg') }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
+                        @endif
+                        <div class="absolute left-4 top-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 backdrop-blur dark:bg-slate-950/70 dark:text-slate-200">
+                            ⭐ {{ $ratingValue }} · {{ $reviewCount }} {{ __('ulasan') }}
+                        </div>
+                    </div>
+                    <div class="flex flex-1 flex-col p-6">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ $place->name }}</h3>
+                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">{{ Str::limit($place->description, 120) }}</p>
+                        <div class="mt-auto flex items-center justify-between pt-4 text-xs text-slate-400">
+                            <span>📍 {{ Str::limit($place->address, 32) }}</span>
+                            <span>{{ $place->created_at->diffForHumans() }}</span>
+                        </div>
+                    </div>
+                </a>
+            @empty
+                <div class="col-span-full">
+                    <x-ui.card class="text-center">
+                        <p class="text-sm text-slate-500">{{ __('Belum ada destinasi...') }}</p>
+                    </x-ui.card>
+                </div>
             @endforelse
         </div>
-    </div>
 
-    <footer class="bg-gray-900 text-white pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <div class="col-span-1 md:col-span-2">
-                    <span class="text-2xl font-bold text-white tracking-tight mb-4 block">
-                        🇯🇵 Japan<span class="text-sky-500">Travel</span>
-                    </span>
-                    <p class="text-gray-400 leading-relaxed max-w-sm">
-                        {{ __('Deskripsi Footer') }}
-                    </p>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg mb-4">{{ __('Navigasi') }}</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="{{ route('home') }}" class="hover:text-sky-500 transition">{{ __('Beranda') }}</a></li>
-                        <li><a href="{{ route('shop.index') }}" class="hover:text-sky-500 transition">{{ __('Toko Oleh-oleh') }}</a></li>
-                        <li><a href="{{ route('login') }}" class="hover:text-sky-500 transition">{{ __('Masuk') }}</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg mb-4">{{ __('Kontak') }}</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Tokyo, Japan</li>
-                        <li>support@japantravel.com</li>
-                        <li>+81 90-1234-5678</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-                &copy; {{ date('Y') }} Japan Travel Project. {{ __('Dibuat dengan') }}
-            </div>
+        <div class="mt-8">
+            {{ $places->links() }}
         </div>
-    </footer>
+    </section>
 
-</body>
-</html>
+    <section class="mx-auto mt-16 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <x-ui.card class="flex flex-col items-start justify-between gap-6 bg-slate-900 text-white sm:flex-row sm:items-center">
+            <div>
+                <h3 class="text-2xl font-semibold">{{ __('Siap belanja oleh-oleh?') }}</h3>
+                <p class="mt-2 text-sm text-slate-200">{{ __('Pilih produk terbaik langsung dari Jepang dengan checkout instan.') }}</p>
+            </div>
+            <a href="{{ route('shop.index') }}" class="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900">
+                {{ __('Lihat Katalog') }}
+            </a>
+        </x-ui.card>
+    </section>
+@endsection

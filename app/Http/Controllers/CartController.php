@@ -51,7 +51,7 @@ class CartController extends Controller
 
         Session::put('cart', $cart);
 
-        return redirect()->back()->with('success', 'Barang masuk keranjang! 🛒');
+        return redirect()->back()->with('success', __('Barang masuk keranjang! 🛒'));
     }
 
     // 3. UPDATE QUANTITY
@@ -67,7 +67,7 @@ class CartController extends Controller
         }
 
         Session::put('cart', $cart);
-        return redirect()->route('cart.index')->with('success', 'Keranjang diperbarui.');
+        return redirect()->route('cart.index')->with('success', __('Keranjang diperbarui.'));
     }
 
     // 4. HAPUS ITEM
@@ -80,6 +80,6 @@ class CartController extends Controller
             Session::put('cart', $cart);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Barang dihapus.');
+        return redirect()->route('cart.index')->with('success', __('Barang dihapus.'));
     }
 }

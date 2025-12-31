@@ -1,53 +1,60 @@
-<x-app-layout>
+<x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Edit Barang') }}
-        </h2>
+        <div class="flex flex-col gap-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Souvenir') }}</p>
+            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ __('Edit Souvenir') }}</h2>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <form action="{{ route('admin.souvenirs.update', $souvenir->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf @method('PUT')
-                        
-                        <div class="mb-4">
-                            <x-input-label for="name" :value="__('Nama Barang')" />
-                            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $souvenir->name)" required />
-                        </div>
+    <x-ui.card>
+        @if ($errors->any())
+            <x-ui.alert variant="danger" class="mb-6">
+                <ul class="list-disc space-y-1 pl-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </x-ui.alert>
+        @endif
 
-                        <div class="mb-4">
-                            <x-input-label for="description" :value="__('Deskripsi')" />
-                            <textarea name="description" rows="3" class="block mt-1 w-full border-gray-300 dark:bg-gray-900 dark:text-white rounded-md shadow-sm">{{ old('description', $souvenir->description) }}</textarea>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <x-input-label for="price" :value="__('Harga (Rp)')" />
-                                <x-text-input id="price" class="block mt-1 w-full" type="number" name="price" :value="old('price', $souvenir->price)" required />
-                            </div>
-                            <div>
-                                <x-input-label for="stock" :value="__('Stok')" />
-                                <x-text-input id="stock" class="block mt-1 w-full" type="number" name="stock" :value="old('stock', $souvenir->stock)" required />
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="image" :value="__('Ganti Foto (Opsional)')" />
-                            @if($souvenir->image)
-                                <img src="{{ asset('storage/' . $souvenir->image) }}" class="w-20 h-20 object-cover mb-2 rounded">
-                            @endif
-                            <input type="file" name="image" class="block mt-1 w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('admin.souvenirs.index') }}" class="text-gray-600 mr-4">Batal</a>
-                            <x-primary-button>Update Barang</x-primary-button>
-                        </div>
-                    </form>
+        <form action="{{ route('admin.souvenirs.update', $souvenir->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
+            @method('PUT')
+            <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                    <x-ui.label value="{{ __('Nama Produk (ID)') }}" />
+                    <x-ui.input name="name_id" value="{{ old('name_id', $souvenir->getTranslation('name', 'id')) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Nama Produk (EN)') }}" />
+                    <x-ui.input name="name_en" value="{{ old('name_en', $souvenir->getTranslation('name', 'en')) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Deskripsi (ID)') }}" />
+                    <x-ui.textarea name="description_id" rows="4">{{ old('description_id', $souvenir->getTranslation('description', 'id')) }}</x-ui.textarea>
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Deskripsi (EN)') }}" />
+                    <x-ui.textarea name="description_en" rows="4">{{ old('description_en', $souvenir->getTranslation('description', 'en')) }}</x-ui.textarea>
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Harga') }}" />
+                    <x-ui.input type="number" name="price" value="{{ old('price', $souvenir->price) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Stok') }}" />
+                    <x-ui.input type="number" name="stock" value="{{ old('stock', $souvenir->stock) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Upload Gambar') }}" />
+                    <x-ui.input type="file" name="image" />
                 </div>
             </div>
-        </div>
-    </div>
-</x-app-layout>
+
+            <div class="flex gap-3">
+                <x-ui.button type="submit">{{ __('Simpan Perubahan') }}</x-ui.button>
+                <a href="{{ route('admin.souvenirs.index') }}" class="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-300">{{ __('Batal') }}</a>
+            </div>
+        </form>
+    </x-ui.card>
+</x-admin-layout>

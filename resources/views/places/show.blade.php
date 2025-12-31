@@ -1,208 +1,162 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $place->name }} - Japan Travel</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @includeIf('partials.theme-script')
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+@extends('layouts.site')
 
-    <nav class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="flex items-center text-gray-500 hover:text-sky-600 dark:hover:text-red-400 transition">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        {{ __('Kembali ke Beranda') }}
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                     <div class="flex items-center space-x-2 text-sm font-medium mr-2">
-                        <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'id' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">ID</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 {{ App::getLocale() == 'en' ? 'bg-sky-600 text-white border-sky-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">EN</a>
-                    </div>
-                    <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle theme">
-                        <span class="text-lg" aria-hidden="true">🌗</span>
-                    </button>
-                    <span class="text-xl font-bold text-sky-500 dark:text-red-500">🇯🇵 Japan Travel</span>
-                </div>
-            </div>
-        </div>
-    </nav>
+@section('title', $place->name . ' · ' . __('Japan Travel'))
 
-    <div class="relative h-96 w-full">
-        @if($place->image)
-            <img src="{{ asset('storage/' . $place->image) }}" class="w-full h-full object-cover" alt="{{ $place->name }}">
-        @else
-            <div class="w-full h-full bg-gray-300 flex items-center justify-center">No Image Available</div>
-        @endif
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end">
-            <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-                <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">{{ $place->name }}</h1>
-                <p class="text-gray-200 text-lg">📍 {{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="{ tab: 'ringkasan' }">
-        
-        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
-            <button @click="tab = 'ringkasan'" :class="{ 'border-sky-500 text-sky-600 dark:border-red-500 dark:text-red-400': tab === 'ringkasan', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'ringkasan' }" class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm focus:outline-none">
-                {{ __('Ringkasan') }}
-            </button>
-            <button @click="tab = 'fasilitas'" :class="{ 'border-sky-500 text-sky-600 dark:border-red-500 dark:text-red-400': tab === 'fasilitas', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'fasilitas' }" class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm focus:outline-none">
-                {{ __('Fasilitas') }}
-            </button>
-            <button @click="tab = 'lokasi'" :class="{ 'border-sky-500 text-sky-600 dark:border-red-500 dark:text-red-400': tab === 'lokasi', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'lokasi' }" class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm focus:outline-none">
-                {{ __('Lokasi & Jam Buka') }}
-            </button>
-            <button @click="tab = 'review'" :class="{ 'border-sky-500 text-sky-600 dark:border-red-500 dark:text-red-400': tab === 'review', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'review' }" class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm focus:outline-none">
-                Review ({{ $place->reviews->count() }})
-            </button>
-        </div>
-
-        <div x-show="tab === 'ringkasan'" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="md:col-span-2">
-                <h2 class="text-2xl font-bold mb-4">{{ __('Tentang') }} {{ $place->name }}</h2>
-                <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                    {{ $place->description }}
-                </div>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-fit">
-                <h3 class="font-bold text-lg mb-4">{{ __('Informasi Singkat') }}</h3>
-                <ul class="space-y-3 text-sm">
-                    <li class="flex justify-between">
-                        <span class="text-gray-500">{{ __('Ditambahkan Oleh') }}</span>
-                        <span class="font-medium">{{ $place->author->username ?? 'Admin' }}</span>
-                    </li>
-                    <li class="flex justify-between">
-                        <span class="text-gray-500">{{ __('Tanggal') }}</span>
-                        <span class="font-medium">{{ $place->created_at->format('d M Y') }}</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div x-show="tab === 'fasilitas'" style="display: none;">
-            <h2 class="text-2xl font-bold mb-6">{{ __('Fasilitas Tersedia') }}</h2>
-            @if($place->facilities)
-                <div class="flex flex-wrap gap-3">
-                    @foreach(explode(',', $place->facilities) as $fac)
-                        <span class="bg-sky-100 text-sky-800 dark:bg-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium border border-sky-200 dark:border-gray-600">
-                            ✅ {{ trim($fac) }}
-                        </span>
-                    @endforeach
-                </div>
+@section('content')
+    <section class="relative">
+        <div class="h-80 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+            @if($place->image)
+                <img src="{{ asset('storage/' . $place->image) }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
             @else
-                <p class="text-gray-500 italic">{{ __('Belum ada data fasilitas.') }}</p>
+                <img src="{{ asset('demo/place-placeholder.svg') }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
             @endif
         </div>
-
-        <div x-show="tab === 'lokasi'" style="display: none;">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <h3 class="font-bold text-lg mb-4">{{ __('Jam Operasional') }}</h3>
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <tr>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-500">{{ __('Hari Buka') }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $place->open_days ?? '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-500">{{ __('Jam Buka') }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $place->open_hours ?? '-' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-lg mb-4">{{ __('Peta Lokasi') }}</h3>
-                    @if($place->address)
-                        <div class="aspect-w-16 aspect-h-9 w-full h-64 bg-gray-200 rounded-lg overflow-hidden shadow-inner">
-                            <iframe 
-                                width="100%" 
-                                height="100%" 
-                                frameborder="0" 
-                                style="border:0" 
-                                src="https://maps.google.com/maps?q={{ urlencode($place->address) }}&output=embed" 
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                        <p class="mt-2 text-sm text-gray-500">{{ $place->address }}</p>
-                    @else
-                        <p class="text-gray-500 italic">{{ __('Alamat belum disetting untuk peta.') }}</p>
-                    @endif
-                </div>
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent">
+            <div class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+                <p class="text-xs uppercase tracking-[0.3em] text-slate-200">{{ __('Destinasi') }}</p>
+                <h1 class="mt-2 font-display text-3xl font-semibold text-white sm:text-4xl">{{ $place->name }}</h1>
+                <p class="mt-2 text-sm text-slate-200">📍 {{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
             </div>
         </div>
+    </section>
 
-        <div x-show="tab === 'review'" style="display: none;">
-            <h3 class="font-bold text-lg mb-6">{{ __('Ulasan Pengunjung') }}</h3>
+    <section class="mx-auto -mt-10 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-4 md:grid-cols-3">
+            <x-ui.card>
+                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Rating') }}</p>
+                <p class="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">{{ number_format($place->reviews_avg_rating ?? 0, 1) }}</p>
+                <p class="text-sm text-slate-500">{{ $place->reviews_count }} {{ __('ulasan') }}</p>
+            </x-ui.card>
+            <x-ui.card>
+                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Jam Operasional') }}</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-white">{{ $place->open_days ?? '-' }}</p>
+                <p class="text-sm text-slate-500">{{ $place->open_hours ?? '-' }}</p>
+            </x-ui.card>
+            <x-ui.card>
+                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Ditambahkan Oleh') }}</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-white">{{ $place->author->username ?? __('Admin') }}</p>
+                <p class="text-sm text-slate-500">{{ $place->created_at->format('d M Y') }}</p>
+            </x-ui.card>
+        </div>
+    </section>
 
-            @auth
-                <form action="{{ route('review.store', $place->id) }}" method="POST" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8 border border-gray-200 dark:border-gray-700">
-                    @csrf
-                    <h4 class="font-bold mb-4">{{ __('Tulis Pengalamanmu') }}</h4>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rating</label>
-                        <select name="rating" class="rounded-md border-gray-300 dark:bg-gray-900 dark:text-white focus:border-sky-500 focus:ring-sky-500">
-                            <option value="5">⭐⭐⭐⭐⭐ (Sempurna)</option>
-                            <option value="4">⭐⭐⭐⭐ (Bagus)</option>
-                            <option value="3">⭐⭐⭐ (Biasa)</option>
-                            <option value="2">⭐⭐ (Buruk)</option>
-                            <option value="1">⭐ (Sangat Buruk)</option>
-                        </select>
+    <section class="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-10 lg:grid-cols-3">
+            <div class="space-y-8 lg:col-span-2">
+                <x-ui.card>
+                    <h2 class="text-xl font-semibold text-slate-900 dark:text-white">{{ __('Tentang Destinasi') }}</h2>
+                    <p class="mt-4 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ $place->description }}</p>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Fasilitas') }}</h3>
+                    @if($place->facilities)
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            @foreach(explode(',', $place->facilities) as $facility)
+                                <x-ui.badge variant="info">{{ trim($facility) }}</x-ui.badge>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="mt-4 text-sm text-slate-500">{{ __('Belum ada data fasilitas.') }}</p>
+                    @endif
+                </x-ui.card>
+
+                <x-ui.card>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Lokasi') }}</h3>
+                    <p class="mt-2 text-sm text-slate-500">{{ $place->address ?? __('Alamat belum disetting untuk peta.') }}</p>
+                    <div class="mt-4 rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500 dark:border-slate-700">
+                        {{ __('Peta interaktif akan segera tersedia. Gunakan alamat di atas untuk navigasi langsung.') }}
                     </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Komentar</label>
-                        <textarea name="comment" rows="3" class="w-full rounded-md border-gray-300 dark:bg-gray-900 dark:text-white focus:border-sky-500 focus:ring-sky-500" placeholder="Ceritakan pengalamanmu di sini..."></textarea>
-                    </div>
-
-                    <button type="submit" class="bg-sky-600 dark:bg-red-600 text-white px-4 py-2 rounded hover:bg-sky-700 transition">
-                        {{ __('Kirim Ulasan') }}
-                    </button>
-                </form>
-            @else
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
-                    <p class="text-sm text-yellow-700">
-                        <a href="{{ route('login') }}" class="font-bold underline">Login</a> untuk menulis ulasan.
-                    </p>
-                </div>
-            @endauth
+                </x-ui.card>
+            </div>
 
             <div class="space-y-6">
-                @forelse($place->reviews as $review)
-                    <div class="flex space-x-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                        <div class="flex-shrink-0">
-                            <img class="h-10 w-10 rounded-full object-cover border" src="https://ui-avatars.com/api/?name={{ urlencode($review->user->username) }}&background=random" alt="">
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between mb-1">
-                                <h5 class="font-bold text-sm">{{ $review->user->username }}</h5>
-                                <span class="text-xs text-gray-500">{{ $review->created_at->diffForHumans() }}</span>
-                            </div>
-                            <div class="text-yellow-400 text-xs mb-2">
-                                @for($i=0; $i<$review->rating; $i++) ★ @endfor
-                                @for($i=$review->rating; $i<5; $i++) <span class="text-gray-300">★</span> @endfor
-                            </div>
-                            <p class="text-sm text-gray-700 dark:text-gray-300">{{ $review->comment }}</p>
-                        </div>
+                <x-ui.card>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Ringkasan Rating') }}</h3>
+                    <div class="mt-4 space-y-2 text-sm text-slate-500">
+                        <p>{{ __('Rata-rata') }}: <span class="font-semibold text-slate-900 dark:text-white">{{ number_format($place->reviews_avg_rating ?? 0, 1) }}</span></p>
+                        <p>{{ __('Total ulasan') }}: <span class="font-semibold text-slate-900 dark:text-white">{{ $place->reviews_count }}</span></p>
                     </div>
-                @empty
-                    <p class="text-gray-500 italic text-center py-4">Belum ada ulasan. Jadilah yang pertama!</p>
-                @endforelse
+                </x-ui.card>
+                <x-ui.card>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Tips Berkunjung') }}</h3>
+                    <p class="mt-2 text-sm text-slate-500">{{ __('Datang lebih pagi untuk menikmati suasana yang lebih tenang dan pencahayaan terbaik untuk foto.') }}</p>
+                </x-ui.card>
             </div>
         </div>
+    </section>
 
-    </div> <footer class="bg-gray-800 text-white py-8 text-center mt-12 border-t border-gray-700">
-        <p class="text-sm">© {{ date('Y') }} Japan Travel. All Rights Reserved.</p>
-    </footer>
-</body>
-</html>
+    <section class="mx-auto mt-12 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div class="grid gap-6 lg:grid-cols-3">
+            <div class="space-y-6 lg:col-span-2">
+                <x-ui.card>
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Ulasan Pengunjung') }}</h3>
+                        <span class="text-sm text-slate-500">{{ $place->reviews_count }} {{ __('ulasan') }}</span>
+                    </div>
+                    <div class="mt-6 space-y-4">
+                        @forelse($reviews as $review)
+                            <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-sm font-semibold text-rose-600 dark:bg-rose-500/20 dark:text-rose-200">
+                                            {{ strtoupper(substr($review->user->username, 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ $review->user->username }}</p>
+                                            <p class="text-xs text-slate-400">{{ $review->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-amber-400">
+                                        @for($i = 0; $i < 5; $i++)
+                                            <span class="{{ $i < $review->rating ? '' : 'text-slate-300 dark:text-slate-700' }}">★</span>
+                                        @endfor
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">{{ $review->comment }}</p>
+                            </div>
+                        @empty
+                            <div class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-700">
+                                {{ __('Belum ada ulasan. Jadilah yang pertama!') }}
+                            </div>
+                        @endforelse
+                    </div>
+                    <div class="mt-6">
+                        {{ $reviews->links() }}
+                    </div>
+                </x-ui.card>
+            </div>
+
+            <div>
+                <x-ui.card>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Tulis Ulasan') }}</h3>
+                    @auth
+                        <form action="{{ route('review.store', $place->id) }}" method="POST" class="mt-4 space-y-4">
+                            @csrf
+                            <div>
+                                <x-ui.label value="{{ __('Rating') }}" />
+                                <x-ui.select name="rating">
+                                    <option value="5">{{ __('⭐⭐⭐⭐⭐ (Sempurna)') }}</option>
+                                    <option value="4">{{ __('⭐⭐⭐⭐ (Bagus)') }}</option>
+                                    <option value="3">{{ __('⭐⭐⭐ (Biasa)') }}</option>
+                                    <option value="2">{{ __('⭐⭐ (Buruk)') }}</option>
+                                    <option value="1">{{ __('⭐ (Sangat Buruk)') }}</option>
+                                </x-ui.select>
+                            </div>
+                            <div>
+                                <x-ui.label value="{{ __('Komentar') }}" />
+                                <x-ui.textarea name="comment" rows="4" placeholder="{{ __('Ceritakan pengalamanmu di sini...') }}"></x-ui.textarea>
+                            </div>
+                            <x-ui.button type="submit">{{ __('Kirim Ulasan') }}</x-ui.button>
+                        </form>
+                    @else
+                        <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                            <a href="{{ route('login') }}" class="font-semibold underline">{{ __('Masuk') }}</a>
+                            {{ __('untuk menulis ulasan.') }}
+                        </div>
+                    @endauth
+                </x-ui.card>
+            </div>
+        </div>
+    </section>
+@endsection

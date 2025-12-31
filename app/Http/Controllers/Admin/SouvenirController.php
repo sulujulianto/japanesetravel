@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Souvenir;
+use App\Support\CacheKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,12 +27,22 @@ class SouvenirController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'name_id' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'description_id' => 'nullable|string|required_with:description_en',
+            'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $description = null;
+        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
+            $description = [
+                'id' => $validated['description_id'],
+                'en' => $validated['description_en'],
+            ];
+        }
 
         $imagePath = null;
         if ($request->hasFile('image')) {
@@ -39,14 +50,19 @@ class SouvenirController extends Controller
         }
 
         Souvenir::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
+            'name' => [
+                'id' => $validated['name_id'],
+                'en' => $validated['name_en'],
+            ],
+            'description' => $description,
             'price' => $validated['price'],
             'stock' => $validated['stock'],
             'image' => $imagePath,
         ]);
 
-        return redirect()->route('admin.souvenirs.index')->with('success', 'Barang berhasil ditambahkan!');
+        CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
+
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Barang berhasil ditambahkan!'));
     }
 
     // 4. FORM EDIT
@@ -59,8 +75,10 @@ class SouvenirController extends Controller
     public function update(Request $request, Souvenir $souvenir)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'name_id' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'description_id' => 'nullable|string|required_with:description_en',
+            'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -75,15 +93,28 @@ class SouvenirController extends Controller
             $souvenir->image = $request->file('image')->store('uploads/souvenirs', 'public');
         }
 
+        $description = null;
+        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
+            $description = [
+                'id' => $validated['description_id'],
+                'en' => $validated['description_en'],
+            ];
+        }
+
         $souvenir->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
+            'name' => [
+                'id' => $validated['name_id'],
+                'en' => $validated['name_en'],
+            ],
+            'description' => $description,
             'price' => $validated['price'],
             'stock' => $validated['stock'],
             // Image dihandle di atas
         ]);
 
-        return redirect()->route('admin.souvenirs.index')->with('success', 'Data barang diperbarui!');
+        CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
+
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Data barang diperbarui!'));
     }
 
     // 6. HAPUS BARANG
@@ -93,6 +124,9 @@ class SouvenirController extends Controller
             Storage::disk('public')->delete($souvenir->image);
         }
         $souvenir->delete();
-        return redirect()->route('admin.souvenirs.index')->with('success', 'Barang dihapus dari stok.');
+
+        CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
+
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Barang dihapus dari stok.'));
     }
 }

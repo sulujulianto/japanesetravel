@@ -1,66 +1,98 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Riwayat Pesanan Saya') }}
-        </h2>
+        <div class="flex flex-col gap-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Akun Saya') }}</p>
+            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ __('Riwayat Pesanan Saya') }}</h2>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
+    <div class="py-10">
+        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
             @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                <x-ui.alert variant="success">
                     {{ session('success') }}
-                </div>
+                </x-ui.alert>
             @endif
 
+            @php
+                $statusVariants = [
+                    'pending' => 'warning',
+                    'processing' => 'info',
+                    'completed' => 'success',
+                    'cancelled' => 'danger',
+                ];
+                $paymentVariants = [
+                    'pending' => 'warning',
+                    'paid' => 'success',
+                    'failed' => 'danger',
+                    'expired' => 'danger',
+                    'refunded' => 'info',
+                ];
+            @endphp
+
             @forelse ($orders as $order)
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6 border border-gray-200 dark:border-gray-700">
-                    <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                <x-ui.card>
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <span class="text-xs uppercase font-bold text-gray-500">Nomor Order</span>
-                            <div class="font-bold text-gray-900 dark:text-white">#ORDER-{{ $order->id }}</div>
+                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Nomor Order') }}</p>
+                            <p class="text-lg font-semibold text-slate-900 dark:text-white">#ORDER-{{ $order->id }}</p>
+                            <p class="text-sm text-slate-500">{{ $order->created_at->format('d M Y') }}</p>
                         </div>
                         <div>
-                            <span class="text-xs uppercase font-bold text-gray-500">Tanggal</span>
-                            <div class="text-sm text-gray-900 dark:text-white">{{ $order->created_at->format('d M Y') }}</div>
+                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Total') }}</p>
+                            <p class="text-lg font-semibold text-slate-900 dark:text-white">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
+                                {{ __(strtoupper($order->status)) }}
+                            </x-ui.badge>
+                            @if($order->payment)
+                                <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
+                                    {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
+                                </x-ui.badge>
+                            @else
+                                <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
+                            @endif
                         </div>
                         <div>
-                            <span class="text-xs uppercase font-bold text-gray-500">Total</span>
-                            <div class="font-bold text-sky-600 dark:text-red-400">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
-                        </div>
-                        <div>
-                            <span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">
-                                {{ strtoupper($order->status) }}
-                            </span>
+                            <a href="{{ route('orders.show', $order) }}" class="text-sm font-semibold text-rose-500 hover:text-rose-400">{{ __('Lihat Detail') }}</a>
                         </div>
                     </div>
 
-                    <div class="p-6">
-                        <table class="min-w-full">
-                            <tbody>
-                                @foreach ($order->items as $item)
-                                <tr class="border-b last:border-0 border-gray-100 dark:border-gray-700">
-                                    <td class="py-3 flex items-center">
-                                        <img src="{{ asset('storage/' . $item->product->image) }}" class="w-10 h-10 rounded object-cover mr-3">
-                                        <span class="text-gray-700 dark:text-gray-300">{{ $item->product->name }}</span>
-                                    </td>
-                                    <td class="py-3 text-sm text-gray-500 text-right">
-                                        {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="mt-6 space-y-3">
+                        @foreach ($order->items as $item)
+                            @php
+                                $product = $item->product;
+                                $productName = $product?->name ?? $item->product_name ?? __('Produk tidak tersedia');
+                                $productImage = $product?->image ?? $item->product_image;
+                            @endphp
+                            <div class="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-950/40">
+                                <div class="h-10 w-10 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800">
+                                    @if($productImage)
+                                        <img src="{{ asset('storage/' . $productImage) }}" alt="{{ $productName }}" class="h-full w-full object-cover">
+                                    @else
+                                        <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $productName }}" class="h-full w-full object-cover">
+                                    @endif
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-slate-900 dark:text-white">{{ $productName }}</p>
+                                    <p class="text-xs text-slate-500">{{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                                </div>
+                                <div class="text-sm font-semibold text-slate-900 dark:text-white">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</div>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
+                </x-ui.card>
             @empty
-                <div class="text-center py-12 text-gray-500 bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <p>Belum ada riwayat pesanan.</p>
-                    <a href="{{ route('shop.index') }}" class="text-sky-600 hover:underline mt-2 block">Mulai Belanja</a>
-                </div>
+                <x-ui.card class="text-center">
+                    <p class="text-sm text-slate-500">{{ __('Belum ada riwayat pesanan.') }}</p>
+                    <a href="{{ route('shop.index') }}" class="mt-3 inline-flex text-sm font-semibold text-rose-500">{{ __('Mulai Belanja') }}</a>
+                </x-ui.card>
             @endforelse
 
+            <div>
+                {{ $orders->links() }}
+            </div>
         </div>
     </div>
 </x-app-layout>

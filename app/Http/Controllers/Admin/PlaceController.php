@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Place;
+use App\Support\CacheKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -28,8 +29,10 @@ class PlaceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
+            'name_id' => 'required|string|max:150',
+            'name_en' => 'required|string|max:150',
+            'description_id' => 'nullable|string|required_with:description_en',
+            'description_en' => 'nullable|string|required_with:description_id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
@@ -37,24 +40,37 @@ class PlaceController extends Controller
             'open_hours' => 'nullable|string|max:100',
         ]);
 
+        $description = null;
+        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
+            $description = [
+                'id' => $validated['description_id'],
+                'en' => $validated['description_en'],
+            ];
+        }
+
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('uploads/places', 'public');
         }
 
         Place::create([
-            'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']) . '-' . Str::random(5),
-            'description' => $validated['description'],
+            'name' => [
+                'id' => $validated['name_id'],
+                'en' => $validated['name_en'],
+            ],
+            'slug' => Str::slug($validated['name_en']) . '-' . Str::random(5),
+            'description' => $description,
             'image' => $imagePath,
             'address' => $validated['address'],
             'facilities' => $validated['facilities'],
             'open_days' => $validated['open_days'],
             'open_hours' => $validated['open_hours'],
-            'created_by' => Auth::id(),
+            'created_by' => Auth::guard('admin')->id(),
         ]);
 
-        return redirect()->route('admin.places.index')->with('success', 'Destinasi wisata berhasil ditambahkan!');
+        CacheKeys::bump(CacheKeys::PLACES_VERSION);
+
+        return redirect()->route('admin.places.index')->with('success', __('Destinasi wisata berhasil ditambahkan!'));
     }
 
     // 4. TAMPILKAN FORM EDIT (BARU)
@@ -67,8 +83,10 @@ class PlaceController extends Controller
     public function update(Request $request, Place $place)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
+            'name_id' => 'required|string|max:150',
+            'name_en' => 'required|string|max:150',
+            'description_id' => 'nullable|string|required_with:description_en',
+            'description_en' => 'nullable|string|required_with:description_id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
@@ -87,13 +105,24 @@ class PlaceController extends Controller
         }
 
         // Update slug jika nama berubah
-        if ($place->name !== $validated['name']) {
-            $place->slug = Str::slug($validated['name']) . '-' . Str::random(5);
+        if ($place->getTranslation('name', 'en') !== $validated['name_en']) {
+            $place->slug = Str::slug($validated['name_en']) . '-' . Str::random(5);
+        }
+
+        $description = null;
+        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
+            $description = [
+                'id' => $validated['description_id'],
+                'en' => $validated['description_en'],
+            ];
         }
 
         $place->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
+            'name' => [
+                'id' => $validated['name_id'],
+                'en' => $validated['name_en'],
+            ],
+            'description' => $description,
             'address' => $validated['address'],
             'facilities' => $validated['facilities'],
             'open_days' => $validated['open_days'],
@@ -101,7 +130,9 @@ class PlaceController extends Controller
             // Image sudah dihandle di atas
         ]);
 
-        return redirect()->route('admin.places.index')->with('success', 'Data berhasil diperbarui!');
+        CacheKeys::bump(CacheKeys::PLACES_VERSION);
+
+        return redirect()->route('admin.places.index')->with('success', __('Data berhasil diperbarui!'));
     }
 
     // 6. HAPUS DATA (BARU)
@@ -114,6 +145,8 @@ class PlaceController extends Controller
 
         $place->delete();
 
-        return redirect()->route('admin.places.index')->with('success', 'Destinasi wisata telah dihapus.');
+        CacheKeys::bump(CacheKeys::PLACES_VERSION);
+
+        return redirect()->route('admin.places.index')->with('success', __('Destinasi wisata telah dihapus.'));
     }
 }

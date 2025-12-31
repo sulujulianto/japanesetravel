@@ -1,75 +1,68 @@
-<x-app-layout>
+<x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Edit Destinasi') }}
-        </h2>
+        <div class="flex flex-col gap-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Destinasi') }}</p>
+            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ __('Edit Destinasi') }}</h2>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
+    <x-ui.card>
+        @if ($errors->any())
+            <x-ui.alert variant="danger" class="mb-6">
+                <ul class="list-disc space-y-1 pl-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </x-ui.alert>
+        @endif
 
-                    <form action="{{ route('admin.places.update', $place->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT') <div class="mb-4">
-                            <x-input-label for="name" :value="__('Nama Destinasi')" />
-                            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $place->name)" required />
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="description" :value="__('Deskripsi Singkat')" />
-                            <textarea name="description" id="description" rows="4" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ old('description', $place->description) }}</textarea>
-                            <x-input-error :messages="$errors->get('description')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="address" :value="__('Alamat Lengkap')" />
-                            <x-text-input id="address" class="block mt-1 w-full" type="text" name="address" :value="old('address', $place->address)" />
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="facilities" :value="__('Fasilitas (Pisahkan dengan koma)')" />
-                            <x-text-input id="facilities" class="block mt-1 w-full" type="text" name="facilities" :value="old('facilities', $place->facilities)" />
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="image" :value="__('Ganti Gambar Utama (Opsional)')" />
-                            
-                            @if($place->image)
-                                <div class="mb-2">
-                                    <p class="text-sm text-gray-500 mb-1">Gambar saat ini:</p>
-                                    <img src="{{ asset('storage/' . $place->image) }}" alt="Current Image" class="w-32 h-24 object-cover rounded border border-gray-300">
-                                </div>
-                            @endif
-
-                            <input type="file" name="image" id="image" class="block mt-1 w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400">
-                            <p class="mt-1 text-sm text-gray-500">Biarkan kosong jika tidak ingin mengubah gambar.</p>
-                            <x-input-error :messages="$errors->get('image')" class="mt-2" />
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <x-input-label for="open_days" :value="__('Hari Buka')" />
-                                <x-text-input id="open_days" class="block mt-1 w-full" type="text" name="open_days" :value="old('open_days', $place->open_days)" />
-                            </div>
-                            <div>
-                                <x-input-label for="open_hours" :value="__('Jam Buka')" />
-                                <x-text-input id="open_hours" class="block mt-1 w-full" type="text" name="open_hours" :value="old('open_hours', $place->open_hours)" />
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('admin.places.index') }}" class="text-gray-600 hover:text-gray-900 mr-4">Batal</a>
-                            <x-primary-button>
-                                {{ __('Update Data') }}
-                            </x-primary-button>
-                        </div>
-
-                    </form>
+        <form action="{{ route('admin.places.update', $place->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
+            @method('PUT')
+            <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                    <x-ui.label value="{{ __('Nama Destinasi (ID)') }}" />
+                    <x-ui.input name="name_id" value="{{ old('name_id', $place->getTranslation('name', 'id')) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Nama Destinasi (EN)') }}" />
+                    <x-ui.input name="name_en" value="{{ old('name_en', $place->getTranslation('name', 'en')) }}" required />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Deskripsi (ID)') }}" />
+                    <x-ui.textarea name="description_id" rows="4">{{ old('description_id', $place->getTranslation('description', 'id')) }}</x-ui.textarea>
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Deskripsi (EN)') }}" />
+                    <x-ui.textarea name="description_en" rows="4">{{ old('description_en', $place->getTranslation('description', 'en')) }}</x-ui.textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <x-ui.label value="{{ __('Alamat') }}" />
+                    <x-ui.input name="address" value="{{ old('address', $place->address) }}" />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Fasilitas (pisahkan dengan koma)') }}" />
+                    <x-ui.input name="facilities" value="{{ old('facilities', $place->facilities) }}" />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Hari Buka') }}" />
+                    <x-ui.input name="open_days" value="{{ old('open_days', $place->open_days) }}" />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Jam Buka') }}" />
+                    <x-ui.input name="open_hours" value="{{ old('open_hours', $place->open_hours) }}" />
+                </div>
+                <div>
+                    <x-ui.label value="{{ __('Upload Gambar') }}" />
+                    <x-ui.input type="file" name="image" />
                 </div>
             </div>
-        </div>
-    </div>
-</x-app-layout>
+
+            <div class="flex gap-3">
+                <x-ui.button type="submit">{{ __('Simpan Perubahan') }}</x-ui.button>
+                <a href="{{ route('admin.places.index') }}" class="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-300">{{ __('Batal') }}</a>
+            </div>
+        </form>
+    </x-ui.card>
+</x-admin-layout>

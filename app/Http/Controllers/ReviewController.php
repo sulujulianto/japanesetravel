@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Place;
 use App\Models\PlaceReview;
+use App\Support\CacheKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,7 +29,9 @@ class ReviewController extends Controller
             'comment' => $request->comment,
         ]);
 
+        CacheKeys::bump(CacheKeys::REVIEWS_VERSION);
+
         // 4. Kembali ke halaman sebelumnya
-        return back()->with('success', 'Terima kasih atas ulasanmu!');
+        return back()->with('success', __('Terima kasih atas ulasanmu!'));
     }
 }

@@ -1,3 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --brand-ink: 15 23 42;
+        --brand-rose: 244 63 94;
+        --brand-sky: 14 165 233;
+        --brand-cream: 248 250 252;
+    }
+
+    .dark {
+        --brand-ink: 226 232 240;
+        --brand-rose: 251 113 133;
+        --brand-sky: 56 189 248;
+        --brand-cream: 15 23 42;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer utilities {
+    @keyframes rise {
+        0% {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-rise {
+        animation: rise 0.7s ease-out both;
+    }
+}

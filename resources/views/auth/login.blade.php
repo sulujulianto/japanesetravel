@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Selamat Datang Kembali! 👋</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Masuk untuk mengelola pesanan atau wishlistmu.</p>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ __('Selamat Datang Kembali! 👋') }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ __('Masuk untuk mengelola pesanan atau wishlistmu.') }}</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -11,7 +11,7 @@
 
         <div>
             <x-input-label for="email" :value="__('Email')" class="text-gray-700 font-semibold" />
-            <x-text-input id="email" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-lg py-3" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="nama@email.com" />
+            <x-text-input id="email" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-lg py-3" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="{{ __('nama@email.com') }}" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -21,7 +21,7 @@
                             type="password"
                             name="password"
                             required autocomplete="current-password" 
-                            placeholder="••••••••" />
+                            placeholder="{{ __('••••••••') }}" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -45,8 +45,8 @@
         </div>
 
         <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600">Belum punya akun? 
-                <a href="{{ route('register') }}" class="font-bold text-sky-600 hover:underline">Daftar Gratis</a>
+            <p class="text-sm text-gray-600">{{ __('Belum punya akun?') }}
+                <a href="{{ route('register') }}" class="font-bold text-sky-600 hover:underline">{{ __('Daftar Gratis') }}</a>
             </p>
         </div>
     </form>

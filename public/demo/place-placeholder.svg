@@ -1,0 +1,17 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" rx="32" fill="url(#bg)"/>
+  <circle cx="640" cy="120" r="140" fill="url(#glow)"/>
+  <circle cx="140" cy="520" r="180" fill="url(#glow)" opacity="0.6"/>
+  <text x="80" y="280" fill="#f8fafc" font-size="42" font-family="Manrope, sans-serif" font-weight="600">Japan Travel</text>
+  <text x="80" y="330" fill="#94a3b8" font-size="20" font-family="Manrope, sans-serif" letter-spacing="4">DESTINATION</text>
+</svg>

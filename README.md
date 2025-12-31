@@ -1,57 +1,93 @@
 # Japan Travel
 
-Portal wisata Jepang dengan katalog destinasi, toko oleh-oleh, ulasan pengunjung, serta dashboard admin. Mendukung tema terang/gelap dan pilihan bahasa Indonesia/Inggris.
+Portfolio-grade travel storefront untuk destinasi Jepang + toko souvenir, lengkap dengan admin dashboard modern, pembayaran nyata, dan UX bilingual (ID/EN).
 
 ![Tampilan Japan Travel](japantravel/japanese-travel.jpg)
 
-## Fitur Utama
-- Destinasi wisata: landing page, detail dengan fasilitas, peta, dan ulasan.
-- Toko oleh-oleh: listing produk, stok, keranjang, dan checkout (order + item).
-- Ulasan pengunjung: rating 1–5 dan komentar untuk setiap destinasi (login).
-- Dashboard & peran: pengguna biasa melihat riwayat belanja; admin kelola destinasi (places) dan souvenir, serta memantau pesanan/stock rendah.
-- Dukungan bahasa ganda: toggle ID/EN di seluruh halaman publik/auth.
-- Tema terang/gelap: tombol 🌗, preferensi tersimpan di localStorage.
-- Autentikasi lengkap: register, login, reset password, verifikasi email, profil.
+**Fitur Utama**
+- Public: listing destinasi, detail + ulasan, toko souvenir, cart, checkout, riwayat pesanan.
+- Admin: dashboard KPI + charts, manajemen destinasi/souvenir, low-stock tooling, manajemen order + payment.
+- Auth terpisah: guard user (web) dan guard admin, login admin via `/admin/login`.
+- Payment production-ready: Midtrans Snap (Indonesia) + PayPal Checkout (internasional) dengan webhook + verifikasi signature + idempotency.
+- i18n: auto-locale dari browser, toggle ID/EN, konten DB bilingual (spatie/laravel-translatable).
+- Security: rate limiting login & webhook, security headers, session/cookie hardening.
+- Performance: pagination, eager loading, caching listing, indeks DB untuk query populer.
 
-## Teknologi
-- Laravel 12 (PHP >= 8.2), Breeze, Tailwind CSS, Alpine.js, Vite.
+**Teknologi**
+- Laravel 12, Breeze, Tailwind CSS, Vite.
 - MariaDB/MySQL.
+- Midtrans Snap, PayPal Checkout.
+- Chart.js.
 
-## Persiapan & Instalasi
+**Persiapan Lokal**
+1) Install dependency
 ```bash
-git clone <repo-url>
-cd japanesetravel
 composer install
 npm install
-cp .env.example .env  # atau sesuaikan .env yang sudah ada
+```
+
+2) Salin env
+```bash
+cp .env.example .env
 php artisan key:generate
 ```
 
-Konfigurasikan `.env` untuk database, contoh:
-```
+3) Atur database di `.env`
+```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=japantravel
 DB_USERNAME=root
-DB_PASSWORD=ppkpi
+DB_PASSWORD=
 ```
 
-## Database
-Jalankan migrasi:
+**Setup Database**
+Opsi A (migrate + seed):
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
 
-Opsional – impor data demo (admin, 8 destinasi, 8 souvenir, ulasan, pesanan):
+Opsi B (import SQL demo):
 ```bash
 mysql -u root -p japantravel < japantravel/japantravel.sql
 ```
-Kredensial admin demo:  
-`admin@japantravel.com` / `password`
+Catatan: jika memakai opsi B, tidak perlu menjalankan `php artisan migrate` lagi.
 
-## Menjalankan Aplikasi
-Mode pengembangan (watcher Vite):
+**Akun Demo**
+- Admin: `admin@japantravel.com` / `password`
+- User: `kei@japantravel.com` / `password`
+
+**Payment Setup (Sandbox)**
+Tambahkan env berikut di `.env`:
+```env
+MIDTRANS_SERVER_KEY=your_midtrans_server_key
+MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+MIDTRANS_IS_PRODUCTION=false
+
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+PAYPAL_WEBHOOK_ID=your_paypal_webhook_id
+PAYPAL_IS_PRODUCTION=false
+PAYPAL_CURRENCY=USD
+PAYPAL_EXCHANGE_RATE=15000
+```
+
+Webhook endpoints:
+- Midtrans: `POST /payments/webhook/midtrans`
+- PayPal: `POST /payments/webhook/paypal`
+
+Untuk uji local, gunakan ngrok (contoh):
+```bash
+ngrok http 8000
+```
+Lalu set webhook URL ke `https://<ngrok-id>.ngrok-free.app/payments/webhook/...`
+
+**i18n (ID/EN)**
+- Auto-locale dari header browser.
+- Toggle manual: `/lang/id` atau `/lang/en`.
+
+**Menjalankan Aplikasi**
 ```bash
 php artisan serve
 npm run dev
@@ -63,15 +99,28 @@ npm run build
 php artisan serve
 ```
 
-## Pengujian
+**Testing & Quality**
 ```bash
+./vendor/bin/pint --test
+./vendor/bin/phpstan analyse
 php artisan test
+composer audit
+npm audit --audit-level=high
 ```
+CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 
-## Catatan Penggunaan
-- Toggle bahasa ID/EN ada di navbar halaman publik dan auth.
-- Toggle tema 🌗 tersedia di navbar publik, detail destinasi, toko, keranjang, dan halaman auth; preferensi disimpan otomatis.
-- Upload gambar destinasi/souvenir saat input admin; field `image` dibiarkan kosong di data demo.
+**Deployment Checklist**
+- `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`.
+- `php artisan storage:link`.
+- `npm run build`.
+- `php artisan optimize` + `config:cache`, `route:cache`, `view:cache`.
+- Pastikan webhook Midtrans/PayPal mengarah ke domain production.
+- Set `MIDTRANS_IS_PRODUCTION=true` dan `PAYPAL_IS_PRODUCTION=true`.
+
+**Regenerasi SQL Demo**
+```bash
+php scripts/generate_demo_sql.php
+```
 
 ## Lisensi
 MIT (mengikuti lisensi bawaan Laravel).
