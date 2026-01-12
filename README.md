@@ -10,7 +10,8 @@ Portfolio-grade travel storefront untuk destinasi Jepang + toko souvenir, lengka
 - Auth terpisah: guard user (web) dan guard admin, login admin via `/admin/login`.
 - Payment production-ready: Midtrans Snap (Indonesia) + PayPal Checkout (internasional) dengan webhook + verifikasi signature + idempotency.
 - i18n: auto-locale dari browser, toggle ID/EN, konten DB bilingual (spatie/laravel-translatable).
-- Security: rate limiting login & webhook, security headers, session/cookie hardening.
+- Theme toggle: light/dark berbasis class, tersimpan di localStorage, tanpa flicker.
+- Security: rate limiting login & webhook, security headers, session/cookie hardening, sesi admin terpisah.
 - Performance: pagination, eager loading, caching listing, indeks DB untuk query populer.
 
 **Teknologi**

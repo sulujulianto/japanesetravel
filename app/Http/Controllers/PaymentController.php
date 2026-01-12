@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\PaymentWebhookEvent;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
 use App\Services\Payments\Drivers\PayPalCheckoutDriver;
@@ -107,15 +108,33 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Payment not found.'], 404);
         }
 
-        $this->applyWebhookUpdate($payment, $data);
+        $this->applyWebhookUpdate($payment, $data, $provider);
 
         return response()->json(['message' => 'OK']);
     }
 
-    protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data): void
+    protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, string $provider): void
     {
-        DB::transaction(function () use ($payment, $data) {
+        DB::transaction(function () use ($payment, $data, $provider) {
             $payment->refresh();
+
+            if ($data->eventId !== '') {
+                $event = PaymentWebhookEvent::firstOrCreate(
+                    [
+                        'provider' => $provider,
+                        'event_id' => $data->eventId,
+                    ],
+                    [
+                        'payment_id' => $payment->id,
+                        'status' => $data->status,
+                        'payload_json' => $data->payload,
+                    ]
+                );
+
+                if (! $event->wasRecentlyCreated) {
+                    return;
+                }
+            }
 
             if ($payment->status === $data->status) {
                 return;

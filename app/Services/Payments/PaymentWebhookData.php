@@ -10,6 +10,7 @@ class PaymentWebhookData
         public float $amount,
         public string $currency,
         public array $payload = [],
+        public string $eventId = '',
     ) {
     }
 }

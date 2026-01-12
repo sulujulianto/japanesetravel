@@ -97,7 +97,7 @@ Route::get('/payments/paypal/return', [PaymentController::class, 'paypalReturn']
 Route::get('/payments/paypal/cancel', [PaymentController::class, 'paypalCancel'])->name('payments.paypal.cancel');
 
 // AREA ADMIN (Kelola Data)
-Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth:admin', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/charts', [DashboardController::class, 'charts'])->name('dashboard.charts');
     Route::resource('orders', OrderController::class)->only(['index', 'show', 'update']);

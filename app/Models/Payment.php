@@ -30,4 +30,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function webhookEvents()
+    {
+        return $this->hasMany(PaymentWebhookEvent::class);
+    }
 }

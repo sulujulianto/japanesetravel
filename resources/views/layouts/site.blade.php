@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Japan Travel'))</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @includeIf('partials.theme-script')
+    @includeIf('partials.vite')
 </head>
 <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <div class="relative min-h-screen overflow-hidden">

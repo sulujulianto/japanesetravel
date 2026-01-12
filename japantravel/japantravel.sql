@@ -11,7 +11,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS `payments`, `order_items`, `orders`, `place_reviews`, `souvenirs`, `places`, `sessions`, `password_reset_tokens`, `cache_locks`, `cache`, `failed_jobs`, `job_batches`, `jobs`, `users`;
+DROP TABLE IF EXISTS `payment_webhook_events`, `payments`, `order_items`, `orders`, `place_reviews`, `souvenirs`, `places`, `sessions`, `password_reset_tokens`, `cache_locks`, `cache`, `failed_jobs`, `job_batches`, `jobs`, `users`;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE `users` (
@@ -203,6 +203,21 @@ CREATE TABLE `payments` (
   KEY `payments_order_id_index` (`order_id`),
   KEY `payments_status_index` (`status`),
   CONSTRAINT `payments_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `payment_webhook_events` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `payment_id` bigint unsigned NOT NULL,
+  `provider` varchar(20) NOT NULL,
+  `event_id` varchar(120) NOT NULL,
+  `status` varchar(20) NOT NULL,
+  `payload_json` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payment_webhook_events_provider_event_id_unique` (`provider`,`event_id`),
+  KEY `payment_webhook_events_payment_id_status_index` (`payment_id`,`status`),
+  CONSTRAINT `payment_webhook_events_payment_id_foreign` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `avatar`, `role`, `last_seen`, `email_verified_at`, `remember_token`, `created_at`, `updated_at`) VALUES

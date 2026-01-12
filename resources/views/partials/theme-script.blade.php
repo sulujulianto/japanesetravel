@@ -1,9 +1,13 @@
 <script>
 (() => {
     const root = document.documentElement;
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = stored ?? (prefersDark ? 'dark' : 'light');
+    let stored = null;
+    try {
+        stored = localStorage.getItem('theme');
+    } catch (error) {
+        stored = null;
+    }
+    const initial = stored === 'dark' ? 'dark' : 'light';
     const apply = (theme) => {
         root.classList.toggle('dark', theme === 'dark');
         root.style.colorScheme = theme;
@@ -12,7 +16,11 @@
     window.toggleTheme = () => {
         const next = root.classList.contains('dark') ? 'light' : 'dark';
         apply(next);
-        localStorage.setItem('theme', next);
+        try {
+            localStorage.setItem('theme', next);
+        } catch (error) {
+            // Ignore storage errors (private mode, quota, etc).
+        }
     };
 })();
 </script>

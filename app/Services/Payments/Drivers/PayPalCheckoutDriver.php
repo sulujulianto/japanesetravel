@@ -7,14 +7,13 @@ use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\PaymentGatewayResult;
 use App\Services\Payments\PaymentWebhookData;
-use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Arr;
 use RuntimeException;
 
 class PayPalCheckoutDriver implements PaymentGatewayInterface
 {
-    protected Client $client;
     protected string $baseUrl;
     protected string $clientId;
     protected string $clientSecret;
@@ -24,7 +23,6 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
     public function __construct()
     {
-        $this->client = new Client();
         $this->baseUrl = config('services.paypal.is_production')
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
@@ -58,15 +56,15 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             ],
         ];
 
-        $response = $this->client->post($this->baseUrl . '/v2/checkout/orders', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $payload,
-        ]);
+        $response = Http::withToken($accessToken)
+            ->acceptJson()
+            ->post($this->baseUrl . '/v2/checkout/orders', $payload);
 
-        $body = json_decode((string) $response->getBody(), true);
+        if (! $response->successful()) {
+            throw new RuntimeException('PayPal gagal membuat checkout order.');
+        }
+
+        $body = $response->json() ?? [];
         $providerRef = $body['id'] ?? '';
         $redirectUrl = collect($body['links'] ?? [])
             ->firstWhere('rel', 'approve')['href'] ?? null;
@@ -103,15 +101,15 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             'webhook_event' => $request->all(),
         ];
 
-        $response = $this->client->post($this->baseUrl . '/v1/notifications/verify-webhook-signature', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $payload,
-        ]);
+        $response = Http::withToken($accessToken)
+            ->acceptJson()
+            ->post($this->baseUrl . '/v1/notifications/verify-webhook-signature', $payload);
 
-        $body = json_decode((string) $response->getBody(), true);
+        if (! $response->successful()) {
+            return false;
+        }
+
+        $body = $response->json() ?? [];
 
         return ($body['verification_status'] ?? '') === 'SUCCESS';
     }
@@ -148,6 +146,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             amount: (float) $amountValue,
             currency: (string) $currency,
             payload: $payload,
+            eventId: (string) ($payload['id'] ?? ''),
         );
     }
 
@@ -155,14 +154,15 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
     {
         $accessToken = $this->getAccessToken();
 
-        $response = $this->client->post($this->baseUrl . '/v2/checkout/orders/' . $providerRef . '/capture', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-            ],
-        ]);
+        $response = Http::withToken($accessToken)
+            ->acceptJson()
+            ->post($this->baseUrl . '/v2/checkout/orders/' . $providerRef . '/capture');
 
-        return json_decode((string) $response->getBody(), true);
+        if (! $response->successful()) {
+            throw new RuntimeException('PayPal gagal menangkap pembayaran.');
+        }
+
+        return $response->json() ?? [];
     }
 
     protected function getAccessToken(): string
@@ -171,14 +171,17 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             throw new RuntimeException('Konfigurasi PayPal belum lengkap.');
         }
 
-        $response = $this->client->post($this->baseUrl . '/v1/oauth2/token', [
-            'auth' => [$this->clientId, $this->clientSecret],
-            'form_params' => [
+        $response = Http::withBasicAuth($this->clientId, $this->clientSecret)
+            ->asForm()
+            ->post($this->baseUrl . '/v1/oauth2/token', [
                 'grant_type' => 'client_credentials',
-            ],
-        ]);
+            ]);
 
-        $body = json_decode((string) $response->getBody(), true);
+        if (! $response->successful()) {
+            throw new RuntimeException('Gagal mendapatkan token PayPal.');
+        }
+
+        $body = $response->json() ?? [];
         $token = $body['access_token'] ?? null;
 
         if (! $token) {

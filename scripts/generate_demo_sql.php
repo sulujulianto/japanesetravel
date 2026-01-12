@@ -287,7 +287,7 @@ fwrite($handle, "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION *
 fwrite($handle, "/*!40101 SET NAMES utf8mb4 */;\n\n");
 
 fwrite($handle, "SET FOREIGN_KEY_CHECKS = 0;\n");
-fwrite($handle, "DROP TABLE IF EXISTS `payments`, `order_items`, `orders`, `place_reviews`, `souvenirs`, `places`, `sessions`, `password_reset_tokens`, `cache_locks`, `cache`, `failed_jobs`, `job_batches`, `jobs`, `users`;\n");
+fwrite($handle, "DROP TABLE IF EXISTS `payment_webhook_events`, `payments`, `order_items`, `orders`, `place_reviews`, `souvenirs`, `places`, `sessions`, `password_reset_tokens`, `cache_locks`, `cache`, `failed_jobs`, `job_batches`, `jobs`, `users`;\n");
 fwrite($handle, "SET FOREIGN_KEY_CHECKS = 1;\n\n");
 
 fwrite($handle, "CREATE TABLE `users` (\n");
@@ -479,6 +479,21 @@ fwrite($handle, "  UNIQUE KEY `payments_provider_provider_ref_unique` (`provider
 fwrite($handle, "  KEY `payments_order_id_index` (`order_id`),\n");
 fwrite($handle, "  KEY `payments_status_index` (`status`),\n");
 fwrite($handle, "  CONSTRAINT `payments_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE\n");
+fwrite($handle, ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n");
+
+fwrite($handle, "CREATE TABLE `payment_webhook_events` (\n");
+fwrite($handle, "  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n");
+fwrite($handle, "  `payment_id` bigint unsigned NOT NULL,\n");
+fwrite($handle, "  `provider` varchar(20) NOT NULL,\n");
+fwrite($handle, "  `event_id` varchar(120) NOT NULL,\n");
+fwrite($handle, "  `status` varchar(20) NOT NULL,\n");
+fwrite($handle, "  `payload_json` json DEFAULT NULL,\n");
+fwrite($handle, "  `created_at` timestamp NULL DEFAULT NULL,\n");
+fwrite($handle, "  `updated_at` timestamp NULL DEFAULT NULL,\n");
+fwrite($handle, "  PRIMARY KEY (`id`),\n");
+fwrite($handle, "  UNIQUE KEY `payment_webhook_events_provider_event_id_unique` (`provider`,`event_id`),\n");
+fwrite($handle, "  KEY `payment_webhook_events_payment_id_status_index` (`payment_id`,`status`),\n");
+fwrite($handle, "  CONSTRAINT `payment_webhook_events_payment_id_foreign` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE CASCADE\n");
 fwrite($handle, ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n");
 
 insertRows($handle, 'users', [
