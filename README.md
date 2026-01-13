@@ -125,3 +125,5 @@ php scripts/generate_demo_sql.php
 
 ## Lisensi
 MIT (mengikuti lisensi bawaan Laravel).
+
+
