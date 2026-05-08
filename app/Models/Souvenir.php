@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
@@ -30,5 +31,10 @@ class Souvenir extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return Media::url($this->image);
     }
 }

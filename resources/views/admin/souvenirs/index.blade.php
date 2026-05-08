@@ -34,8 +34,8 @@
                         <tr>
                             <td class="py-3">
                                 <div class="h-14 w-14 overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800">
-                                    @if($souvenir->image)
-                                        <img src="{{ asset('storage/' . $souvenir->image) }}" alt="{{ $souvenir->name }}" class="h-full w-full object-cover">
+                                    @if($souvenir->image_url)
+                                        <img src="{{ $souvenir->image_url }}" alt="{{ $souvenir->name }}" class="h-full w-full object-cover">
                                     @else
                                         <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $souvenir->name }}" class="h-full w-full object-cover">
                                     @endif

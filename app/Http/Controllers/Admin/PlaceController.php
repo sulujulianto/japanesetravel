@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Place;
 use App\Support\CacheKeys;
+use App\Support\Media;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PlaceController extends Controller
 {
@@ -16,6 +16,7 @@ class PlaceController extends Controller
     public function index()
     {
         $places = Place::latest()->paginate(10);
+
         return view('admin.places.index', compact('places'));
     }
 
@@ -33,7 +34,7 @@ class PlaceController extends Controller
             'name_en' => 'required|string|max:150',
             'description_id' => 'nullable|string|required_with:description_en',
             'description_en' => 'nullable|string|required_with:description_id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
             'open_days' => 'nullable|string|max:100',
@@ -50,7 +51,7 @@ class PlaceController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('uploads/places', 'public');
+            $imagePath = Media::storeUploadedImage($request->file('image'), 'uploads/places');
         }
 
         Place::create([
@@ -58,7 +59,7 @@ class PlaceController extends Controller
                 'id' => $validated['name_id'],
                 'en' => $validated['name_en'],
             ],
-            'slug' => Str::slug($validated['name_en']) . '-' . Str::random(5),
+            'slug' => Str::slug($validated['name_en']).'-'.Str::random(5),
             'description' => $description,
             'image' => $imagePath,
             'address' => $validated['address'],
@@ -87,7 +88,7 @@ class PlaceController extends Controller
             'name_en' => 'required|string|max:150',
             'description_id' => 'nullable|string|required_with:description_en',
             'description_en' => 'nullable|string|required_with:description_id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
             'open_days' => 'nullable|string|max:100',
@@ -96,17 +97,12 @@ class PlaceController extends Controller
 
         // Cek jika ada gambar baru diupload
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($place->image && Storage::disk('public')->exists($place->image)) {
-                Storage::disk('public')->delete($place->image);
-            }
-            // Simpan gambar baru
-            $place->image = $request->file('image')->store('uploads/places', 'public');
+            $place->image = Media::replaceUploadedImage($request->file('image'), $place->image, 'uploads/places');
         }
 
         // Update slug jika nama berubah
         if ($place->getTranslation('name', 'en') !== $validated['name_en']) {
-            $place->slug = Str::slug($validated['name_en']) . '-' . Str::random(5);
+            $place->slug = Str::slug($validated['name_en']).'-'.Str::random(5);
         }
 
         $description = null;
@@ -123,11 +119,11 @@ class PlaceController extends Controller
                 'en' => $validated['name_en'],
             ],
             'description' => $description,
+            'image' => $place->image,
             'address' => $validated['address'],
             'facilities' => $validated['facilities'],
             'open_days' => $validated['open_days'],
             'open_hours' => $validated['open_hours'],
-            // Image sudah dihandle di atas
         ]);
 
         CacheKeys::bump(CacheKeys::PLACES_VERSION);
@@ -139,9 +135,7 @@ class PlaceController extends Controller
     public function destroy(Place $place)
     {
         // Hapus gambar dari storage agar tidak menumpuk sampah file
-        if ($place->image && Storage::disk('public')->exists($place->image)) {
-            Storage::disk('public')->delete($place->image);
-        }
+        Media::delete($place->image);
 
         $place->delete();
 

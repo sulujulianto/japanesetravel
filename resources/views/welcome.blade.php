@@ -116,8 +116,8 @@
                 @endphp
                 <a href="{{ route('place.show', $place->slug) }}" class="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
                     <div class="relative h-52 overflow-hidden bg-slate-200 dark:bg-slate-800">
-                        @if($place->image)
-                            <img src="{{ asset('storage/' . $place->image) }}" alt="{{ $place->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        @if($place->image_url)
+                            <img src="{{ $place->image_url }}" alt="{{ $place->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
                         @else
                             <img src="{{ asset('demo/place-placeholder.svg') }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
                         @endif

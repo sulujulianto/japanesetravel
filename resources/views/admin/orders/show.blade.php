@@ -86,11 +86,10 @@
                         @php
                             $product = $item->product;
                             $productName = $product?->name ?? $item->product_name ?? __('Produk tidak tersedia');
-                            $productImage = $product?->image ?? $item->product_image;
                         @endphp
                         <div class="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                            @if($productImage)
-                                <img src="{{ asset('storage/' . $productImage) }}" alt="{{ $productName }}" class="h-14 w-14 rounded-xl object-cover">
+                            @if($item->resolved_image_url)
+                                <img src="{{ $item->resolved_image_url }}" alt="{{ $productName }}" class="h-14 w-14 rounded-xl object-cover">
                             @else
                                 <div class="h-14 w-14 rounded-xl bg-slate-200 dark:bg-slate-800"></div>
                             @endif

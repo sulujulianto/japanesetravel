@@ -5,8 +5,8 @@
 @section('content')
     <section class="relative">
         <div class="h-80 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
-            @if($place->image)
-                <img src="{{ asset('storage/' . $place->image) }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
+            @if($place->image_url)
+                <img src="{{ $place->image_url }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
             @else
                 <img src="{{ asset('demo/place-placeholder.svg') }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
             @endif

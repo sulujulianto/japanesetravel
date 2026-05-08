@@ -64,12 +64,11 @@
                             @php
                                 $product = $item->product;
                                 $productName = $product?->name ?? $item->product_name ?? __('Produk tidak tersedia');
-                                $productImage = $product?->image ?? $item->product_image;
                             @endphp
                             <div class="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-950/40">
                                 <div class="h-10 w-10 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800">
-                                    @if($productImage)
-                                        <img src="{{ asset('storage/' . $productImage) }}" alt="{{ $productName }}" class="h-full w-full object-cover">
+                                    @if($item->resolved_image_url)
+                                        <img src="{{ $item->resolved_image_url }}" alt="{{ $productName }}" class="h-full w-full object-cover">
                                     @else
                                         <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $productName }}" class="h-full w-full object-cover">
                                     @endif

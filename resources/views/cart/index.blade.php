@@ -31,8 +31,8 @@
                         @foreach($cartItems as $item)
                             <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 sm:flex-row sm:items-center">
                                 <div class="h-16 w-16 overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800">
-                                    @if($item['product']->image)
-                                        <img src="{{ asset('storage/' . $item['product']->image) }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover">
+                                    @if($item['product']->image_url)
+                                        <img src="{{ $item['product']->image_url }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover">
                                     @else
                                         <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover">
                                     @endif

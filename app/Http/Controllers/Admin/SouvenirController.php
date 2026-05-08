@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Souvenir;
 use App\Support\CacheKeys;
+use App\Support\Media;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SouvenirController extends Controller
 {
@@ -14,6 +14,7 @@ class SouvenirController extends Controller
     public function index()
     {
         $souvenirs = Souvenir::latest()->paginate(10);
+
         return view('admin.souvenirs.index', compact('souvenirs'));
     }
 
@@ -33,7 +34,7 @@ class SouvenirController extends Controller
             'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $description = null;
@@ -46,7 +47,7 @@ class SouvenirController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('uploads/souvenirs', 'public');
+            $imagePath = Media::storeUploadedImage($request->file('image'), 'uploads/souvenirs');
         }
 
         Souvenir::create([
@@ -81,16 +82,11 @@ class SouvenirController extends Controller
             'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            // Hapus gambar lama
-            if ($souvenir->image && Storage::disk('public')->exists($souvenir->image)) {
-                Storage::disk('public')->delete($souvenir->image);
-            }
-            // Upload baru
-            $souvenir->image = $request->file('image')->store('uploads/souvenirs', 'public');
+            $souvenir->image = Media::replaceUploadedImage($request->file('image'), $souvenir->image, 'uploads/souvenirs');
         }
 
         $description = null;
@@ -109,7 +105,7 @@ class SouvenirController extends Controller
             'description' => $description,
             'price' => $validated['price'],
             'stock' => $validated['stock'],
-            // Image dihandle di atas
+            'image' => $souvenir->image,
         ]);
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
@@ -120,9 +116,7 @@ class SouvenirController extends Controller
     // 6. HAPUS BARANG
     public function destroy(Souvenir $souvenir)
     {
-        if ($souvenir->image && Storage::disk('public')->exists($souvenir->image)) {
-            Storage::disk('public')->delete($souvenir->image);
-        }
+        Media::delete($souvenir->image);
         $souvenir->delete();
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);

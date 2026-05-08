@@ -52,8 +52,8 @@
             @forelse($souvenirs as $item)
                 <div class="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
                     <div class="relative h-52 overflow-hidden bg-slate-200 dark:bg-slate-800">
-                        @if($item->image)
-                            <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        @if($item->image_url)
+                            <img src="{{ $item->image_url }}" alt="{{ $item->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
                         @else
                             <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $item->name }}" class="h-full w-full object-cover">
                         @endif

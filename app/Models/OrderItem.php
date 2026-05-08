@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,5 +28,10 @@ class OrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Souvenir::class, 'souvenir_id');
+    }
+
+    public function getResolvedImageUrlAttribute(): ?string
+    {
+        return $this->product?->image_url ?? Media::url($this->product_image);
     }
 }
