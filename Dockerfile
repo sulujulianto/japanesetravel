@@ -33,7 +33,7 @@ COPY vite.config.js postcss.config.js tailwind.config.js ./
 
 RUN npm run build
 
-FROM php:8.2-apache-bookworm AS app
+FROM php:8.3-apache-bookworm AS app
 
 WORKDIR /var/www/html
 
