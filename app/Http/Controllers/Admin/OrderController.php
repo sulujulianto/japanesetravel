@@ -65,8 +65,14 @@ class OrderController extends Controller
 
     public function update(UpdateOrderStatusRequest $request, Order $order)
     {
+        $nextStatus = (string) $request->input('status');
+        if (! $order->canTransitionTo($nextStatus)) {
+            return redirect()->route('admin.orders.show', $order)
+                ->with('error', __('Transisi status pesanan tidak valid.'));
+        }
+
         $order->update([
-            'status' => $request->input('status'),
+            'status' => $nextStatus,
             'admin_note' => $request->input('admin_note'),
         ]);
 
