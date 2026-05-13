@@ -72,8 +72,292 @@ class PaymentWebhookTest extends TestCase
         $this->assertDatabaseCount('payment_webhook_events', 1);
         $this->assertDatabaseHas('payment_webhook_events', [
             'provider' => 'midtrans',
-            'event_id' => 'TRX-TEST-001',
+            'event_id' => 'TRX-TEST-001:paid',
             'payment_id' => $payment->id,
+        ]);
+    }
+
+    public function test_midtrans_pending_then_settlement_with_same_transaction_id_is_processed(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 175000,
+            'status' => 'pending',
+            'note' => 'Test order progression',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-TEST-PROGRESSION',
+            'status' => 'pending',
+            'amount' => 175000,
+            'currency' => 'IDR',
+        ]);
+
+        config([
+            'services.midtrans.server_key' => 'test-server-key',
+        ]);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $signature = hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key');
+
+        $pendingPayload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => $signature,
+            'transaction_status' => 'pending',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-PROGRESSION-001',
+        ];
+
+        $settlementPayload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => $signature,
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-PROGRESSION-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $pendingPayload)
+            ->assertOk();
+
+        $this->postJson(route('payments.webhook.midtrans'), $settlementPayload)
+            ->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'processing',
+        ]);
+
+        $this->assertDatabaseCount('payment_webhook_events', 2);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'provider' => 'midtrans',
+            'event_id' => 'TRX-PROGRESSION-001:pending',
+            'payment_id' => $payment->id,
+        ]);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'provider' => 'midtrans',
+            'event_id' => 'TRX-PROGRESSION-001:paid',
+            'payment_id' => $payment->id,
+        ]);
+    }
+
+    public function test_midtrans_duplicate_same_status_event_is_idempotent(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 155000,
+            'status' => 'pending',
+            'note' => 'Test duplicate event',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-TEST-DUPLICATE',
+            'status' => 'pending',
+            'amount' => 155000,
+            'currency' => 'IDR',
+        ]);
+
+        config([
+            'services.midtrans.server_key' => 'test-server-key',
+        ]);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $signature = hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key');
+
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => $signature,
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-DUP-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)
+            ->assertOk();
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)
+            ->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'processing',
+        ]);
+        $this->assertDatabaseCount('payment_webhook_events', 1);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'provider' => 'midtrans',
+            'event_id' => 'TRX-DUP-001:paid',
+            'payment_id' => $payment->id,
+        ]);
+    }
+
+    public function test_paid_webhook_does_not_downgrade_completed_order(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 300000,
+            'status' => 'completed',
+            'note' => 'Completed order',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-TEST-COMPLETED-PAID',
+            'status' => 'pending',
+            'amount' => 300000,
+            'currency' => 'IDR',
+        ]);
+
+        config([
+            'services.midtrans.server_key' => 'test-server-key',
+        ]);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $signature = hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key');
+
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => $signature,
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-COMPLETED-PAID-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)
+            ->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_refunded_webhook_does_not_cancel_completed_or_processing_order(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $completedOrder = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 250000,
+            'status' => 'completed',
+            'note' => 'Completed order',
+        ]);
+        $processingOrder = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 260000,
+            'status' => 'processing',
+            'note' => 'Processing order',
+        ]);
+
+        $completedPayment = Payment::create([
+            'order_id' => $completedOrder->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-TEST-COMPLETED-REFUND',
+            'status' => 'paid',
+            'amount' => 250000,
+            'currency' => 'IDR',
+        ]);
+        $processingPayment = Payment::create([
+            'order_id' => $processingOrder->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-TEST-PROCESSING-REFUND',
+            'status' => 'paid',
+            'amount' => 260000,
+            'currency' => 'IDR',
+        ]);
+
+        config([
+            'services.midtrans.server_key' => 'test-server-key',
+        ]);
+
+        $completedGrossAmount = number_format($completedPayment->amount, 2, '.', '');
+        $completedSignature = hash('sha512', $completedPayment->provider_ref.'200'.$completedGrossAmount.'test-server-key');
+        $processingGrossAmount = number_format($processingPayment->amount, 2, '.', '');
+        $processingSignature = hash('sha512', $processingPayment->provider_ref.'200'.$processingGrossAmount.'test-server-key');
+
+        $completedPayload = [
+            'order_id' => $completedPayment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $completedGrossAmount,
+            'signature_key' => $completedSignature,
+            'transaction_status' => 'refund',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-COMPLETED-REFUND-001',
+        ];
+        $processingPayload = [
+            'order_id' => $processingPayment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $processingGrossAmount,
+            'signature_key' => $processingSignature,
+            'transaction_status' => 'refund',
+            'fraud_status' => 'accept',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-PROCESSING-REFUND-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $completedPayload)
+            ->assertOk();
+        $this->postJson(route('payments.webhook.midtrans'), $processingPayload)
+            ->assertOk();
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $completedOrder->id,
+            'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $processingOrder->id,
+            'status' => 'processing',
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'id' => $completedPayment->id,
+            'status' => 'refunded',
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'id' => $processingPayment->id,
+            'status' => 'refunded',
         ]);
     }
 

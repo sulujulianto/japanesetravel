@@ -96,11 +96,11 @@ class MidtransSnapDriver implements PaymentGatewayInterface
             default => 'pending',
         };
 
-        $eventId = (string) ($payload['transaction_id'] ?? '');
-        if ($eventId === '') {
-            $orderId = (string) ($payload['order_id'] ?? '');
-            $eventId = $orderId !== '' ? $orderId.':'.$transactionStatus : '';
-        }
+        $transactionId = (string) ($payload['transaction_id'] ?? '');
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $eventId = $transactionId !== ''
+            ? $transactionId.':'.$status
+            : ($orderId !== '' ? $orderId.':'.$status : '');
 
         return new PaymentWebhookData(
             providerRef: (string) ($payload['order_id'] ?? ''),

@@ -116,7 +116,7 @@ class PaymentController extends Controller
     protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, string $provider): void
     {
         DB::transaction(function () use ($payment, $data, $provider) {
-            $payment->refresh();
+            $payment->refresh()->loadMissing('order');
 
             if ($data->eventId !== '') {
                 $event = PaymentWebhookEvent::firstOrCreate(
@@ -150,17 +150,32 @@ class PaymentController extends Controller
 
             if ($data->status === 'paid') {
                 $payment->paid_at = now();
-                $payment->order()->update([
-                    'status' => 'processing',
-                ]);
-            } elseif ($data->status === 'refunded') {
-                $payment->order()->update([
-                    'status' => 'cancelled',
-                ]);
             }
+
+            $this->applyOrderStatusGuardFromWebhook($payment, $data->status);
 
             $payment->save();
         });
+    }
+
+    protected function applyOrderStatusGuardFromWebhook(Payment $payment, string $paymentStatus): void
+    {
+        $order = $payment->order()->first();
+        if (! $order) {
+            return;
+        }
+
+        if ($paymentStatus === 'paid') {
+            if ($order->status === 'pending') {
+                $order->update(['status' => 'processing']);
+            }
+
+            return;
+        }
+
+        if (in_array($paymentStatus, ['failed', 'expired', 'cancelled', 'refunded'], true) && $order->status === 'pending') {
+            $order->update(['status' => 'cancelled']);
+        }
     }
 
     protected function redirectToOrder(Payment $payment, string $message): RedirectResponse
