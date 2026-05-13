@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class PaymentController extends Controller
@@ -43,7 +44,31 @@ class PaymentController extends Controller
             return redirect()->route('orders.index')->with('error', __('Provider pembayaran tidak valid.'));
         }
 
-        $response = $driver->captureOrder($providerRef);
+        try {
+            $response = $driver->captureOrder($providerRef);
+        } catch (\Throwable $exception) {
+            Log::warning('PayPal capture failed on return callback.', [
+                'payment_id' => $payment->id,
+                'provider_ref' => $providerRef,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            if ($payment->status === 'pending') {
+                $payload = $payment->payload_json ?? [];
+                $payload['capture_error'] = $exception->getMessage();
+
+                $payment->update([
+                    'status' => 'failed',
+                    'payload_json' => $payload,
+                ]);
+            }
+
+            return $this->redirectToOrderError(
+                $payment,
+                __('Gagal memproses pembayaran PayPal. Silakan coba lagi atau hubungi admin.')
+            );
+        }
+
         $status = $response['status'] ?? '';
 
         $message = __('Pembayaran berhasil diproses.');
@@ -185,5 +210,15 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('orders.index')->with('success', $message);
+    }
+
+    protected function redirectToOrderError(Payment $payment, string $message): RedirectResponse
+    {
+        $order = $payment->order()->first();
+        if ($order && Auth::check() && Auth::id() === $order->user_id) {
+            return redirect()->route('orders.show', $order)->with('error', $message);
+        }
+
+        return redirect()->route('orders.index')->with('error', $message);
     }
 }

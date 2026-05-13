@@ -434,4 +434,125 @@ class PaymentWebhookTest extends TestCase
             'payment_id' => $payment->id,
         ]);
     }
+
+    public function test_paypal_return_capture_failure_does_not_throw_500_and_marks_payment_failed(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 210000,
+            'status' => 'pending',
+            'note' => 'PayPal return failure test',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-FAIL-001',
+            'status' => 'pending',
+            'amount' => 210000,
+            'currency' => 'USD',
+            'payload_json' => [
+                'gateway' => [
+                    'id' => 'PAYPAL-RETURN-FAIL-001',
+                ],
+            ],
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ], 200),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
+                'name' => 'UNPROCESSABLE_ENTITY',
+            ], 422),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('payments.paypal.return', [
+                'token' => $payment->provider_ref,
+            ]));
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('error');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'failed',
+        ]);
+
+        $freshPayment = $payment->fresh();
+        $this->assertNotNull($freshPayment);
+        $this->assertStringContainsString('PayPal gagal menangkap pembayaran.', (string) ($freshPayment->payload_json['capture_error'] ?? ''));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_paypal_return_capture_success_marks_payment_paid_and_order_processing(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 220000,
+            'status' => 'pending',
+            'note' => 'PayPal return success test',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-SUCCESS-001',
+            'status' => 'pending',
+            'amount' => 220000,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ], 200),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
+                'status' => 'COMPLETED',
+                'id' => $payment->provider_ref,
+            ], 201),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('payments.paypal.return', [
+                'token' => $payment->provider_ref,
+            ]));
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'processing',
+        ]);
+    }
 }
