@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
    ->withMiddleware(function (Middleware $middleware) {
+        $trustedProxies = env('TRUSTED_PROXIES');
+        if (is_string($trustedProxies) && $trustedProxies !== '') {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
+
         // Middleware Alias untuk Admin
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,

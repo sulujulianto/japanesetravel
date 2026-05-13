@@ -118,6 +118,61 @@ CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 - Pastikan webhook Midtrans/PayPal mengarah ke domain production.
 - Set `MIDTRANS_IS_PRODUCTION=true` dan `PAYPAL_IS_PRODUCTION=true`.
 
+## Railway Deployment (No-Deploy Checklist)
+
+Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan deploy otomatis dari aplikasi.
+
+**1. Services yang disarankan**
+- Web service: Dockerfile project ini.
+- MySQL service: gunakan MySQL Railway agar konsisten dengan lokal MariaDB/MySQL.
+- Optional worker service: untuk queue jika dipakai.
+- Optional cron service: untuk scheduler jika dipakai.
+
+**2. Start command per service**
+- Web: `sh railway/start-web.sh`
+- One-off migration (manual sebelum go-live): `sh railway/init-app.sh --migrate-only`
+- Worker (optional): `sh railway/run-worker.sh`
+- Cron (optional): `sh railway/run-cron.sh`
+
+**3. Environment variables wajib (tanpa nilai secret)**
+- App: `APP_NAME`, `APP_ENV`, `APP_KEY`, `APP_DEBUG`, `APP_URL`, `TRUSTED_PROXIES`
+- Logging: `LOG_CHANNEL`, `LOG_STACK`, `LOG_LEVEL`
+- Database: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (atau `DB_URL`)
+- Session/cache/queue: `SESSION_DRIVER`, `SESSION_SECURE_COOKIE`, `CACHE_STORE`, `QUEUE_CONNECTION`
+- Storage: `FILESYSTEM_DISK`, `MEDIA_DISK`
+- Mail: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
+- Payment Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
+- Payment PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_IS_PRODUCTION`, `PAYPAL_CURRENCY`, `PAYPAL_EXCHANGE_RATE`
+- Monitoring: `SENTRY_LARAVEL_DSN` (+ optional `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE`)
+
+**4. Production baseline env**
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `SESSION_SECURE_COOKIE=true`
+- `TRUSTED_PROXIES=*`
+- `LOG_CHANNEL=stack`
+- `LOG_STACK=stderr`
+
+**5. Migration / seed strategy**
+- Jalankan migrasi dengan `--force` via one-off command (`sh railway/init-app.sh --migrate-only`).
+- Jangan jalankan demo seeder pada production.
+- Demo seed hanya untuk local/staging environment.
+
+**6. Storage / media upload**
+- Saat ini media menggunakan disk lokal/public (`MEDIA_DISK=public`), yang bersifat ephemeral di container Railway.
+- Opsi sementara: mount Railway Volume ke path storage yang sesuai.
+- Opsi production-ready: gunakan object storage (`FILESYSTEM_DISK=s3`) dengan env `AWS_*`.
+
+**7. Verifikasi sebelum deploy**
+```bash
+composer validate
+composer audit
+./vendor/bin/phpstan analyse --no-progress
+php artisan test
+npm ci
+npm run build
+```
+
 **Regenerasi SQL Demo**
 ```bash
 php scripts/generate_demo_sql.php
