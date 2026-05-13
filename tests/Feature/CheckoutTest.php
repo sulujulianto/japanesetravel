@@ -252,4 +252,221 @@ class CheckoutTest extends TestCase
         $this->assertDatabaseCount('payments', 0);
         $this->assertSame(5, $validSouvenir->fresh()->stock);
     }
+
+    public function test_retry_payment_reuses_existing_pending_payment_redirect_url_without_creating_new_payment(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 200000,
+            'status' => 'pending',
+            'note' => 'Retry test order',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-RETRY-PENDING-001',
+            'status' => 'pending',
+            'amount' => 200000,
+            'currency' => 'IDR',
+            'payload_json' => [
+                'gateway' => [
+                    'redirect_url' => 'https://pay.test/existing-midtrans',
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'paypal',
+            ]);
+
+        $response->assertRedirect('https://pay.test/existing-midtrans');
+
+        $this->assertSame(1, Payment::where('order_id', $order->id)->count());
+        $this->assertTrue($payment->fresh()->is($payment));
+        $this->assertSame('pending', $payment->fresh()->status);
+    }
+
+    public function test_retry_payment_with_pending_payment_without_redirect_url_does_not_create_duplicate_payment(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 120000,
+            'status' => 'pending',
+            'note' => 'Retry pending without URL',
+        ]);
+
+        Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-RETRY-NO-URL-001',
+            'status' => 'pending',
+            'amount' => 120000,
+            'currency' => 'IDR',
+            'payload_json' => [
+                'gateway' => [],
+            ],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'midtrans',
+            ]);
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('error');
+        $this->assertSame(1, Payment::where('order_id', $order->id)->count());
+    }
+
+    public function test_retry_payment_creates_new_payment_after_failed_payment(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 190000,
+            'status' => 'pending',
+            'note' => 'Retry after failed',
+        ]);
+
+        Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-RETRY-FAILED-001',
+            'status' => 'failed',
+            'amount' => 190000,
+            'currency' => 'IDR',
+        ]);
+
+        $this->app->instance(PaymentService::class, new class extends PaymentService
+        {
+            public function driver(string $provider): PaymentGatewayInterface
+            {
+                return new class implements PaymentGatewayInterface
+                {
+                    public function createPayment(Order $order, Payment $payment): PaymentGatewayResult
+                    {
+                        return new PaymentGatewayResult(
+                            providerRef: $payment->provider_ref ?? 'RETRY-REF',
+                            redirectUrl: 'https://pay.test/retry-success',
+                            token: null,
+                            payload: [],
+                            currency: 'IDR',
+                            amount: (float) $order->total_price,
+                        );
+                    }
+
+                    public function verifyWebhook(Request $request): bool
+                    {
+                        return true;
+                    }
+
+                    public function parseWebhook(Request $request): PaymentWebhookData
+                    {
+                        return new PaymentWebhookData(
+                            providerRef: 'RETRY-REF',
+                            status: 'pending',
+                            amount: 0,
+                            currency: 'IDR',
+                            payload: [],
+                        );
+                    }
+                };
+            }
+        });
+
+        $response = $this->actingAs($user)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'midtrans',
+            ]);
+
+        $response->assertRedirect('https://pay.test/retry-success');
+        $this->assertSame(2, Payment::where('order_id', $order->id)->count());
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $order->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_retry_payment_for_completed_order_is_rejected_without_creating_payment(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 220000,
+            'status' => 'completed',
+            'note' => 'Completed order',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'midtrans',
+            ]);
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('error');
+        $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
+
+    public function test_retry_payment_for_cancelled_order_is_rejected_without_creating_payment(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 230000,
+            'status' => 'cancelled',
+            'note' => 'Cancelled order',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'paypal',
+            ]);
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('error');
+        $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
+
+    public function test_retry_payment_for_other_user_order_is_forbidden(): void
+    {
+        $owner = User::factory()->create([
+            'role' => 'user',
+        ]);
+        $otherUser = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $owner->id,
+            'total_price' => 180000,
+            'status' => 'pending',
+            'note' => 'Owned by another user',
+        ]);
+
+        $response = $this->actingAs($otherUser)
+            ->post(route('orders.pay', $order), [
+                'payment_provider' => 'midtrans',
+            ]);
+
+        $response->assertForbidden();
+        $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
 }

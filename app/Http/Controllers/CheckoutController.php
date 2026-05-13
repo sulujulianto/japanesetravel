@@ -286,29 +286,117 @@ class CheckoutController extends Controller
             abort(403);
         }
 
-        if (! in_array($order->status, ['pending'], true)) {
-            return redirect()->route('orders.show', $order)->with('error', __('Pesanan tidak dapat dibayar ulang.'));
-        }
-
         $validated = $request->validate([
             'payment_provider' => 'required|in:midtrans,paypal',
         ]);
 
         $provider = $validated['payment_provider'];
+        $gatewayOrder = null;
+        $payment = null;
+        $reuseRedirectUrl = null;
+        $retryOutcome = 'create_new';
 
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'provider' => $provider,
-            'provider_ref' => $provider === 'midtrans'
-                ? 'ORD-'.$order->id.'-'.Str::uuid()
-                : null,
-            'status' => 'pending',
-            'amount' => $order->total_price,
-            'currency' => 'IDR',
-        ]);
+        DB::transaction(function () use ($order, $provider, &$gatewayOrder, &$payment, &$reuseRedirectUrl, &$retryOutcome) {
+            $lockedOrder = Order::whereKey($order->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedOrder) {
+                $retryOutcome = 'not_found';
+
+                return;
+            }
+
+            if ($lockedOrder->status === 'completed') {
+                $retryOutcome = 'order_completed';
+
+                return;
+            }
+
+            if ($lockedOrder->status === 'cancelled') {
+                $retryOutcome = 'order_cancelled';
+
+                return;
+            }
+
+            if ($lockedOrder->status !== 'pending') {
+                $retryOutcome = 'order_not_retryable';
+
+                return;
+            }
+
+            $pendingPayment = Payment::query()
+                ->where('order_id', $lockedOrder->id)
+                ->where('status', 'pending')
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($pendingPayment) {
+                $reuseRedirectUrl = $this->extractRedirectUrlFromPayment($pendingPayment);
+                $retryOutcome = $reuseRedirectUrl !== null
+                    ? 'reuse_pending'
+                    : 'pending_without_redirect';
+
+                return;
+            }
+
+            $paidPaymentExists = Payment::query()
+                ->where('order_id', $lockedOrder->id)
+                ->where('status', 'paid')
+                ->exists();
+
+            if ($paidPaymentExists) {
+                $retryOutcome = 'already_paid';
+
+                return;
+            }
+
+            $payment = Payment::create([
+                'order_id' => $lockedOrder->id,
+                'provider' => $provider,
+                'provider_ref' => $provider === 'midtrans'
+                    ? 'ORD-'.$lockedOrder->id.'-'.Str::uuid()
+                    : null,
+                'status' => 'pending',
+                'amount' => $lockedOrder->total_price,
+                'currency' => 'IDR',
+            ]);
+
+            $gatewayOrder = $lockedOrder->loadMissing('items', 'user');
+            $retryOutcome = 'created_new_payment';
+        });
+
+        if ($retryOutcome === 'order_completed') {
+            return redirect()->route('orders.show', $order)->with('error', __('Pesanan sudah selesai dan tidak dapat dibayar ulang.'));
+        }
+
+        if ($retryOutcome === 'order_cancelled') {
+            return redirect()->route('orders.show', $order)->with('error', __('Pesanan sudah dibatalkan dan tidak dapat dibayar ulang.'));
+        }
+
+        if ($retryOutcome === 'order_not_retryable' || $retryOutcome === 'not_found') {
+            return redirect()->route('orders.show', $order)->with('error', __('Pesanan tidak dapat dibayar ulang.'));
+        }
+
+        if ($retryOutcome === 'reuse_pending' && $reuseRedirectUrl !== null) {
+            return redirect()->away($reuseRedirectUrl);
+        }
+
+        if ($retryOutcome === 'pending_without_redirect') {
+            return redirect()->route('orders.show', $order)->with('error', __('Pembayaran sebelumnya sedang diproses. Silakan cek kembali status pesanan.'));
+        }
+
+        if ($retryOutcome === 'already_paid') {
+            return redirect()->route('orders.show', $order)->with('success', __('Pembayaran pesanan ini sudah diterima.'));
+        }
+
+        if ($retryOutcome !== 'created_new_payment' || ! $payment) {
+            return redirect()->route('orders.show', $order)->with('error', __('Pesanan tidak dapat dibayar ulang.'));
+        }
 
         try {
-            $result = $paymentService->driver($provider)->createPayment($order->loadMissing('items', 'user'), $payment);
+            $result = $paymentService->driver($provider)->createPayment($gatewayOrder ?? $order->loadMissing('items', 'user'), $payment);
 
             $payload = $payment->payload_json ?? [];
             $payload['gateway'] = $result->payload;
@@ -332,5 +420,41 @@ class CheckoutController extends Controller
         }
 
         return redirect()->away($result->redirectUrl);
+    }
+
+    private function extractRedirectUrlFromPayment(Payment $payment): ?string
+    {
+        $payload = $payment->payload_json ?? [];
+        $gatewayPayload = is_array($payload['gateway'] ?? null) ? $payload['gateway'] : [];
+
+        $directRedirectUrl = $gatewayPayload['redirect_url']
+            ?? $gatewayPayload['payment_url']
+            ?? $payload['redirect_url']
+            ?? $payload['payment_url']
+            ?? null;
+
+        if (is_string($directRedirectUrl) && $directRedirectUrl !== '') {
+            return $directRedirectUrl;
+        }
+
+        $links = $gatewayPayload['links'] ?? [];
+        if (is_array($links)) {
+            foreach ($links as $link) {
+                if (! is_array($link)) {
+                    continue;
+                }
+
+                if (($link['rel'] ?? null) !== 'approve') {
+                    continue;
+                }
+
+                $href = $link['href'] ?? null;
+                if (is_string($href) && $href !== '') {
+                    return $href;
+                }
+            }
+        }
+
+        return null;
     }
 }
