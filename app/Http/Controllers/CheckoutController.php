@@ -115,8 +115,11 @@ class CheckoutController extends Controller
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
+        $gatewayCreated = false;
+
         try {
             $result = $paymentService->driver($provider)->createPayment($order, $payment);
+            $gatewayCreated = true;
 
             $payload = $payment->payload_json ?? [];
             $payload['gateway'] = $result->payload;
@@ -128,12 +131,17 @@ class CheckoutController extends Controller
                 'currency' => $result->currency ?? $payment->currency,
             ]);
         } catch (\Throwable $exception) {
-            $payment->update([
-                'status' => 'failed',
-                'payload_json' => [
-                    'error' => $exception->getMessage(),
-                ],
-            ]);
+            if (! $gatewayCreated) {
+                $this->compensateFailedCheckout($order, $payment, $exception);
+                CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
+            } else {
+                $payment->update([
+                    'status' => 'failed',
+                    'payload_json' => [
+                        'error' => $exception->getMessage(),
+                    ],
+                ]);
+            }
 
             return redirect()->route('cart.index')
                 ->with('error', __('Gagal membuat pembayaran. Silakan coba lagi.'));
@@ -143,6 +151,60 @@ class CheckoutController extends Controller
         Session::forget('cart');
 
         return redirect()->away($result->redirectUrl);
+    }
+
+    protected function compensateFailedCheckout(Order $order, Payment $payment, \Throwable $exception): void
+    {
+        DB::transaction(function () use ($order, $payment, $exception) {
+            $lockedOrder = Order::whereKey($order->id)
+                ->lockForUpdate()
+                ->first();
+            $lockedPayment = Payment::whereKey($payment->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedOrder || ! $lockedPayment) {
+                return;
+            }
+
+            if ($lockedOrder->status === 'pending') {
+                $itemQuantities = OrderItem::query()
+                    ->where('order_id', $lockedOrder->id)
+                    ->whereNotNull('souvenir_id')
+                    ->selectRaw('souvenir_id, SUM(quantity) as total_qty')
+                    ->groupBy('souvenir_id')
+                    ->pluck('total_qty', 'souvenir_id')
+                    ->map(fn ($qty) => (int) $qty);
+
+                if ($itemQuantities->isNotEmpty()) {
+                    $souvenirs = Souvenir::whereIn('id', $itemQuantities->keys()->all())
+                        ->lockForUpdate()
+                        ->get()
+                        ->keyBy('id');
+
+                    foreach ($itemQuantities as $souvenirId => $qty) {
+                        $souvenir = $souvenirs->get((int) $souvenirId);
+                        if (! $souvenir) {
+                            continue;
+                        }
+
+                        $souvenir->increment('stock', $qty);
+                    }
+                }
+
+                $lockedOrder->update([
+                    'status' => 'cancelled',
+                ]);
+            }
+
+            $payload = $lockedPayment->payload_json ?? [];
+            $payload['error'] = $exception->getMessage();
+
+            $lockedPayment->update([
+                'status' => 'failed',
+                'payload_json' => $payload,
+            ]);
+        });
     }
 
     // FUNGSI 2: Melihat Riwayat Pesanan
