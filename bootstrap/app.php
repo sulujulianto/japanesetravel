@@ -11,7 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-   ->withMiddleware(function (Middleware $middleware) {
+    ->withMiddleware(function (Middleware $middleware) {
         $trustedProxies = env('TRUSTED_PROXIES');
         if (is_string($trustedProxies) && $trustedProxies !== '') {
             $middleware->trustProxies(at: $trustedProxies);

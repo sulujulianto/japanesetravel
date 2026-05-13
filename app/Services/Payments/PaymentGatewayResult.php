@@ -11,6 +11,5 @@ class PaymentGatewayResult
         public array $payload = [],
         public ?string $currency = null,
         public ?float $amount = null,
-    ) {
-    }
+    ) {}
 }

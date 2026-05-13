@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
+use App\Services\Payments\Drivers\PayPalCheckoutDriver;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
-use App\Services\Payments\Drivers\PayPalCheckoutDriver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

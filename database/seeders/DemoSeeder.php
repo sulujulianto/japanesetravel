@@ -54,7 +54,7 @@ class DemoSeeder extends Seeder
                     'id' => $placeData['name_id'],
                     'en' => $placeData['name_en'],
                 ],
-                'slug' => Str::slug($placeData['name_en']) . '-' . Str::random(6),
+                'slug' => Str::slug($placeData['name_en']).'-'.Str::random(6),
                 'description' => [
                     'id' => $placeData['description_id'],
                     'en' => $placeData['description_en'],
@@ -184,7 +184,7 @@ class DemoSeeder extends Seeder
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'provider' => $provider,
-                'provider_ref' => 'ORD-' . $order->id . '-' . Str::uuid(),
+                'provider_ref' => 'ORD-'.$order->id.'-'.Str::uuid(),
                 'status' => $paymentStatus,
                 'amount' => $total,
                 'currency' => 'IDR',

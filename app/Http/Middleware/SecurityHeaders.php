@@ -44,11 +44,11 @@ class SecurityHeaders
 
         $csp = [
             "default-src 'self'",
-            'script-src ' . implode(' ', $scriptSrc),
-            'style-src ' . implode(' ', $styleSrc),
-            'img-src ' . implode(' ', $imgSrc),
-            'font-src ' . implode(' ', $fontSrc),
-            'connect-src ' . implode(' ', $connectSrc),
+            'script-src '.implode(' ', $scriptSrc),
+            'style-src '.implode(' ', $styleSrc),
+            'img-src '.implode(' ', $imgSrc),
+            'font-src '.implode(' ', $fontSrc),
+            'connect-src '.implode(' ', $connectSrc),
             "frame-ancestors 'self'",
         ];
 

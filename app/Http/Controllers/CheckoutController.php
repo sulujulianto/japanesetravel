@@ -95,7 +95,7 @@ class CheckoutController extends Controller
                 }
 
                 $providerRef = $provider === 'midtrans'
-                    ? 'ORD-' . $order->id . '-' . Str::uuid()
+                    ? 'ORD-'.$order->id.'-'.Str::uuid()
                     : null;
 
                 $payment = Payment::create([
@@ -150,10 +150,10 @@ class CheckoutController extends Controller
     {
         // Ambil pesanan milik user yang sedang login
         $orders = Order::where('user_id', Auth::id())
-                       ->with(['items.product', 'payment'])
-                       ->latest()
-                       ->paginate(10)
-                       ->withQueryString();
+            ->with(['items.product', 'payment'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('orders.index', compact('orders'));
     }
@@ -189,7 +189,7 @@ class CheckoutController extends Controller
             'order_id' => $order->id,
             'provider' => $provider,
             'provider_ref' => $provider === 'midtrans'
-                ? 'ORD-' . $order->id . '-' . Str::uuid()
+                ? 'ORD-'.$order->id.'-'.Str::uuid()
                 : null,
             'status' => 'pending',
             'amount' => $order->total_price,

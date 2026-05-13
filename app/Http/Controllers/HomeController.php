@@ -22,7 +22,7 @@ class HomeController extends Controller
         }
 
         $placesVersion = CacheKeys::version(CacheKeys::PLACES_VERSION);
-        $placesKey = 'places:list:' . md5(json_encode([
+        $placesKey = 'places:list:'.md5(json_encode([
             'v' => $placesVersion,
             'search' => $search,
             'rating' => $rating,
@@ -37,11 +37,11 @@ class HomeController extends Controller
 
             if ($search !== '') {
                 $query->where(function ($builder) use ($search) {
-                    $builder->where('name->id', 'like', '%' . $search . '%')
-                        ->orWhere('name->en', 'like', '%' . $search . '%')
-                        ->orWhere('description->id', 'like', '%' . $search . '%')
-                        ->orWhere('description->en', 'like', '%' . $search . '%')
-                        ->orWhere('address', 'like', '%' . $search . '%');
+                    $builder->where('name->id', 'like', '%'.$search.'%')
+                        ->orWhere('name->en', 'like', '%'.$search.'%')
+                        ->orWhere('description->id', 'like', '%'.$search.'%')
+                        ->orWhere('description->en', 'like', '%'.$search.'%')
+                        ->orWhere('address', 'like', '%'.$search.'%');
                 });
             }
 
@@ -67,7 +67,7 @@ class HomeController extends Controller
             CacheKeys::version(CacheKeys::SOUVENIRS_VERSION),
             CacheKeys::version(CacheKeys::REVIEWS_VERSION),
         ]);
-        $summary = Cache::remember('home:summary:' . $summaryVersion, now()->addMinutes(5), function () {
+        $summary = Cache::remember('home:summary:'.$summaryVersion, now()->addMinutes(5), function () {
             return [
                 'places' => Place::count(),
                 'souvenirs' => Souvenir::count(),

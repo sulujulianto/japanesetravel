@@ -40,7 +40,7 @@ class PaymentWebhookTest extends TestCase
         ]);
 
         $grossAmount = number_format($payment->amount, 2, '.', '');
-        $signature = hash('sha512', $payment->provider_ref . '200' . $grossAmount . 'test-server-key');
+        $signature = hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key');
 
         $payload = [
             'order_id' => $payment->provider_ref,

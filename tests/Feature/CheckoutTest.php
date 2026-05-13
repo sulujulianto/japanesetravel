@@ -28,10 +28,12 @@ class CheckoutTest extends TestCase
             'price' => 100000,
         ]);
 
-        $this->app->instance(PaymentService::class, new class extends PaymentService {
+        $this->app->instance(PaymentService::class, new class extends PaymentService
+        {
             public function driver(string $provider): PaymentGatewayInterface
             {
-                return new class implements PaymentGatewayInterface {
+                return new class implements PaymentGatewayInterface
+                {
                     public function createPayment(Order $order, Payment $payment): PaymentGatewayResult
                     {
                         return new PaymentGatewayResult(

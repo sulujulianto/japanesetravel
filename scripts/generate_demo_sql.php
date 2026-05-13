@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
-require __DIR__ . '/../database/seeders/DemoData.php';
+require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/../database/seeders/DemoData.php';
 
 use Database\Seeders\DemoData;
 
@@ -29,7 +29,7 @@ function sqlValue(mixed $value): string
 
     $escaped = str_replace(['\\', "'"], ['\\\\', "''"], (string) $value);
 
-    return "'" . $escaped . "'";
+    return "'".$escaped."'";
 }
 
 function formatMoney(float|int $value): string
@@ -53,16 +53,16 @@ function insertRows($handle, string $table, array $columns, array $rows): void
         return;
     }
 
-    fwrite($handle, 'INSERT INTO `' . $table . '` (`' . implode('`, `', $columns) . "`) VALUES\n");
+    fwrite($handle, 'INSERT INTO `'.$table.'` (`'.implode('`, `', $columns)."`) VALUES\n");
     $lines = [];
     foreach ($rows as $row) {
         $values = [];
         foreach ($columns as $column) {
             $values[] = sqlValue($row[$column] ?? null);
         }
-        $lines[] = '(' . implode(', ', $values) . ')';
+        $lines[] = '('.implode(', ', $values).')';
     }
-    fwrite($handle, implode(",\n", $lines) . ";\n\n");
+    fwrite($handle, implode(",\n", $lines).";\n\n");
 }
 
 $baseNow = new DateTimeImmutable('2025-02-15 10:00:00', new DateTimeZone('UTC'));
@@ -86,7 +86,7 @@ $users[] = [
 ];
 
 foreach (DemoData::users() as $user) {
-    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P' . mt_rand(10, 120) . 'D')));
+    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P'.mt_rand(10, 120).'D')));
     $users[] = [
         'id' => $userId++,
         'username' => $user['username'],
@@ -105,11 +105,11 @@ foreach (DemoData::users() as $user) {
 $places = [];
 mt_srand(2023);
 foreach (DemoData::places() as $index => $place) {
-    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P' . mt_rand(15, 180) . 'D')));
+    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P'.mt_rand(15, 180).'D')));
     $places[] = [
         'id' => $index + 1,
         'name' => json_encode(['id' => $place['name_id'], 'en' => $place['name_en']], JSON_UNESCAPED_SLASHES),
-        'slug' => slugify($place['name_en']) . '-' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
+        'slug' => slugify($place['name_en']).'-'.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
         'description' => json_encode(['id' => $place['description_id'], 'en' => $place['description_en']], JSON_UNESCAPED_SLASHES),
         'image' => null,
         'video_url' => null,
@@ -128,7 +128,7 @@ foreach (DemoData::places() as $index => $place) {
 $souvenirs = [];
 mt_srand(2022);
 foreach (DemoData::souvenirs() as $index => $souvenir) {
-    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P' . mt_rand(20, 150) . 'D')));
+    $createdAt = dateWithRandomTime($baseNow->sub(new DateInterval('P'.mt_rand(20, 150).'D')));
     $souvenirs[] = [
         'id' => $index + 1,
         'name' => json_encode(['id' => $souvenir['name_id'], 'en' => $souvenir['name_en']], JSON_UNESCAPED_SLASHES),
@@ -152,7 +152,7 @@ foreach ($places as $place) {
     for ($i = 0; $i < $reviewCount; $i++) {
         $reviewer = $reviewers[mt_rand(0, $reviewerCount - 1)];
         $template = $reviewTemplates[mt_rand(0, count($reviewTemplates) - 1)];
-        $date = dateWithRandomTime($baseNow->sub(new DateInterval('P' . mt_rand(1, 120) . 'D')));
+        $date = dateWithRandomTime($baseNow->sub(new DateInterval('P'.mt_rand(1, 120).'D')));
 
         $reviews[] = [
             'id' => $reviewId++,
@@ -180,7 +180,7 @@ $pendingPaymentStatuses = ['pending', 'expired', 'failed'];
 mt_srand(2027);
 for ($i = 0; $i < 18; $i++) {
     $user = $reviewers[mt_rand(0, $reviewerCount - 1)];
-    $orderDate = dateWithRandomTime($baseNow->sub(new DateInterval('P' . mt_rand(1, 120) . 'D')));
+    $orderDate = dateWithRandomTime($baseNow->sub(new DateInterval('P'.mt_rand(1, 120).'D')));
     $status = $orderStatuses[mt_rand(0, count($orderStatuses) - 1)];
 
     $itemsCount = mt_rand(1, 3);
@@ -234,7 +234,7 @@ for ($i = 0; $i < 18; $i++) {
     }
 
     $paidAt = $paymentStatus === 'paid'
-        ? formatDate($orderDate->add(new DateInterval('PT' . mt_rand(1, 24) . 'H')))
+        ? formatDate($orderDate->add(new DateInterval('PT'.mt_rand(1, 24).'H')))
         : null;
 
     $orders[] = $order;
@@ -258,7 +258,7 @@ for ($i = 0; $i < 18; $i++) {
         'id' => $paymentId++,
         'order_id' => $orderId,
         'provider' => $provider,
-        'provider_ref' => 'ORD-' . str_pad((string) $orderId, 3, '0', STR_PAD_LEFT) . '-DEMO',
+        'provider_ref' => 'ORD-'.str_pad((string) $orderId, 3, '0', STR_PAD_LEFT).'-DEMO',
         'status' => $paymentStatus,
         'amount' => formatMoney($total),
         'currency' => 'IDR',
@@ -273,7 +273,7 @@ for ($i = 0; $i < 18; $i++) {
 
 $souvenirs = array_values($inventory);
 
-$outputPath = __DIR__ . '/../japantravel/japantravel.sql';
+$outputPath = __DIR__.'/../japantravel/japantravel.sql';
 $handle = fopen($outputPath, 'wb');
 
 fwrite($handle, "-- JAPAN TRAVEL PORTFOLIO DEMO SQL\n");

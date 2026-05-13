@@ -19,7 +19,7 @@ class AdminMiddleware
         Auth::shouldUse('admin');
 
         // CEK 1: Apakah pengguna sudah login?
-        if (!Auth::guard('admin')->check()) {
+        if (! Auth::guard('admin')->check()) {
             return redirect()->route('admin.login')->with('error', __('Silakan login admin terlebih dahulu.'));
         }
 

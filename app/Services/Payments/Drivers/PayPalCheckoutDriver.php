@@ -8,17 +8,22 @@ use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\PaymentGatewayResult;
 use App\Services\Payments\PaymentWebhookData;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 class PayPalCheckoutDriver implements PaymentGatewayInterface
 {
     protected string $baseUrl;
+
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected string $webhookId;
+
     protected string $currency;
+
     protected float $exchangeRate;
 
     public function __construct()
@@ -43,7 +48,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             'purchase_units' => [
                 [
                     'reference_id' => (string) $order->id,
-                    'description' => 'Japan Travel Order #' . $order->id,
+                    'description' => 'Japan Travel Order #'.$order->id,
                     'amount' => [
                         'currency_code' => $this->currency,
                         'value' => number_format($amount, 2, '.', ''),
@@ -58,7 +63,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $response = Http::withToken($accessToken)
             ->acceptJson()
-            ->post($this->baseUrl . '/v2/checkout/orders', $payload);
+            ->post($this->baseUrl.'/v2/checkout/orders', $payload);
 
         if (! $response->successful()) {
             throw new RuntimeException('PayPal gagal membuat checkout order.');
@@ -103,7 +108,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $response = Http::withToken($accessToken)
             ->acceptJson()
-            ->post($this->baseUrl . '/v1/notifications/verify-webhook-signature', $payload);
+            ->post($this->baseUrl.'/v1/notifications/verify-webhook-signature', $payload);
 
         if (! $response->successful()) {
             return false;
@@ -156,7 +161,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $response = Http::withToken($accessToken)
             ->acceptJson()
-            ->post($this->baseUrl . '/v2/checkout/orders/' . $providerRef . '/capture');
+            ->post($this->baseUrl.'/v2/checkout/orders/'.$providerRef.'/capture');
 
         if (! $response->successful()) {
             throw new RuntimeException('PayPal gagal menangkap pembayaran.');
@@ -173,7 +178,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $response = Http::withBasicAuth($this->clientId, $this->clientSecret)
             ->asForm()
-            ->post($this->baseUrl . '/v1/oauth2/token', [
+            ->post($this->baseUrl.'/v1/oauth2/token', [
                 'grant_type' => 'client_credentials',
             ]);
 

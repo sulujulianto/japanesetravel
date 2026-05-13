@@ -41,7 +41,7 @@ class CartController extends Controller
     public function add(Request $request, $id)
     {
         $cart = Session::get('cart', []);
-        
+
         // Jika barang sudah ada, tambah qty. Jika belum, set 1.
         if (isset($cart[$id])) {
             $cart[$id]++;
@@ -67,6 +67,7 @@ class CartController extends Controller
         }
 
         Session::put('cart', $cart);
+
         return redirect()->route('cart.index')->with('success', __('Keranjang diperbarui.'));
     }
 

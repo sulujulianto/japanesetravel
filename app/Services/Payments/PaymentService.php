@@ -4,7 +4,6 @@ namespace App\Services\Payments;
 
 use App\Services\Payments\Drivers\MidtransSnapDriver;
 use App\Services\Payments\Drivers\PayPalCheckoutDriver;
-use App\Services\Payments\PaymentGatewayInterface;
 use InvalidArgumentException;
 
 class PaymentService

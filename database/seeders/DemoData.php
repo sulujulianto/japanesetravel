@@ -508,8 +508,8 @@ class DemoData
         foreach (self::souvenirTypes() as $type) {
             foreach (self::regions() as $region) {
                 $souvenirs[] = [
-                    'name_id' => $type['name_id'] . ' ' . $region['id'],
-                    'name_en' => $region['en'] . ' ' . $type['name_en'],
+                    'name_id' => $type['name_id'].' '.$region['id'],
+                    'name_en' => $region['en'].' '.$type['name_en'],
                     'description_id' => str_replace(':region', $region['id'], $type['desc_id']),
                     'description_en' => str_replace(':region', $region['en'], $type['desc_en']),
                     'price' => mt_rand($type['price'][0], $type['price'][1]),

@@ -11,8 +11,8 @@ class SouvenirFactory extends Factory
 
     public function definition(): array
     {
-        $nameId = 'Souvenir ' . $this->faker->unique()->word();
-        $nameEn = 'Souvenir ' . $this->faker->unique()->word();
+        $nameId = 'Souvenir '.$this->faker->unique()->word();
+        $nameEn = 'Souvenir '.$this->faker->unique()->word();
 
         return [
             'name' => [

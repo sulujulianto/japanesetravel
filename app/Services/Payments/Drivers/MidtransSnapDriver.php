@@ -99,7 +99,7 @@ class MidtransSnapDriver implements PaymentGatewayInterface
         $eventId = (string) ($payload['transaction_id'] ?? '');
         if ($eventId === '') {
             $orderId = (string) ($payload['order_id'] ?? '');
-            $eventId = $orderId !== '' ? $orderId . ':' . $transactionStatus : '';
+            $eventId = $orderId !== '' ? $orderId.':'.$transactionStatus : '';
         }
 
         return new PaymentWebhookData(

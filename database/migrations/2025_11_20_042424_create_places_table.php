@@ -24,11 +24,11 @@ return new class extends Migration
             $table->string('open_days', 100)->nullable(); // Contoh: "Senin - Jumat"
             $table->string('open_hours', 100)->nullable(); // Contoh: "09:00 - 22:00"
             $table->json('opening_hours')->nullable(); // Jam buka detail per hari
-            
+
             // Relasi ke tabel users (siapa yang input data ini)
             // Jika user dihapus, data wisata tidak hilang (set null)
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            
+
             $table->timestamps(); // Created_at & Updated_at
         });
     }

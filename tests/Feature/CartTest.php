@@ -17,13 +17,13 @@ class CartTest extends TestCase
         ]);
 
         $this->post(route('cart.add', $souvenir->id))
-            ->assertSessionHas('cart.' . $souvenir->id, 1);
+            ->assertSessionHas('cart.'.$souvenir->id, 1);
 
         $this->post(route('cart.update'), [
             'qty' => [$souvenir->id => 2],
-        ])->assertSessionHas('cart.' . $souvenir->id, 2);
+        ])->assertSessionHas('cart.'.$souvenir->id, 2);
 
         $this->delete(route('cart.items.destroy', $souvenir->id))
-            ->assertSessionMissing('cart.' . $souvenir->id);
+            ->assertSessionMissing('cart.'.$souvenir->id);
     }
 }

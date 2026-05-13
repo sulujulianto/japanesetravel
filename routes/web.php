@@ -1,23 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController as AdminAuthenticatedSessionController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\SouvenirController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\InventoryController;
-use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController as AdminAuthenticatedSessionController;
-use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PaymentController;
-
-// Model Data
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ShopController;
 use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
+// Model Data
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +29,7 @@ Route::get('/lang/{locale}', function ($locale) {
     if (in_array($locale, ['en', 'id'])) {
         return redirect()->back()->withCookie(cookie('locale', $locale, 60 * 24 * 30));
     }
+
     return redirect()->back();
 })->name('lang.switch');
 
@@ -60,7 +60,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 // AREA LOGIN (User & Admin Dashboard)
 Route::middleware(['auth:web', 'verified'])->group(function () {
-    
+
     // DASHBOARD (Diperbaiki agar mengirim data statistik)
     Route::get('/dashboard', function () {
         $user = Auth::user();

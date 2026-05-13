@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Souvenir;
 use App\Support\CacheKeys;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ShopController extends Controller
@@ -22,7 +21,7 @@ class ShopController extends Controller
         }
 
         $souvenirsVersion = CacheKeys::version(CacheKeys::SOUVENIRS_VERSION);
-        $souvenirsKey = 'souvenirs:list:' . md5(json_encode([
+        $souvenirsKey = 'souvenirs:list:'.md5(json_encode([
             'v' => $souvenirsVersion,
             'search' => $search,
             'min' => $minPrice,
@@ -37,10 +36,10 @@ class ShopController extends Controller
 
             if ($search !== '') {
                 $query->where(function ($builder) use ($search) {
-                    $builder->where('name->id', 'like', '%' . $search . '%')
-                        ->orWhere('name->en', 'like', '%' . $search . '%')
-                        ->orWhere('description->id', 'like', '%' . $search . '%')
-                        ->orWhere('description->en', 'like', '%' . $search . '%');
+                    $builder->where('name->id', 'like', '%'.$search.'%')
+                        ->orWhere('name->en', 'like', '%'.$search.'%')
+                        ->orWhere('description->id', 'like', '%'.$search.'%')
+                        ->orWhere('description->en', 'like', '%'.$search.'%');
                 });
             }
 

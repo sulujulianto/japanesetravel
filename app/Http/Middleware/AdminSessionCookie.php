@@ -17,12 +17,12 @@ class AdminSessionCookie
 
         $adminCookie = config('session.admin_cookie');
         if (! $adminCookie) {
-            $adminCookie = Str::slug((string) config('app.name', 'laravel')) . '-admin-session';
+            $adminCookie = Str::slug((string) config('app.name', 'laravel')).'-admin-session';
         }
 
         $webCookie = config('session.web_cookie');
         if (! $webCookie) {
-            $webCookie = Str::slug((string) config('app.name', 'laravel')) . '-session';
+            $webCookie = Str::slug((string) config('app.name', 'laravel')).'-session';
         }
 
         $cookie = ($request->is('admin') || $request->is('admin/*'))
