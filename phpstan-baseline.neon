@@ -1,0 +1,565 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property App\\Models\\OrderItem\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrderItem\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\DashboardController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\OrderItem\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''payment'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\OrderItem\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\InventoryController\:\:lowStock\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/InventoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\InventoryController\:\:restock\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/InventoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\OrderController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/OrderController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\OrderController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/OrderController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\OrderController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/OrderController.php
+
+		-
+			message: '#^Relation ''payment'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Admin/OrderController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Admin/OrderController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:create\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:edit\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/PlaceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:create\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:edit\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/Admin/SouvenirController.php
+
+		-
+			message: '#^Parameter \#1 \$user of class Illuminate\\Auth\\Events\\Verified constructor expects Illuminate\\Contracts\\Auth\\MustVerifyEmail, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:add\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:add\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:remove\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:remove\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CartController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CartController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CheckoutController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CheckoutController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CheckoutController\:\:pay\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CheckoutController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CheckoutController\:\:process\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CheckoutController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CheckoutController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CheckoutController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/CheckoutController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\HomeController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\HomeController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\HomeController\:\:show\(\) has parameter \$slug with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$order\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/PaymentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReviewController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReviewController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReviewController\:\:store\(\) has parameter \$placeId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/ReviewController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ShopController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ShopController.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\RestockRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/RestockRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateOrderStatusRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateOrderStatusRequest.php
+
+		-
+			message: '#^Class App\\Models\\Order uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:items\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:payment\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:payments\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:user\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Class App\\Models\\OrderItem uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Method App\\Models\\OrderItem\:\:order\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Method App\\Models\\OrderItem\:\:product\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>image_url" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Class App\\Models\\Payment uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:order\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:webhookEvents\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Class App\\Models\\PaymentWebhookEvent uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/PaymentWebhookEvent.php
+
+		-
+			message: '#^Method App\\Models\\PaymentWebhookEvent\:\:payment\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/PaymentWebhookEvent.php
+
+		-
+			message: '#^Class App\\Models\\Place uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Place.php
+
+		-
+			message: '#^Method App\\Models\\Place\:\:author\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Place.php
+
+		-
+			message: '#^Method App\\Models\\Place\:\:reviews\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Place.php
+
+		-
+			message: '#^Property App\\Models\\Place\:\:\$translatable has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Models/Place.php
+
+		-
+			message: '#^Method App\\Models\\PlaceReview\:\:place\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/PlaceReview.php
+
+		-
+			message: '#^Method App\\Models\\PlaceReview\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/PlaceReview.php
+
+		-
+			message: '#^Class App\\Models\\Souvenir uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Souvenir.php
+
+		-
+			message: '#^Method App\\Models\\Souvenir\:\:orderItems\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Souvenir.php
+
+		-
+			message: '#^Property App\\Models\\Souvenir\:\:\$translatable has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Models/Souvenir.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:orders\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Payments/Drivers/MidtransSnapDriver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Payments/Drivers/MidtransSnapDriver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Payments/Drivers/MidtransSnapDriver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>username" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Payments/Drivers/MidtransSnapDriver.php
+
+		-
+			message: '#^Method App\\Services\\Payments\\Drivers\\PayPalCheckoutDriver\:\:captureOrder\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Payments/Drivers/PayPalCheckoutDriver.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Services/Payments/Drivers/PayPalCheckoutDriver.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Services/Payments/Drivers/PayPalCheckoutDriver.php
+
+		-
+			message: '#^Variable \$body on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Services/Payments/Drivers/PayPalCheckoutDriver.php
+
+		-
+			message: '#^Method App\\Services\\Payments\\PaymentGatewayResult\:\:__construct\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Payments/PaymentGatewayResult.php
+
+		-
+			message: '#^Method App\\Services\\Payments\\PaymentWebhookData\:\:__construct\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Payments/PaymentWebhookData.php
+
+		-
+			message: '#^Method App\\Support\\Media\:\:loadJpeg\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Support/Media.php
+
+		-
+			message: '#^Method App\\Support\\Media\:\:loadPng\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Support/Media.php
+
+		-
+			message: '#^Method App\\Support\\Media\:\:normalizeOrientation\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Support/Media.php
+
+		-
+			message: '#^Method App\\Support\\Media\:\:normalizeOrientation\(\) has parameter \$image with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Support/Media.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:places\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:regions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:reviewTemplates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:souvenirTypes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:souvenirs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Method Database\\Seeders\\DemoData\:\:users\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/DemoData.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: database/seeders/DemoSeeder.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''completed''\|''processing'' and ''pending'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: database/seeders/DemoSeeder.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\Order model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: routes/web.php
