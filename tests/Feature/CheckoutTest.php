@@ -218,4 +218,38 @@ class CheckoutTest extends TestCase
         $this->assertLessThanOrEqual(10, $souvenirA->fresh()->stock);
         $this->assertLessThanOrEqual(8, $souvenirB->fresh()->stock);
     }
+
+    public function test_checkout_with_stale_cart_item_is_rejected_and_cart_is_sanitized(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+        $validSouvenir = Souvenir::factory()->create([
+            'stock' => 5,
+            'price' => 50000,
+        ]);
+
+        $staleId = 999999;
+
+        $response = $this->actingAs($user)
+            ->from(route('cart.index'))
+            ->withSession([
+                'cart' => [
+                    $validSouvenir->id => 2,
+                    $staleId => 1,
+                ],
+            ])
+            ->post(route('checkout.process'), [
+                'payment_provider' => 'midtrans',
+            ]);
+
+        $response->assertRedirect(route('cart.index'));
+        $response->assertSessionHas('error');
+        $response->assertSessionHas('cart.'.$validSouvenir->id, 2);
+        $response->assertSessionMissing('cart.'.$staleId);
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame(5, $validSouvenir->fresh()->stock);
+    }
 }

@@ -13,16 +13,23 @@ class CartController extends Controller
     {
         // Ambil data session 'cart' (array: id_barang => qty)
         $cart = Session::get('cart', []);
+        [$cart, $changed] = $this->sanitizeCart($cart);
+        if ($changed) {
+            Session::put('cart', $cart);
+        }
 
         // Ambil detail barang dari database berdasarkan ID yang ada di session
         // whereIn('id', [1, 2, ...])
-        $items = Souvenir::whereIn('id', array_keys($cart))->get();
+        $items = Souvenir::whereIn('id', array_keys($cart))->get()->keyBy('id');
 
         $total = 0;
         $cartItems = [];
 
-        foreach ($items as $item) {
-            $qty = $cart[$item->id];
+        foreach ($cart as $id => $qty) {
+            $item = $items->get((int) $id);
+            if (! $item) {
+                continue;
+            }
             $subtotal = $item->price * $qty;
             $total += $subtotal;
 
@@ -40,16 +47,36 @@ class CartController extends Controller
     // 2. TAMBAH KE KERANJANG
     public function add(Request $request, $id)
     {
-        $cart = Session::get('cart', []);
-
-        // Jika barang sudah ada, tambah qty. Jika belum, set 1.
-        if (isset($cart[$id])) {
-            $cart[$id]++;
-        } else {
-            $cart[$id] = 1;
+        $souvenir = Souvenir::find($id);
+        if (! $souvenir) {
+            return redirect()->back()->with('error', __('Produk tidak ditemukan.'));
         }
 
+        if ($souvenir->stock <= 0) {
+            return redirect()->back()->with('error', __('Produk sedang habis.'));
+        }
+
+        $validated = $request->validate([
+            'quantity' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $requestedQty = (int) ($validated['quantity'] ?? 1);
+        $cart = Session::get('cart', []);
+        $currentQty = (int) ($cart[$souvenir->id] ?? 0);
+        $targetQty = $currentQty + $requestedQty;
+        $finalQty = min($targetQty, (int) $souvenir->stock);
+
+        if ($finalQty < 1) {
+            return redirect()->back()->with('error', __('Produk sedang habis.'));
+        }
+
+        $cart[$souvenir->id] = $finalQty;
+
         Session::put('cart', $cart);
+
+        if ($finalQty < $targetQty) {
+            return redirect()->back()->with('error', __('Jumlah di keranjang disesuaikan dengan stok tersedia.'));
+        }
 
         return redirect()->back()->with('success', __('Barang masuk keranjang! 🛒'));
     }
@@ -58,15 +85,42 @@ class CartController extends Controller
     public function update(Request $request)
     {
         $cart = Session::get('cart', []);
+        [$cart, $changedBySanitizer] = $this->sanitizeCart($cart);
         $quantities = $request->input('qty', []); // Ambil array qty dari form
+        $warnings = [];
+
+        $souvenirs = Souvenir::whereIn('id', array_keys($cart))
+            ->get()
+            ->keyBy('id');
 
         foreach ($quantities as $id => $qty) {
-            if (isset($cart[$id])) {
-                $cart[$id] = max(1, intval($qty)); // Minimal 1
+            $id = (int) $id;
+            if (! isset($cart[$id])) {
+                continue;
             }
+
+            $souvenir = $souvenirs->get($id);
+            if (! $souvenir || $souvenir->stock <= 0) {
+                unset($cart[$id]);
+                $warnings[] = __('Sebagian produk tidak tersedia dan telah dihapus dari keranjang.');
+
+                continue;
+            }
+
+            $normalizedQty = max(1, (int) $qty);
+            $clampedQty = min($normalizedQty, (int) $souvenir->stock);
+            if ($clampedQty !== $normalizedQty) {
+                $warnings[] = __('Sebagian jumlah barang disesuaikan dengan stok tersedia.');
+            }
+
+            $cart[$id] = $clampedQty;
         }
 
         Session::put('cart', $cart);
+
+        if ($changedBySanitizer || ! empty($warnings)) {
+            return redirect()->route('cart.index')->with('error', __('Keranjang diperbarui dengan penyesuaian stok.'));
+        }
 
         return redirect()->route('cart.index')->with('success', __('Keranjang diperbarui.'));
     }
@@ -82,5 +136,46 @@ class CartController extends Controller
         }
 
         return redirect()->route('cart.index')->with('success', __('Barang dihapus.'));
+    }
+
+    /**
+     * @param  array<int|string, int|string>  $cart
+     * @return array{0: array<int, int>, 1: bool}
+     */
+    private function sanitizeCart(array $cart): array
+    {
+        if (empty($cart)) {
+            return [$cart, false];
+        }
+
+        $changed = false;
+        $souvenirs = Souvenir::whereIn('id', array_keys($cart))
+            ->get()
+            ->keyBy('id');
+        $sanitized = [];
+
+        foreach ($cart as $id => $qty) {
+            $id = (int) $id;
+            $souvenir = $souvenirs->get($id);
+            if (! $souvenir || $souvenir->stock <= 0) {
+                $changed = true;
+
+                continue;
+            }
+
+            $normalizedQty = max(1, (int) $qty);
+            $clampedQty = min($normalizedQty, (int) $souvenir->stock);
+            if ($clampedQty !== $qty) {
+                $changed = true;
+            }
+
+            $sanitized[$id] = $clampedQty;
+        }
+
+        if (count($sanitized) !== count($cart)) {
+            $changed = true;
+        }
+
+        return [$sanitized, $changed];
     }
 }

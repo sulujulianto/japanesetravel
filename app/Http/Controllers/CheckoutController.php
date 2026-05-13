@@ -20,6 +20,13 @@ class CheckoutController extends Controller
     public function process(Request $request, PaymentService $paymentService)
     {
         $cart = Session::get('cart', []);
+        [$cart, $sanitized] = $this->sanitizeCheckoutCart($cart);
+        if ($sanitized) {
+            Session::put('cart', $cart);
+
+            return redirect()->route('cart.index')
+                ->with('error', __('Keranjang diperbarui karena ada perubahan ketersediaan stok. Periksa kembali sebelum checkout.'));
+        }
 
         if (empty($cart)) {
             return redirect()->route('shop.index')->with('error', __('Keranjang belanja kosong.'));
@@ -205,6 +212,48 @@ class CheckoutController extends Controller
                 'payload_json' => $payload,
             ]);
         });
+    }
+
+    /**
+     * @param  array<int|string, int|string>  $cart
+     * @return array{0: array<int, int>, 1: bool}
+     */
+    private function sanitizeCheckoutCart(array $cart): array
+    {
+        if (empty($cart)) {
+            return [$cart, false];
+        }
+
+        $changed = false;
+        $souvenirs = Souvenir::whereIn('id', array_keys($cart))
+            ->get()
+            ->keyBy('id');
+        $sanitized = [];
+
+        foreach ($cart as $id => $qty) {
+            $id = (int) $id;
+            $souvenir = $souvenirs->get($id);
+            if (! $souvenir || $souvenir->stock <= 0) {
+                $changed = true;
+
+                continue;
+            }
+
+            $normalizedQty = max(1, (int) $qty);
+            $clampedQty = min($normalizedQty, (int) $souvenir->stock);
+
+            if ($clampedQty !== (int) $qty) {
+                $changed = true;
+            }
+
+            $sanitized[$id] = $clampedQty;
+        }
+
+        if (count($sanitized) !== count($cart)) {
+            $changed = true;
+        }
+
+        return [$sanitized, $changed];
     }
 
     // FUNGSI 2: Melihat Riwayat Pesanan
