@@ -84,9 +84,7 @@ class PaymentController extends Controller
                     'payload_json' => $payload,
                 ]);
 
-                $payment->order()->update([
-                    'status' => 'processing',
-                ]);
+                $this->applyOrderStatusGuardFromWebhook($payment, 'paid');
             });
         } elseif ($status !== 'COMPLETED') {
             $message = __('Pembayaran sedang diproses.');

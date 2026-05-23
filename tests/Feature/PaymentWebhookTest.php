@@ -555,4 +555,116 @@ class PaymentWebhookTest extends TestCase
             'status' => 'processing',
         ]);
     }
+
+    public function test_paypal_return_capture_success_does_not_downgrade_completed_order(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 230000,
+            'status' => 'completed',
+            'note' => 'PayPal return completed order test',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-COMPLETED-001',
+            'status' => 'pending',
+            'amount' => 230000,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ], 200),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
+                'status' => 'COMPLETED',
+                'id' => $payment->provider_ref,
+            ], 201),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('payments.paypal.return', [
+                'token' => $payment->provider_ref,
+            ]));
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_paypal_return_capture_success_does_not_revive_cancelled_order(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 240000,
+            'status' => 'cancelled',
+            'note' => 'PayPal return cancelled order test',
+        ]);
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-CANCELLED-001',
+            'status' => 'pending',
+            'amount' => 240000,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ], 200),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
+                'status' => 'COMPLETED',
+                'id' => $payment->provider_ref,
+            ], 201),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('payments.paypal.return', [
+                'token' => $payment->provider_ref,
+            ]));
+
+        $response->assertRedirect(route('orders.show', $order));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'cancelled',
+        ]);
+    }
 }
