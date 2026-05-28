@@ -110,6 +110,9 @@ npm audit --audit-level=high
 ```
 CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 
+**Dokumentasi Teknis Backend**
+- Lihat dokumen lengkap: [`docs/backend-technical-documentation.md`](docs/backend-technical-documentation.md)
+
 **Deployment Checklist**
 - `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`.
 - `php artisan storage:link`.
