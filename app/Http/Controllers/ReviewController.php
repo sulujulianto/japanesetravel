@@ -20,11 +20,21 @@ class ReviewController extends Controller
 
         // 2. Cek apakah wisata ada?
         $place = Place::findOrFail($placeId);
+        $userId = (int) Auth::id();
+
+        $alreadyReviewed = PlaceReview::query()
+            ->where('place_id', $place->id)
+            ->where('user_id', $userId)
+            ->exists();
+
+        if ($alreadyReviewed) {
+            return back()->with('error', __('Kamu sudah pernah memberi ulasan untuk destinasi ini.'));
+        }
 
         // 3. Simpan Review
         PlaceReview::create([
             'place_id' => $place->id,
-            'user_id' => Auth::id(), // Ambil ID user yang sedang login
+            'user_id' => $userId, // Ambil ID user yang sedang login
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);
