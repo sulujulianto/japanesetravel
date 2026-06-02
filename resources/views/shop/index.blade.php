@@ -74,7 +74,7 @@
                                 </div>
                                 <form action="{{ route('cart.add', $item->id) }}" method="POST">
                                     @csrf
-                                    <x-ui.button type="submit" size="sm" variant="primary" class="rounded-full px-4 {{ $item->stock <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}" @disabled($item->stock <= 0)>
+                                    <x-ui.button type="submit" size="sm" variant="primary" class="rounded-full px-4 {{ $item->stock <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}" :disabled="$item->stock <= 0">
                                         {{ __('Tambah') }}
                                     </x-ui.button>
                                 </form>
