@@ -8,39 +8,38 @@
     @includeIf('partials.theme-script')
     @includeIf('partials.vite')
 </head>
-<body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    
-    <div class="absolute top-4 right-4 flex items-center gap-2">
-        <div class="flex space-x-2 text-xs font-bold">
-            <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 {{ App::getLocale() == 'id' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800' }}">ID</a>
-            <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 {{ App::getLocale() == 'en' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800' }}">EN</a>
-        </div>
-        <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="{{ __('Ganti tema') }}">
-            <span class="text-lg" aria-hidden="true">🌗</span>
-        </button>
-    </div>
+<body class="auth-page font-sans antialiased">
+    <div class="flex min-h-screen flex-col">
+        <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-3 text-sm font-semibold tracking-tight text-[var(--auth-ink)]">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--auth-hairline)] bg-[var(--auth-surface)] font-display text-sm">JT</span>
+                <span>{{ __('Japan Travel') }}</span>
+            </a>
 
-    <div class="min-h-screen flex flex-col sm:flex-row">
-        
-        <div class="hidden sm:flex sm:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-rose-900 relative">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(244,63,94,0.35),_transparent_60%)]"></div>
-            <div class="relative z-10 w-full flex flex-col justify-center p-12 text-white">
-                <h1 class="text-5xl font-display font-semibold mb-4">🇯🇵 {{ __('Japan Travel') }}</h1>
-                <p class="text-xl opacity-90">{{ __('Jelajahi keindahan Jepang dan bawa pulang kenangan manisnya.') }}</p>
+            <div class="flex items-center gap-2 text-xs font-semibold">
+                <a href="{{ route('lang.switch', 'id') }}" class="auth-control px-3 py-1.5 {{ App::getLocale() == 'id' ? 'auth-control-active' : '' }}">ID</a>
+                <a href="{{ route('lang.switch', 'en') }}" class="auth-control px-3 py-1.5 {{ App::getLocale() == 'en' ? 'auth-control-active' : '' }}">EN</a>
+                <button onclick="toggleTheme()" class="auth-control px-3 py-1.5" title="{{ __('Ganti tema') }}" type="button">
+                    {{ __('Tema') }}
+                </button>
             </div>
-        </div>
+        </header>
 
-        <div class="w-full sm:w-1/2 flex flex-col justify-center items-center bg-white/80 dark:bg-slate-950/80 p-6 sm:p-12">
-            <div class="w-full max-w-md">
-                <div class="sm:hidden text-center mb-8">
-                    <span class="text-3xl font-display font-semibold text-slate-900 dark:text-white">🇯🇵 {{ __('Japan Travel') }}</span>
+        <main class="flex flex-1 items-center justify-center px-5 pb-12 pt-4 sm:px-8">
+            <div class="w-full max-w-[440px]">
+                <div class="mb-5 text-center">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-muted)]">{{ __('Destinasi dan oleh-oleh Jepang') }}</p>
                 </div>
 
-                {{ $slot }}
-                
-            </div>
-        </div>
+                <section class="auth-card px-6 py-7 sm:px-8 sm:py-8">
+                    {{ $slot }}
+                </section>
 
+                <p class="mx-auto mt-5 max-w-sm text-center text-xs leading-5 text-[var(--auth-muted)]">
+                    {{ __('Temukan destinasi Jepang, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.') }}
+                </p>
+            </div>
+        </main>
     </div>
 </body>
 </html>
