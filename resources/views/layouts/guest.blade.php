@@ -28,14 +28,14 @@
         <main class="flex flex-1 items-center justify-center px-5 pb-12 pt-4 sm:px-8">
             <div class="w-full max-w-[440px]">
                 <div class="mb-5 text-center">
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-muted)]">{{ __('Destinasi dan oleh-oleh Jepang') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-helper)]">{{ __('Destinasi dan oleh-oleh Jepang') }}</p>
                 </div>
 
                 <section class="auth-card px-6 py-7 sm:px-8 sm:py-8">
                     {{ $slot }}
                 </section>
 
-                <p class="mx-auto mt-5 max-w-sm text-center text-xs leading-5 text-[var(--auth-muted)]">
+                <p class="mx-auto mt-5 max-w-sm text-center text-xs font-medium leading-5 text-[var(--auth-helper)]">
                     {{ __('Temukan destinasi Jepang, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.') }}
                 </p>
             </div>

@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Atur ulang password') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-[var(--auth-muted)]">{{ __('Masukkan email akun Anda. Kami akan mengirim tautan untuk membuat password baru.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Masukkan email akun Anda. Kami akan mengirim tautan untuk membuat password baru.') }}</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />

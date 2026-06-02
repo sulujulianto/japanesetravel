@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Buat akun') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-[var(--auth-muted)]">{{ __('Simpan destinasi, tulis ulasan, dan kelola pesanan oleh-oleh Anda.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Simpan destinasi, tulis ulasan, dan kelola pesanan oleh-oleh Anda.') }}</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}">
@@ -46,7 +46,7 @@
         </div>
 
         <div class="mt-6 text-center">
-            <p class="text-sm text-[var(--auth-muted)]">{{ __('Sudah punya akun?') }}
+            <p class="text-sm font-medium text-[var(--auth-helper)]">{{ __('Sudah punya akun?') }}
                 <a href="{{ route('login') }}" class="auth-link font-semibold">{{ __('Masuk') }}</a>
             </p>
         </div>

@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Masuk ke Japan Travel') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-[var(--auth-muted)]">{{ __('Lanjutkan eksplorasi destinasi dan pesanan oleh-oleh Anda.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Lanjutkan eksplorasi destinasi dan pesanan oleh-oleh Anda.') }}</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -28,7 +28,7 @@
         <div class="mt-4 flex items-center justify-between gap-4">
             <label for="remember_me" class="inline-flex items-center">
                 <input id="remember_me" type="checkbox" class="rounded border-[var(--auth-hairline)] text-[var(--auth-accent)] shadow-sm focus:ring-[var(--auth-focus)]" name="remember">
-                <span class="ms-2 text-sm text-[var(--auth-muted)]">{{ __('Ingat saya') }}</span>
+                <span class="ms-2 text-sm font-medium text-[var(--auth-helper)]">{{ __('Ingat saya') }}</span>
             </label>
 
             @if (Route::has('password.request'))
@@ -45,7 +45,7 @@
         </div>
 
         <div class="mt-6 text-center">
-            <p class="text-sm text-[var(--auth-muted)]">{{ __('Belum punya akun?') }}
+            <p class="text-sm font-medium text-[var(--auth-helper)]">{{ __('Belum punya akun?') }}
                 <a href="{{ route('register') }}" class="auth-link font-semibold">{{ __('Buat akun') }}</a>
             </p>
         </div>

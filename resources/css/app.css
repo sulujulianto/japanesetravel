@@ -11,9 +11,13 @@
         --auth-muted-surface: #F6F4EF;
         --auth-hairline: #E7E3DC;
         --auth-ink: #222222;
-        --auth-muted: #6A6A6A;
+        --auth-muted: #3F3F3F;
+        --auth-helper: #525252;
+        --auth-label: #333333;
         --auth-accent: #B53A3A;
         --auth-accent-active: #8F2E2E;
+        --auth-danger: #9F2A2A;
+        --auth-success: #245B49;
         --auth-focus: rgba(181, 58, 58, 0.24);
     }
 
@@ -23,9 +27,13 @@
         --auth-muted-surface: #1F2630;
         --auth-hairline: #2A333D;
         --auth-ink: #E5E7EB;
-        --auth-muted: #AAB4C0;
+        --auth-muted: #D1D5DB;
+        --auth-helper: #CBD5E1;
+        --auth-label: #E2E8F0;
         --auth-accent: #D96B6B;
         --auth-accent-active: #E18484;
+        --auth-danger: #F0A0A0;
+        --auth-success: #A7D8C5;
         --auth-focus: rgba(217, 107, 107, 0.28);
     }
 
@@ -64,7 +72,7 @@
         border: 1px solid var(--auth-hairline);
         border-radius: 9999px;
         background: var(--auth-surface);
-        color: var(--auth-muted);
+        color: var(--auth-helper);
         transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
     }
 
@@ -93,8 +101,8 @@
     }
 
     .auth-input::placeholder {
-        color: var(--auth-muted);
-        opacity: 0.72;
+        color: var(--auth-helper);
+        opacity: 1;
     }
 
     .auth-input:focus {
@@ -104,7 +112,7 @@
     }
 
     .auth-label {
-        color: var(--auth-muted);
+        color: var(--auth-label);
     }
 
     .auth-primary {

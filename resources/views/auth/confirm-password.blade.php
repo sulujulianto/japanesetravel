@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Konfirmasi password') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-[var(--auth-muted)]">{{ __('Masukkan password Anda untuk melanjutkan ke area akun yang aman.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Masukkan password Anda untuk melanjutkan ke area akun yang aman.') }}</p>
     </div>
 
     <form method="POST" action="{{ route('password.confirm') }}">

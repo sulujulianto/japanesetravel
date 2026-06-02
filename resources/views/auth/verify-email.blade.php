@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Verifikasi email Anda') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-[var(--auth-muted)]">{{ __('Buka tautan verifikasi yang kami kirimkan. Jika belum menerima email, Anda dapat meminta tautan baru.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Buka tautan verifikasi yang kami kirimkan. Jika belum menerima email, Anda dapat meminta tautan baru.') }}</p>
     </div>
 
     @if (session('status') == 'verification-link-sent')
