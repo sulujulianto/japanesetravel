@@ -7,7 +7,7 @@
 
 <nav class="site-navbar sticky top-0 z-50 border-b border-[#E7E3DC] bg-[#FAF8F3] text-[#222222] shadow-[0_1px_0_rgba(34,34,34,0.02)] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-slate-100 dark:shadow-none">
     <div class="hidden lg:block">
-        <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto grid min-h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" class="inline-flex items-center gap-2.5 text-[#222222] transition hover:text-[#8F2E2E] dark:text-slate-100 dark:hover:text-[#D96B6B]">
                 <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-white text-sm font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">
                     JT
@@ -25,7 +25,7 @@
                 @endauth
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center justify-end gap-2">
                 <a href="{{ route('cart.index') }}" class="{{ $control }}">
                     <span>{{ __('Keranjang') }}</span>
                     @if($cartCount > 0)

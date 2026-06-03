@@ -5,6 +5,13 @@
 @tailwind utilities;
 
 @layer base {
+    html,
+    body {
+        margin: 0;
+        min-height: 100%;
+        padding: 0;
+    }
+
     :root {
         --auth-canvas: #FAF9F6;
         --auth-surface: #FFFFFF;

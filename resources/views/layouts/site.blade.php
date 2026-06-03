@@ -8,16 +8,16 @@
     @includeIf('partials.theme-script')
     @includeIf('partials.vite')
 </head>
-<body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <div class="relative min-h-screen overflow-x-clip">
-        <div class="pointer-events-none absolute inset-0">
+<body class="m-0 min-h-dvh p-0 font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div class="relative isolate m-0 flex min-h-dvh flex-col overflow-x-clip p-0">
+        <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
             <div class="absolute -top-32 right-0 h-96 w-96 rounded-full bg-rose-200/50 blur-3xl dark:bg-rose-500/10"></div>
-            <div class="absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10"></div>
+            <div class="absolute bottom-0 left-0 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10"></div>
         </div>
 
         @include('partials.site-nav')
 
-        <main class="relative">
+        <main class="relative flex-1">
             @yield('content')
         </main>
 
