@@ -9,7 +9,7 @@
     @includeIf('partials.vite')
 </head>
 <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <div class="relative min-h-screen overflow-hidden">
+    <div class="relative min-h-screen overflow-x-clip">
         <div class="pointer-events-none absolute inset-0">
             <div class="absolute -top-32 right-0 h-96 w-96 rounded-full bg-rose-200/50 blur-3xl dark:bg-rose-500/10"></div>
             <div class="absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10"></div>
@@ -17,7 +17,7 @@
 
         @include('partials.site-nav')
 
-        <main class="relative pt-24">
+        <main class="relative">
             @yield('content')
         </main>
 

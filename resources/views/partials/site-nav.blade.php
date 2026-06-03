@@ -1,63 +1,97 @@
 @php
     $cartCount = collect(session('cart', []))->sum();
+    $navLink = 'text-sm font-medium text-[#3F3F3F] transition hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]';
+    $control = 'inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:text-slate-300 dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]';
+    $mobileLink = 'block rounded-lg px-3 py-2 text-sm font-medium text-[#3F3F3F] transition hover:bg-white hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:bg-[#0E1116] dark:hover:text-[#D96B6B]';
 @endphp
 
-<nav x-data="{ open: false, scrolled: false }" @scroll.window="scrolled = window.scrollY > 20" class="fixed top-0 left-0 right-0 z-50 transition">
-    <div :class="scrolled ? 'bg-white/90 shadow-sm dark:bg-slate-950/90' : 'bg-white/70 dark:bg-slate-950/60'" class="border-b border-slate-200/60 backdrop-blur dark:border-slate-800">
-        <div class="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-3">
-                <button class="text-xl text-slate-600 dark:text-slate-200 lg:hidden" @click="open = !open" type="button">☰</button>
-                <a href="{{ route('home') }}" class="flex items-center gap-2">
-                    <span class="text-2xl">⛩️</span>
-                    <span class="font-display text-lg font-semibold text-slate-900 dark:text-white">Japan<span class="text-rose-500">Travel</span></span>
-                </a>
-            </div>
+<nav class="site-navbar sticky top-0 z-50 border-b border-[#E7E3DC] bg-[#FAF8F3] text-[#222222] shadow-[0_1px_0_rgba(34,34,34,0.02)] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-slate-100 dark:shadow-none">
+    <div class="hidden lg:block">
+        <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-2.5 text-[#222222] transition hover:text-[#8F2E2E] dark:text-slate-100 dark:hover:text-[#D96B6B]">
+                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-white text-sm font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">
+                    JT
+                </span>
+                <span class="text-base font-semibold tracking-tight">
+                    Japan<span class="text-[#A6423A] dark:text-[#D96B6B]">Travel</span>
+                </span>
+            </a>
 
-            <div class="hidden items-center gap-6 lg:flex">
-                <a href="{{ route('home') }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">{{ __('Wisata') }}</a>
-                <a href="{{ route('shop.index') }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">{{ __('Oleh-oleh') }}</a>
+            <div class="flex items-center gap-7">
+                <a href="{{ route('places.index') }}" class="{{ $navLink }}">{{ __('Wisata') }}</a>
+                <a href="{{ route('shop.index') }}" class="{{ $navLink }}">{{ __('Oleh-oleh') }}</a>
                 @auth
-                    <a href="{{ route('orders.index') }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">{{ __('Pesanan Saya') }}</a>
+                    <a href="{{ route('orders.index') }}" class="{{ $navLink }}">{{ __('Pesanan Saya') }}</a>
                 @endauth
             </div>
 
-            <div class="flex items-center gap-3">
-                <a href="{{ route('cart.index') }}" class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white">
-                    🛒
+            <div class="flex items-center gap-2">
+                <a href="{{ route('cart.index') }}" class="{{ $control }}">
+                    <span>{{ __('Keranjang') }}</span>
                     @if($cartCount > 0)
-                        <span class="absolute -right-1 -top-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">{{ $cartCount }}</span>
+                        <span class="ml-2 rounded-full bg-[#B33A3A] px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-[#D96B6B] dark:text-[#0E1116]">{{ $cartCount }}</span>
                     @endif
                 </a>
-                <div class="hidden items-center gap-2 text-xs font-semibold sm:flex">
-                    <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-slate-200 px-3 py-1 {{ App::getLocale() === 'id' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300' }}">ID</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-slate-200 px-3 py-1 {{ App::getLocale() === 'en' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300' }}">EN</a>
+
+                <div class="inline-flex items-center rounded-full border border-[#E7E3DC] bg-white p-1 text-xs font-semibold dark:border-[#2A333D] dark:bg-[#0E1116]">
+                    <a href="{{ route('lang.switch', 'id') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]' }}">ID</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]' }}">EN</a>
                 </div>
-                <button onclick="toggleTheme()" class="h-10 w-10 rounded-full border border-slate-200 text-lg text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300" title="{{ __('Ganti tema') }}" type="button">🌗</button>
+
+                <button onclick="toggleTheme()" class="{{ $control }}" title="{{ __('Ganti tema') }}" type="button">{{ __('Tema') }}</button>
+
                 @auth
-                    <a href="{{ route('dashboard') }}" class="hidden rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 lg:inline-flex">{{ __('Dashboard') }}</a>
+                    <a href="{{ route('dashboard') }}" class="inline-flex h-9 items-center rounded-full bg-[#B33A3A] px-4 text-xs font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">{{ __('Dashboard') }}</a>
                 @else
-                    <a href="{{ route('login') }}" class="hidden text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white lg:inline">{{ __('Masuk') }}</a>
-                    <a href="{{ route('register') }}" class="hidden rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 lg:inline-flex">{{ __('Daftar') }}</a>
+                    <a href="{{ route('login') }}" class="{{ $navLink }}">{{ __('Masuk') }}</a>
+                    <a href="{{ route('register') }}" class="inline-flex h-9 items-center rounded-full bg-[#B33A3A] px-4 text-xs font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">{{ __('Daftar') }}</a>
                 @endauth
             </div>
         </div>
     </div>
 
-    <div x-cloak x-show="open" class="bg-white/95 px-4 pb-6 pt-4 text-sm font-semibold text-slate-700 shadow-sm dark:bg-slate-950/95 dark:text-slate-200 lg:hidden">
-        <div class="space-y-3">
-            <a href="{{ route('home') }}" class="block">{{ __('Wisata') }}</a>
-            <a href="{{ route('shop.index') }}" class="block">{{ __('Oleh-oleh') }}</a>
-            @auth
-                <a href="{{ route('orders.index') }}" class="block">{{ __('Pesanan Saya') }}</a>
-                <a href="{{ route('dashboard') }}" class="block">{{ __('Dashboard') }}</a>
-            @else
-                <a href="{{ route('login') }}" class="block">{{ __('Masuk') }}</a>
-                <a href="{{ route('register') }}" class="block">{{ __('Daftar') }}</a>
-            @endauth
+    <details class="site-mobile-menu lg:hidden">
+        <summary class="block cursor-pointer select-none">
+            <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+                <span class="inline-flex items-center gap-2.5 text-[#222222] dark:text-slate-100">
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-white text-sm font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">
+                        JT
+                    </span>
+                    <span class="text-base font-semibold tracking-tight">
+                        Japan<span class="text-[#A6423A] dark:text-[#D96B6B]">Travel</span>
+                    </span>
+                </span>
+                <span class="flex shrink-0 items-center gap-2">
+                    <button onclick="event.stopPropagation(); toggleTheme();" class="inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] dark:border-[#2A333D] dark:text-slate-300" title="{{ __('Ganti tema') }}" type="button">{{ __('Tema') }}</button>
+                    <span class="inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] dark:border-[#2A333D] dark:text-slate-300">
+                        {{ __('Menu') }}
+                    </span>
+                </span>
+            </div>
+        </summary>
+
+        <div class="border-t border-[#E7E3DC] bg-[#FAF8F3] dark:border-[#2A333D] dark:bg-[#161B22]">
+            <div class="mx-auto max-w-7xl space-y-2 px-4 py-4 sm:px-6">
+                <a href="{{ route('places.index') }}" class="{{ $mobileLink }}">{{ __('Wisata') }}</a>
+                <a href="{{ route('shop.index') }}" class="{{ $mobileLink }}">{{ __('Oleh-oleh') }}</a>
+                <a href="{{ route('cart.index') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-[#3F3F3F] transition hover:bg-white hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:bg-[#0E1116] dark:hover:text-[#D96B6B]">
+                    <span>{{ __('Keranjang') }}</span>
+                    @if($cartCount > 0)
+                        <span class="rounded-full bg-[#B33A3A] px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-[#D96B6B] dark:text-[#0E1116]">{{ $cartCount }}</span>
+                    @endif
+                </a>
+                @auth
+                    <a href="{{ route('orders.index') }}" class="{{ $mobileLink }}">{{ __('Pesanan Saya') }}</a>
+                    <a href="{{ route('dashboard') }}" class="{{ $mobileLink }}">{{ __('Dashboard') }}</a>
+                @else
+                    <a href="{{ route('login') }}" class="{{ $mobileLink }}">{{ __('Masuk') }}</a>
+                    <a href="{{ route('register') }}" class="{{ $mobileLink }}">{{ __('Daftar') }}</a>
+                @endauth
+                <div class="flex items-center gap-2 px-3 pt-2 text-xs font-semibold">
+                    <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] dark:border-[#2A333D] dark:text-slate-300' }}">ID</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] dark:border-[#2A333D] dark:text-slate-300' }}">EN</a>
+                </div>
+            </div>
         </div>
-        <div class="mt-4 flex items-center gap-2 text-xs font-semibold">
-            <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-slate-200 px-3 py-1 {{ App::getLocale() === 'id' ? 'bg-slate-900 text-white' : 'text-slate-500' }}">ID</a>
-            <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-slate-200 px-3 py-1 {{ App::getLocale() === 'en' ? 'bg-slate-900 text-white' : 'text-slate-500' }}">EN</a>
-        </div>
-    </div>
+    </details>
 </nav>
