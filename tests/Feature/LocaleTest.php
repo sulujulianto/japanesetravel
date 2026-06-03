@@ -15,7 +15,7 @@ class LocaleTest extends TestCase
             'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
         ]);
 
-        $response->assertSee('Temukan destinasi otentik, ulasan jujur, dan rekomendasi oleh-oleh yang benar-benar dibutuhkan traveler modern.');
+        $response->assertSee('Temukan destinasi Jepang dan oleh-oleh pilihan.');
     }
 
     public function test_locale_uses_accept_language_en(): void
@@ -24,7 +24,7 @@ class LocaleTest extends TestCase
             'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
         ]);
 
-        $response->assertSee('Discover authentic destinations, honest reviews, and souvenir picks that modern travelers actually need.');
+        $response->assertSee('Discover Japan destinations and curated souvenirs.');
     }
 
     public function test_locale_toggle_cookie_overrides_header(): void
@@ -37,6 +37,6 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
             ]);
 
-        $response->assertSee('Discover authentic destinations, honest reviews, and souvenir picks that modern travelers actually need.');
+        $response->assertSee('Discover Japan destinations and curated souvenirs.');
     }
 }

@@ -35,6 +35,7 @@ Route::get('/lang/{locale}', function ($locale) {
 
 // Halaman Publik
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/places', [HomeController::class, 'places'])->name('places.index');
 Route::get('/place/{slug}', [HomeController::class, 'show'])->name('place.show');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
