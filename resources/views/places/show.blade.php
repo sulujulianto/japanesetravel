@@ -3,159 +3,214 @@
 @section('title', $place->name . ' · ' . __('Japan Travel'))
 
 @section('content')
-    <section class="relative">
-        <div class="h-80 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
-            @if($place->image_url)
-                <img src="{{ $place->image_url }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
-            @else
-                <img src="{{ asset('demo/place-placeholder.svg') }}" alt="{{ $place->name }}" class="h-full w-full object-cover">
-            @endif
+    @php
+        $ratingValue = number_format($place->reviews_avg_rating ?? 0, 1);
+        $reviewCount = $place->reviews_count ?? 0;
+        $travelWhatsappNumber = preg_replace('/\D+/', '', (string) config('services.travel.whatsapp_number'));
+        $travelWhatsappUrl = $travelWhatsappNumber !== '' ? 'https://wa.me/'.$travelWhatsappNumber : null;
+        $placeImage = $place->image_url ?: asset('demo/place-placeholder.svg');
+    @endphp
+
+    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <a href="{{ route('places.index') }}" class="inline-flex items-center justify-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]">
+            {{ __('Katalog destinasi') }}
+        </a>
+
+        <div class="mt-6 overflow-hidden rounded-[28px] border border-[#E7E3DC] bg-[#F1EEE8] shadow-sm dark:border-[#2A333D] dark:bg-[#1F2630]">
+            <img src="{{ $placeImage }}" alt="{{ $place->name }}" class="aspect-[16/11] w-full object-cover sm:aspect-[16/8] lg:aspect-[16/7]">
         </div>
-        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent">
-            <div class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-                <p class="text-xs uppercase tracking-[0.3em] text-slate-200">{{ __('Destinasi') }}</p>
-                <h1 class="mt-2 font-display text-3xl font-semibold text-white sm:text-4xl">{{ $place->name }}</h1>
-                <p class="mt-2 text-sm text-slate-200">📍 {{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
+
+        <header class="mt-8 max-w-4xl">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Destinasi') }}</p>
+            <h1 class="mt-3 text-4xl font-semibold leading-tight text-[#1F2937] dark:text-[#F4F1ED] sm:text-5xl">{{ $place->name }}</h1>
+            <p class="mt-4 max-w-2xl text-base leading-7 text-[#374151] dark:text-[#D8DEE8]">{{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+                <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#1F2937] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#F4F1ED]">
+                    {{ __('Rating') }} {{ $ratingValue }}
+                </span>
+                <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
+                    {{ $reviewCount }} {{ __('ulasan') }}
+                </span>
+                @if($place->open_days || $place->open_hours)
+                    <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
+                        {{ $place->open_days ?? __('Jadwal fleksibel') }} · {{ $place->open_hours ?? __('Jam belum tersedia') }}
+                    </span>
+                @endif
             </div>
-        </div>
-    </section>
+        </header>
 
-    <section class="mx-auto -mt-10 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="grid gap-4 md:grid-cols-3">
-            <x-ui.card>
-                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Rating') }}</p>
-                <p class="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">{{ number_format($place->reviews_avg_rating ?? 0, 1) }}</p>
-                <p class="text-sm text-slate-500">{{ $place->reviews_count }} {{ __('ulasan') }}</p>
-            </x-ui.card>
-            <x-ui.card>
-                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Jam Operasional') }}</p>
-                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-white">{{ $place->open_days ?? '-' }}</p>
-                <p class="text-sm text-slate-500">{{ $place->open_hours ?? '-' }}</p>
-            </x-ui.card>
-            <x-ui.card>
-                <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Ditambahkan Oleh') }}</p>
-                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-white">{{ $place->author->username ?? __('Admin') }}</p>
-                <p class="text-sm text-slate-500">{{ $place->created_at->format('d M Y') }}</p>
-            </x-ui.card>
-        </div>
-    </section>
+        <div class="mt-6 grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
+            <div class="space-y-6 lg:col-span-8">
+                <article class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Tentang Destinasi') }}</p>
+                    <h2 class="mt-3 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $place->name }}</h2>
+                    <p class="mt-5 whitespace-pre-line text-base leading-8 text-[#374151] dark:text-[#D8DEE8]">{{ $place->description }}</p>
+                </article>
 
-    <section class="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="grid gap-10 lg:grid-cols-3">
-            <div class="space-y-8 lg:col-span-2">
-                <x-ui.card>
-                    <h2 class="text-xl font-semibold text-slate-900 dark:text-white">{{ __('Tentang Destinasi') }}</h2>
-                    <p class="mt-4 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ $place->description }}</p>
-                </x-ui.card>
-
-                <x-ui.card>
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Fasilitas') }}</h3>
-                    @if($place->facilities)
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            @foreach(explode(',', $place->facilities) as $facility)
-                                <x-ui.badge variant="info">{{ trim($facility) }}</x-ui.badge>
-                            @endforeach
+                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Informasi Kunjungan') }}</p>
+                            <h2 class="mt-3 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Sebelum berangkat') }}</h2>
                         </div>
-                    @else
-                        <p class="mt-4 text-sm text-slate-500">{{ __('Belum ada data fasilitas.') }}</p>
-                    @endif
-                </x-ui.card>
-
-                <x-ui.card>
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Lokasi') }}</h3>
-                    <p class="mt-2 text-sm text-slate-500">{{ $place->address ?? __('Alamat belum disetting untuk peta.') }}</p>
-                    <div class="mt-4 rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500 dark:border-slate-700">
-                        {{ __('Peta interaktif akan segera tersedia. Gunakan alamat di atas untuk navigasi langsung.') }}
+                        @if($place->open_days || $place->open_hours)
+                            <p class="text-sm font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</p>
+                        @endif
                     </div>
-                </x-ui.card>
+
+                    <div class="mt-6 space-y-5">
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Fasilitas') }}</h3>
+                            @if($place->facilities)
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    @foreach(explode(',', $place->facilities) as $facility)
+                                        <span class="rounded-full border border-[#DDD6CC] bg-[#FAF9F6] px-3 py-1.5 text-xs font-semibold text-[#2F5D50] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#8AB7A4]">{{ trim($facility) }}</span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ __('Belum ada data fasilitas.') }}</p>
+                            @endif
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
+                                <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Lokasi') }}</h3>
+                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ $place->address ?? __('Alamat belum tersedia.') }}</p>
+                            </div>
+                            <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
+                                <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Peta') }}</h3>
+                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ __('Peta interaktif belum tersedia.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <div class="space-y-6">
-                <x-ui.card>
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Ringkasan Rating') }}</h3>
-                    <div class="mt-4 space-y-2 text-sm text-slate-500">
-                        <p>{{ __('Rata-rata') }}: <span class="font-semibold text-slate-900 dark:text-white">{{ number_format($place->reviews_avg_rating ?? 0, 1) }}</span></p>
-                        <p>{{ __('Total ulasan') }}: <span class="font-semibold text-slate-900 dark:text-white">{{ $place->reviews_count }}</span></p>
-                    </div>
-                </x-ui.card>
-                <x-ui.card>
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Tips Berkunjung') }}</h3>
-                    <p class="mt-2 text-sm text-slate-500">{{ __('Datang lebih pagi untuk menikmati suasana yang lebih tenang dan pencahayaan terbaik untuk foto.') }}</p>
-                </x-ui.card>
-            </div>
-        </div>
-    </section>
+            <aside class="space-y-5 lg:col-span-4 lg:sticky lg:top-24">
+                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-5 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Travel inquiry') }}</p>
+                    <h2 class="mt-3 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Butuh bantuan menyusun perjalanan?') }}</h2>
+                    <p class="mt-3 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">
+                        {{ __('Hubungi kami untuk bertanya tentang rute, waktu kunjungan, atau kebutuhan travel.') }}
+                    </p>
 
-    <section class="mx-auto mt-12 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div class="grid gap-6 lg:grid-cols-3">
-            <div class="space-y-6 lg:col-span-2">
-                <x-ui.card>
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Ulasan Pengunjung') }}</h3>
-                        <span class="text-sm text-slate-500">{{ $place->reviews_count }} {{ __('ulasan') }}</span>
+                    <div class="mt-5 space-y-3">
+                        @if($travelWhatsappUrl)
+                            <a href="{{ $travelWhatsappUrl }}" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-center rounded-full bg-[#B33A3A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">
+                                {{ __('Konsultasi via WhatsApp') }}
+                            </a>
+                        @else
+                            <div aria-disabled="true" class="flex w-full items-center justify-center rounded-full border border-[#DDD6CC] bg-[#F1EEE8] px-5 py-3 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
+                                {{ __('WhatsApp belum tersedia') }}
+                            </div>
+                        @endif
+
+                        <a href="{{ route('shop.index') }}" class="flex w-full items-center justify-center rounded-full border border-[#B33A3A] bg-white px-5 py-3 text-sm font-semibold text-[#8F2E2E] transition hover:bg-[#FFF5F3] dark:border-[#D96B6B] dark:bg-[#161B22] dark:text-[#D96B6B] dark:hover:bg-[#241F20]">
+                            {{ __('Lihat katalog oleh-oleh') }}
+                        </a>
                     </div>
+                </section>
+
+                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-5 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
+                    <h3 class="text-base font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Ringkasan destinasi') }}</h3>
+                    <dl class="mt-4 divide-y divide-[#E7E3DC] border-y border-[#E7E3DC] text-sm dark:divide-[#2A333D] dark:border-[#2A333D]">
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Rating') }}</dt>
+                            <dd class="text-[#1F2937] dark:text-[#F4F1ED]">{{ $ratingValue }} · {{ $reviewCount }} {{ __('ulasan') }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Lokasi') }}</dt>
+                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->address ?? __('Belum tersedia') }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Jam') }}</dt>
+                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Kurator') }}</dt>
+                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->author->username ?? __('Admin') }}</dd>
+                        </div>
+                    </dl>
+                    <p class="mt-4 rounded-2xl border border-[#DDD6CC] bg-[#FAF9F6] p-4 text-sm leading-6 text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
+                        {{ __('Tidak ada transaksi jasa travel langsung di halaman ini.') }}
+                    </p>
+                </section>
+            </aside>
+
+            <div class="space-y-6 lg:col-span-8">
+                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Ulasan Pengunjung') }}</p>
+                            <h2 class="mt-2 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Pengalaman dari pengunjung') }}</h2>
+                        </div>
+                        <span class="inline-flex w-fit rounded-full border border-[#DDD6CC] bg-[#FAF9F6] px-3 py-1.5 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
+                            {{ $reviewCount }} {{ __('ulasan') }}
+                        </span>
+                    </div>
+
                     <div class="mt-6 space-y-4">
                         @forelse($reviews as $review)
-                            <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                                <div class="flex items-center justify-between">
+                            <article class="rounded-[20px] border border-[#E7E3DC] bg-[#FAF9F6] p-4 dark:border-[#2A333D] dark:bg-[#1F2630] sm:p-5">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-sm font-semibold text-rose-600 dark:bg-rose-500/20 dark:text-rose-200">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F1EEE8] text-sm font-semibold text-[#B33A3A] dark:bg-[#0E1116] dark:text-[#D96B6B]">
                                             {{ strtoupper(substr($review->user->username, 0, 1)) }}
                                         </div>
                                         <div>
-                                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ $review->user->username }}</p>
-                                            <p class="text-xs text-slate-400">{{ $review->created_at->diffForHumans() }}</p>
+                                            <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $review->user->username }}</p>
+                                            <p class="text-xs font-medium text-[#667085] dark:text-[#AEB8C7]">{{ $review->created_at->diffForHumans() }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-xs text-amber-400">
+                                    <div class="shrink-0 text-sm tracking-wide text-[#8A6A2F] dark:text-[#D2B16F]">
                                         @for($i = 0; $i < 5; $i++)
-                                            <span class="{{ $i < $review->rating ? '' : 'text-slate-300 dark:text-slate-700' }}">★</span>
+                                            <span class="{{ $i < $review->rating ? '' : 'text-[#C7CED8] dark:text-[#46515D]' }}">★</span>
                                         @endfor
                                     </div>
                                 </div>
-                                <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">{{ $review->comment }}</p>
-                            </div>
+                                <p class="mt-4 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ $review->comment }}</p>
+                            </article>
                         @empty
-                            <div class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-700">
+                            <div class="rounded-[20px] border border-dashed border-[#DDD6CC] bg-[#FAF9F6] p-6 text-center text-sm leading-6 text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
                                 {{ __('Belum ada ulasan. Jadilah yang pertama!') }}
                             </div>
                         @endforelse
                     </div>
+
                     <div class="mt-6">
                         {{ $reviews->links() }}
                     </div>
-                </x-ui.card>
-            </div>
+                </section>
 
-            <div>
-                <x-ui.card>
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Tulis Ulasan') }}</h3>
+                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                    <h2 class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Tulis Ulasan') }}</h2>
                     @auth
-                        <form action="{{ route('review.store', $place->id) }}" method="POST" class="mt-4 space-y-4">
+                        <form action="{{ route('review.store', $place->id) }}" method="POST" class="mt-5 space-y-4">
                             @csrf
                             <div>
                                 <x-ui.label value="{{ __('Rating') }}" />
                                 <x-ui.select name="rating">
-                                    <option value="5">{{ __('⭐⭐⭐⭐⭐ (Sempurna)') }}</option>
-                                    <option value="4">{{ __('⭐⭐⭐⭐ (Bagus)') }}</option>
-                                    <option value="3">{{ __('⭐⭐⭐ (Biasa)') }}</option>
-                                    <option value="2">{{ __('⭐⭐ (Buruk)') }}</option>
-                                    <option value="1">{{ __('⭐ (Sangat Buruk)') }}</option>
+                                    <option value="5">{{ __('5 - Sempurna') }}</option>
+                                    <option value="4">{{ __('4 - Bagus') }}</option>
+                                    <option value="3">{{ __('3 - Biasa') }}</option>
+                                    <option value="2">{{ __('2 - Buruk') }}</option>
+                                    <option value="1">{{ __('1 - Sangat Buruk') }}</option>
                                 </x-ui.select>
                             </div>
                             <div>
                                 <x-ui.label value="{{ __('Komentar') }}" />
                                 <x-ui.textarea name="comment" rows="4" placeholder="{{ __('Ceritakan pengalamanmu di sini...') }}"></x-ui.textarea>
                             </div>
-                            <x-ui.button type="submit">{{ __('Kirim Ulasan') }}</x-ui.button>
+                            <x-ui.button type="submit" class="w-full sm:w-auto">{{ __('Kirim Ulasan') }}</x-ui.button>
                         </form>
                     @else
-                        <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                        <div class="mt-5 rounded-2xl border border-[#D2B16F] bg-[#FFF8E6] p-4 text-sm leading-6 text-[#6D541F] dark:border-[#8A6A2F] dark:bg-[#241F14] dark:text-[#D2B16F]">
                             <a href="{{ route('login') }}" class="font-semibold underline">{{ __('Masuk') }}</a>
                             {{ __('untuk menulis ulasan.') }}
                         </div>
                     @endauth
-                </x-ui.card>
+                </section>
             </div>
         </div>
     </section>
