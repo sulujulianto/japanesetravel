@@ -1,8 +1,9 @@
 <x-admin-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Manajemen Order') }}</p>
-            <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ __('Daftar Pesanan') }}</h1>
+        <div class="rounded-2xl border border-[#E7E3DC] bg-white p-5 dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Manajemen Order') }}</p>
+            <h1 class="mt-2 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED] sm:text-3xl">{{ __('Daftar Pesanan') }}</h1>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Cari dan pantau status pesanan serta pembayaran pelanggan dari satu daftar operasional.') }}</p>
         </div>
     </x-slot>
 
@@ -12,25 +13,48 @@
         </x-ui.alert>
     @endif
 
-    <x-ui.card>
-        <form method="GET" class="grid gap-4 lg:grid-cols-6">
-            <div class="lg:col-span-2">
-                <x-ui.label value="{{ __('Cari') }}" />
-                <x-ui.input name="q" value="{{ $search }}" placeholder="{{ __('ID order, email, atau nama') }}" />
+    @php
+        $fieldClass = 'mt-2 w-full rounded-xl border border-[#DDD6CC] bg-white px-3.5 py-2.5 text-sm text-[#1F2937] outline-none transition placeholder:text-[#667085] focus:border-[#B33A3A] focus:ring-2 focus:ring-[#B33A3A]/15 dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#F4F1ED] dark:placeholder:text-[#AEB8C7] dark:focus:border-[#D96B6B] dark:focus:ring-[#D96B6B]/20';
+        $labelClass = 'block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#667085] dark:text-[#AEB8C7]';
+        $statusVariants = [
+            'pending' => 'warning',
+            'processing' => 'info',
+            'completed' => 'success',
+            'cancelled' => 'danger',
+        ];
+        $paymentVariants = [
+            'pending' => 'warning',
+            'paid' => 'success',
+            'failed' => 'danger',
+            'expired' => 'danger',
+            'refunded' => 'info',
+        ];
+    @endphp
+
+    <section class="rounded-2xl border border-[#E7E3DC] bg-white p-5 dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6" aria-labelledby="order-filters-heading">
+        <div>
+            <h2 id="order-filters-heading" class="text-base font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Filter Pesanan') }}</h2>
+            <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Gunakan satu atau beberapa filter untuk mempersempit daftar operasional.') }}</p>
+        </div>
+
+        <form method="GET" class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+            <div class="sm:col-span-2 xl:col-span-2">
+                <label for="order-search" class="{{ $labelClass }}">{{ __('Cari') }}</label>
+                <input id="order-search" name="q" value="{{ $search }}" placeholder="{{ __('ID order, email, atau nama') }}" class="{{ $fieldClass }}">
             </div>
             <div>
-                <x-ui.label value="{{ __('Status Order') }}" />
-                <x-ui.select name="status">
+                <label for="order-status" class="{{ $labelClass }}">{{ __('Status Order') }}</label>
+                <select id="order-status" name="status" class="{{ $fieldClass }}">
                     <option value="">{{ __('Semua') }}</option>
                     <option value="pending" @selected($status === 'pending')>{{ __('Menunggu') }}</option>
                     <option value="processing" @selected($status === 'processing')>{{ __('Diproses') }}</option>
                     <option value="completed" @selected($status === 'completed')>{{ __('Selesai') }}</option>
                     <option value="cancelled" @selected($status === 'cancelled')>{{ __('Dibatalkan') }}</option>
-                </x-ui.select>
+                </select>
             </div>
             <div>
-                <x-ui.label value="{{ __('Status Payment') }}" />
-                <x-ui.select name="payment_status">
+                <label for="payment-status" class="{{ $labelClass }}">{{ __('Status Payment') }}</label>
+                <select id="payment-status" name="payment_status" class="{{ $fieldClass }}">
                     <option value="">{{ __('Semua') }}</option>
                     <option value="unpaid" @selected($paymentStatus === 'unpaid')>{{ __('Belum ada pembayaran') }}</option>
                     <option value="pending" @selected($paymentStatus === 'pending')>{{ __('Pending') }}</option>
@@ -38,96 +62,133 @@
                     <option value="failed" @selected($paymentStatus === 'failed')>{{ __('Failed') }}</option>
                     <option value="expired" @selected($paymentStatus === 'expired')>{{ __('Expired') }}</option>
                     <option value="refunded" @selected($paymentStatus === 'refunded')>{{ __('Refunded') }}</option>
-                </x-ui.select>
+                </select>
             </div>
             <div>
-                <x-ui.label value="{{ __('Dari') }}" />
-                <x-ui.input type="date" name="date_from" value="{{ $dateFrom }}" />
+                <label for="date-from" class="{{ $labelClass }}">{{ __('Dari') }}</label>
+                <input id="date-from" type="date" name="date_from" value="{{ $dateFrom }}" class="{{ $fieldClass }}">
             </div>
             <div>
-                <x-ui.label value="{{ __('Sampai') }}" />
-                <x-ui.input type="date" name="date_to" value="{{ $dateTo }}" />
+                <label for="date-to" class="{{ $labelClass }}">{{ __('Sampai') }}</label>
+                <input id="date-to" type="date" name="date_to" value="{{ $dateTo }}" class="{{ $fieldClass }}">
             </div>
-            <div class="flex items-end gap-2 lg:col-span-6">
-                <x-ui.button type="submit">{{ __('Terapkan Filter') }}</x-ui.button>
-                <a href="{{ route('admin.orders.index') }}" class="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+            <div class="flex flex-col gap-2 border-t border-[#E7E3DC] pt-4 sm:col-span-2 sm:flex-row sm:items-center xl:col-span-6 dark:border-[#2A333D]">
+                <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#B33A3A] px-4 text-sm font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">
+                    {{ __('Terapkan Filter') }}
+                </button>
+                <a href="{{ route('admin.orders.index') }}" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#E7E3DC] px-4 text-sm font-semibold text-[#526071] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:text-[#AEB8C7] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]">
                     {{ __('Reset') }}
                 </a>
             </div>
         </form>
-    </x-ui.card>
+    </section>
 
-    <div class="mt-6 overflow-hidden">
-        <x-ui.card>
-            <div class="overflow-x-auto">
-                @php
-                    $statusVariants = [
-                        'pending' => 'warning',
-                        'processing' => 'info',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                    ];
-                    $paymentVariants = [
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'failed' => 'danger',
-                        'expired' => 'danger',
-                        'refunded' => 'info',
-                    ];
-                @endphp
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="text-left text-xs uppercase tracking-wider text-slate-400">
-                            <th class="pb-3">{{ __('Order') }}</th>
-                            <th class="pb-3">{{ __('Pelanggan') }}</th>
-                            <th class="pb-3">{{ __('Tanggal') }}</th>
-                            <th class="pb-3">{{ __('Total') }}</th>
-                            <th class="pb-3">{{ __('Pembayaran') }}</th>
-                            <th class="pb-3">{{ __('Status') }}</th>
-                            <th class="pb-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200/60 dark:divide-slate-800">
-                        @forelse($orders as $order)
-                            <tr>
-                                <td class="py-3 font-semibold text-slate-900 dark:text-white">#ORDER-{{ $order->id }}</td>
-                                <td class="py-3">
-                                    <div class="text-slate-900 dark:text-white">{{ $order->user?->username }}</div>
-                                    <div class="text-xs text-slate-500">{{ $order->user?->email }}</div>
-                                </td>
-                                <td class="py-3 text-slate-600 dark:text-slate-300">{{ $order->created_at->format('d M Y') }}</td>
-                                <td class="py-3 text-slate-900 dark:text-white">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
-                                <td class="py-3">
-                                    @if($order->payment)
-                                        <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
-                                            {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
-                                        </x-ui.badge>
-                                    @else
-                                        <x-ui.badge variant="default">{{ __('Belum ada') }}</x-ui.badge>
-                                    @endif
-                                </td>
-                                <td class="py-3">
-                                    <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
-                                        {{ __(strtoupper($order->status)) }}
+    <section class="mt-6 rounded-2xl border border-[#E7E3DC] bg-white dark:border-[#2A333D] dark:bg-[#161B22]" aria-labelledby="orders-list-heading">
+        <div class="border-b border-[#E7E3DC] px-5 py-4 dark:border-[#2A333D] sm:px-6">
+            <h2 id="orders-list-heading" class="text-base font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Hasil Pesanan') }}</h2>
+            <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Pesanan terbaru ditampilkan lebih dahulu dengan status operasional dan pembayaran terkini.') }}</p>
+        </div>
+
+        <div class="hidden overflow-x-auto md:block">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="border-b border-[#E7E3DC] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#667085] dark:border-[#2A333D] dark:text-[#AEB8C7]">
+                        <th class="whitespace-nowrap px-6 py-3">{{ __('Order') }}</th>
+                        <th class="px-4 py-3">{{ __('Pelanggan') }}</th>
+                        <th class="whitespace-nowrap px-4 py-3">{{ __('Tanggal') }}</th>
+                        <th class="whitespace-nowrap px-4 py-3">{{ __('Total') }}</th>
+                        <th class="px-4 py-3">{{ __('Pembayaran') }}</th>
+                        <th class="px-4 py-3">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-right">{{ __('Aksi') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#E7E3DC] dark:divide-[#2A333D]">
+                    @forelse($orders as $order)
+                        <tr>
+                            <td class="whitespace-nowrap px-6 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</td>
+                            <td class="px-4 py-4">
+                                <p class="font-medium text-[#374151] dark:text-[#D8DEE8]">{{ $order->user?->username ?: __('Pengguna tidak tersedia') }}</p>
+                                <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $order->user?->email ?: '-' }}</p>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-4 text-[#526071] dark:text-[#AEB8C7]">{{ $order->created_at->format('d M Y') }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                            <td class="px-4 py-4">
+                                @if($order->payment)
+                                    <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
+                                        {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
                                     </x-ui.badge>
-                                </td>
-                                <td class="py-3 text-right">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="text-sm font-semibold text-rose-500 hover:text-rose-400">{{ __('Detail') }}</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="py-8 text-center text-sm text-slate-500">
-                                    {{ __('Belum ada pesanan yang sesuai.') }}
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-6">
+                                @else
+                                    <x-ui.badge variant="default">{{ __('Belum ada') }}</x-ui.badge>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4">
+                                <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
+                                    {{ __(strtoupper($order->status)) }}
+                                </x-ui.badge>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="{{ route('admin.orders.show', $order) }}" class="text-sm font-semibold text-[#B33A3A] transition hover:text-[#8F2E2E] dark:text-[#D96B6B] dark:hover:text-[#E18484]">{{ __('Detail') }}</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center">
+                                <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Belum ada pesanan yang sesuai.') }}</p>
+                                <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Ubah atau reset filter untuk melihat pesanan lainnya.') }}</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="space-y-3 p-4 md:hidden">
+            @forelse($orders as $order)
+                <article class="rounded-xl border border-[#E7E3DC] bg-[#FAF8F3] p-4 dark:border-[#2A333D] dark:bg-[#0E1116]">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</p>
+                            <p class="mt-1 truncate text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $order->user?->username ?: __('Pengguna tidak tersedia') }}</p>
+                        </div>
+                        <a href="{{ route('admin.orders.show', $order) }}" class="shrink-0 text-sm font-semibold text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Detail') }}</a>
+                    </div>
+
+                    <dl class="mt-4 grid grid-cols-2 gap-3 border-y border-[#E7E3DC] py-3 dark:border-[#2A333D]">
+                        <div>
+                            <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Tanggal') }}</dt>
+                            <dd class="mt-1 text-sm text-[#374151] dark:text-[#D8DEE8]">{{ $order->created_at->format('d M Y') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</dt>
+                            <dd class="mt-1 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</dd>
+                        </div>
+                    </dl>
+
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @if($order->payment)
+                            <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
+                                {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
+                            </x-ui.badge>
+                        @else
+                            <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
+                        @endif
+                        <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
+                            {{ __(strtoupper($order->status)) }}
+                        </x-ui.badge>
+                    </div>
+                </article>
+            @empty
+                <div class="rounded-xl border border-dashed border-[#E7E3DC] p-6 text-center dark:border-[#2A333D]">
+                    <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Belum ada pesanan yang sesuai.') }}</p>
+                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Ubah atau reset filter untuk melihat pesanan lainnya.') }}</p>
+                </div>
+            @endforelse
+        </div>
+
+        @if($orders->hasPages())
+            <div class="border-t border-[#E7E3DC] px-4 py-4 dark:border-[#2A333D] sm:px-6">
                 {{ $orders->links() }}
             </div>
-        </x-ui.card>
-    </div>
+        @endif
+    </section>
 </x-admin-layout>
