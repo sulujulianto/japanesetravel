@@ -106,8 +106,8 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::resource('orders', OrderController::class)->only(['index', 'show', 'update']);
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
     Route::post('inventory/{souvenir}/restock', [InventoryController::class, 'restock'])->name('inventory.restock');
-    Route::resource('places', PlaceController::class);
-    Route::resource('souvenirs', SouvenirController::class);
+    Route::resource('places', PlaceController::class)->except(['show']);
+    Route::resource('souvenirs', SouvenirController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';
