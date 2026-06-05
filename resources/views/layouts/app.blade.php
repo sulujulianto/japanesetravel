@@ -7,29 +7,22 @@
 
         <title>{{ config('app.name', 'Japan Travel') }}</title>
 
-        <!-- Scripts -->
         @includeIf('partials.theme-script')
         @includeIf('partials.vite')
     </head>
-    <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-        <div class="relative min-h-screen overflow-hidden">
-            <div class="pointer-events-none absolute inset-0">
-                <div class="absolute -top-32 right-0 h-96 w-96 rounded-full bg-rose-200/50 blur-3xl dark:bg-rose-500/10"></div>
-                <div class="absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10"></div>
-            </div>
+    <body class="min-h-dvh bg-[#FAF9F6] font-sans text-[#1F2937] antialiased dark:bg-[#0E1116] dark:text-[#F4F1ED]">
+        <div class="flex min-h-dvh flex-col">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
             @isset($header)
-                <header class="relative border-b border-slate-200/60 bg-white/80 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-                    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <header class="border-b border-[#E7E3DC] bg-white dark:border-[#2A333D] dark:bg-[#161B22]">
+                    <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
             @endisset
 
-            <!-- Page Content -->
-            <main class="relative">
+            <main class="flex-1">
                 {{ $slot }}
             </main>
         </div>

@@ -176,3 +176,13 @@
         animation: rise 0.7s ease-out both;
     }
 }
+
+@layer components {
+    .account-menu > summary {
+        list-style: none;
+    }
+
+    .account-menu > summary::-webkit-details-marker {
+        display: none;
+    }
+}
