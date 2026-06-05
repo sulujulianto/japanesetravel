@@ -185,4 +185,12 @@
     .account-menu > summary::-webkit-details-marker {
         display: none;
     }
+
+    .admin-mobile-menu > summary {
+        list-style: none;
+    }
+
+    .admin-mobile-menu > summary::-webkit-details-marker {
+        display: none;
+    }
 }
