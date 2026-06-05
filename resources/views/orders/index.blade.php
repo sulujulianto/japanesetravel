@@ -1,8 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{{ __('Akun Saya') }}</p>
-            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ __('Riwayat Pesanan Saya') }}</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Pesanan') }}</p>
+            <h2 class="text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Riwayat pesanan') }}</h2>
+            <p class="max-w-2xl text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">
+                {{ __('Pantau pesanan oleh-oleh, status pembayaran, dan rincian produk yang pernah Anda checkout.') }}
+            </p>
         </div>
     </x-slot>
 
@@ -31,61 +34,78 @@
             @endphp
 
             @forelse ($orders as $order)
-                <x-ui.card>
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Nomor Order') }}</p>
-                            <p class="text-lg font-semibold text-slate-900 dark:text-white">#ORDER-{{ $order->id }}</p>
-                            <p class="text-sm text-slate-500">{{ $order->created_at->format('d M Y') }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs uppercase tracking-wider text-slate-400">{{ __('Total') }}</p>
-                            <p class="text-lg font-semibold text-slate-900 dark:text-white">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
-                                {{ __(strtoupper($order->status)) }}
-                            </x-ui.badge>
-                            @if($order->payment)
-                                <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
-                                    {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
-                                </x-ui.badge>
-                            @else
-                                <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
-                            @endif
-                        </div>
-                        <div>
-                            <a href="{{ route('orders.show', $order) }}" class="text-sm font-semibold text-rose-500 hover:text-rose-400">{{ __('Lihat Detail') }}</a>
+                <x-ui.card class="overflow-hidden p-0">
+                    <div class="border-b border-slate-200/80 bg-white px-5 py-5 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+                        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="min-w-0 space-y-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Nomor Order') }}</span>
+                                    <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                    <span class="text-sm font-medium text-[#526071] dark:text-[#AEB8C7]">{{ $order->created_at->format('d M Y') }}</span>
+                                </div>
+                                <p class="text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
+                                        {{ __('Order') }} · {{ __(strtoupper($order->status)) }}
+                                    </x-ui.badge>
+                                    @if($order->payment)
+                                        <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
+                                            {{ __('Payment') }} · {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
+                                        </x-ui.badge>
+                                    @else
+                                        <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-end">
+                                <div class="sm:text-right">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</p>
+                                    <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                                </div>
+                                <a href="{{ route('orders.show', $order) }}" class="inline-flex items-center justify-center rounded-xl border border-[#B33A3A]/25 px-4 py-2 text-sm font-semibold text-[#B33A3A] transition hover:border-[#B33A3A] hover:bg-[#B33A3A]/5 dark:border-[#D96B6B]/30 dark:text-[#D96B6B] dark:hover:bg-[#D96B6B]/10">
+                                    {{ __('Lihat detail') }}
+                                </a>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mt-6 space-y-3">
+                    <div class="space-y-3 bg-[#FAF8F3]/60 px-5 py-5 dark:bg-slate-950/40 sm:px-6">
                         @foreach ($order->items as $item)
                             @php
                                 $product = $item->product;
                                 $productName = $product?->name ?? $item->product_name ?? __('Produk tidak tersedia');
                             @endphp
-                            <div class="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-950/40">
-                                <div class="h-10 w-10 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800">
+                            <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 text-sm dark:border-slate-800 dark:bg-slate-900/80 sm:flex-row sm:items-center">
+                                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
                                     @if($item->resolved_image_url)
                                         <img src="{{ $item->resolved_image_url }}" alt="{{ $productName }}" class="h-full w-full object-cover">
                                     @else
                                         <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $productName }}" class="h-full w-full object-cover">
                                     @endif
                                 </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-slate-900 dark:text-white">{{ $productName }}</p>
-                                    <p class="text-xs text-slate-500">{{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $productName }}</p>
+                                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}</p>
                                 </div>
-                                <div class="text-sm font-semibold text-slate-900 dark:text-white">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</div>
+                                <div class="text-left sm:text-right">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Subtotal') }}</p>
+                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</p>
+                                </div>
                             </div>
                         @endforeach
                     </div>
                 </x-ui.card>
             @empty
-                <x-ui.card class="text-center">
-                    <p class="text-sm text-slate-500">{{ __('Belum ada riwayat pesanan.') }}</p>
-                    <a href="{{ route('shop.index') }}" class="mt-3 inline-flex text-sm font-semibold text-rose-500">{{ __('Mulai Belanja') }}</a>
+                <x-ui.card class="mx-auto max-w-2xl text-center">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Belum ada pesanan') }}</p>
+                    <h3 class="mt-3 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Riwayat pesanan masih kosong') }}</h3>
+                    <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">
+                        {{ __('Mulai dari katalog oleh-oleh dan checkout produk yang ingin Anda kirimkan ke rumah.') }}
+                    </p>
+                    <a href="{{ route('shop.index') }}" class="mt-6 inline-flex items-center justify-center rounded-xl bg-[#B33A3A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-slate-950 dark:hover:bg-[#E48787]">
+                        {{ __('Belanja oleh-oleh') }}
+                    </a>
                 </x-ui.card>
             @endforelse
 
