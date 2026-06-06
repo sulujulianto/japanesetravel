@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use LogicException;
 
 class DevAccountSeeder extends Seeder
 {
@@ -19,6 +20,10 @@ class DevAccountSeeder extends Seeder
 
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing'])) {
+            throw new LogicException('DevAccountSeeder uses public demo credentials and is restricted to local and testing environments.');
+        }
+
         $password = Hash::make('Password123!');
 
         $user = User::updateOrCreate(

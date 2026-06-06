@@ -12,21 +12,27 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use LogicException;
 
 class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('payments')->truncate();
-        DB::table('order_items')->truncate();
-        DB::table('orders')->truncate();
-        DB::table('place_reviews')->truncate();
-        DB::table('souvenirs')->truncate();
-        DB::table('places')->truncate();
-        DB::table('users')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        if (! app()->environment(['local', 'testing'])) {
+            throw new LogicException('DemoSeeder is destructive and restricted to local and testing environments.');
+        }
+
+        Schema::withoutForeignKeyConstraints(function (): void {
+            DB::table('payments')->truncate();
+            DB::table('order_items')->truncate();
+            DB::table('orders')->truncate();
+            DB::table('place_reviews')->truncate();
+            DB::table('souvenirs')->truncate();
+            DB::table('places')->truncate();
+            DB::table('users')->truncate();
+        });
 
         $admin = User::create([
             'username' => 'admin',

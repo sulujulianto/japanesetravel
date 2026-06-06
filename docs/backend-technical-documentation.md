@@ -203,6 +203,10 @@ CI menjalankan:
 - Railway scripts tersedia.
 - Status deployment Railway: **postponed** (belum go-live).
 - Env production yang dibutuhkan sudah terdokumentasi di `README.md` dan `.env.example`.
+- Production migration menggunakan `php artisan migrate --force` tanpa demo seed.
+- `DatabaseSeeder` hanya menjalankan demo data pada environment `local`/`testing`.
+- `DemoSeeder` bersifat destruktif dan hanya diizinkan pada environment `local`/`testing`.
+- `DevAccountSeeder` memakai credential publik untuk visual review dan hanya diizinkan pada environment `local`/`testing`.
 - Database target yang disarankan: MySQL service (selaras lokal MariaDB/MySQL).
 - Storage/media caveat:
   - default local/public bersifat ephemeral di container.

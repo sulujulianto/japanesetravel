@@ -44,20 +44,52 @@ DB_PASSWORD=
 ```
 
 **Setup Database**
-Opsi A (migrate + seed):
+
+### Local fresh demo setup
+
+Gunakan hanya pada database lokal yang boleh dihapus dan diisi ulang:
+
 ```bash
 php artisan migrate --seed
 ```
 
-Opsi B (import SQL demo):
+`DatabaseSeeder` memanggil `DemoSeeder`, yang mengosongkan tabel aplikasi sebelum membuat data demo. Seeder ini dibatasi untuk environment `local`/`testing` dan tidak boleh digunakan pada staging atau production.
+
+Alternatif import SQL demo lokal:
+
 ```bash
 mysql -u root -p japantravel < japantravel/japantravel.sql
 ```
-Catatan: jika memakai opsi B, tidak perlu menjalankan `php artisan migrate` lagi.
 
-**Akun Demo**
+Jika memakai import SQL, tidak perlu menjalankan migrasi atau demo seeder lagi.
+
+### Akun demo dari fresh demo setup
+
 - Admin: `admin@japantravel.com` / `password`
 - User: `kei@japantravel.com` / `password`
+
+### Local visual-review accounts
+
+Setelah data souvenir lokal tersedia, buat akun dan pesanan khusus visual review dengan:
+
+```bash
+php artisan db:seed --class=DevAccountSeeder
+```
+
+- Admin: `admin.demo@japantravel.test` / `Password123!`
+- User: `user.demo@japantravel.test` / `Password123!`
+
+`DevAccountSeeder` hanya ditujukan untuk visual review pada environment `local`/`testing`, tidak memanggil payment gateway, dan menolak environment lain.
+
+### Production database setup
+
+Jalankan migrasi tanpa demo seed:
+
+```bash
+php artisan migrate --force
+```
+
+Jangan menjalankan `php artisan migrate --seed`, `DemoSeeder`, `DevAccountSeeder`, atau mengimpor SQL demo pada database production.
 
 **Payment Setup (Sandbox)**
 Tambahkan env berikut di `.env`:
@@ -158,8 +190,10 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 
 **5. Migration / seed strategy**
 - Jalankan migrasi dengan `--force` via one-off command (`sh railway/init-app.sh --migrate-only`).
-- Jangan jalankan demo seeder pada production.
-- Demo seed hanya untuk local/staging environment.
+- Command production setara adalah `php artisan migrate --force` tanpa opsi `--seed`.
+- Jangan menjalankan `DatabaseSeeder`, `DemoSeeder`, `DevAccountSeeder`, atau import SQL demo pada production.
+- `DatabaseSeeder` hanya mengisi demo data pada environment `local`/`testing`.
+- `DevAccountSeeder` hanya untuk visual review pada environment `local`/`testing` dengan credential publik yang terdokumentasi.
 
 **6. Storage / media upload**
 - Saat ini media menggunakan disk lokal/public (`MEDIA_DISK=public`), yang bersifat ephemeral di container Railway.
