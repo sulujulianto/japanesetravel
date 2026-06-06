@@ -231,7 +231,6 @@
     </section>
 
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             const chartEndpoint = @json(route('admin.dashboard.charts'));
 
@@ -391,18 +390,20 @@
                 }
             };
 
-            fetch(chartEndpoint, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error('Dashboard chart request failed.');
-                    }
-
-                    return response.json();
+            document.addEventListener('DOMContentLoaded', () => {
+                fetch(chartEndpoint, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 })
-                .then((payload) => initCharts(payload))
-                .catch(showDashboardLoadError);
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error('Dashboard chart request failed.');
+                        }
+
+                        return response.json();
+                    })
+                    .then((payload) => initCharts(payload))
+                    .catch(showDashboardLoadError);
+            });
         </script>
     @endpush
 </x-admin-layout>

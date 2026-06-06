@@ -17,7 +17,7 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
 
-        $scriptSrc = ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'];
+        $scriptSrc = ["'self'", "'unsafe-inline'"];
         $styleSrc = ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'];
         $imgSrc = ["'self'", 'data:'];
         $fontSrc = ["'self'", 'https://fonts.gstatic.com'];
