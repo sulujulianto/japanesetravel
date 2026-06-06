@@ -6,24 +6,22 @@
                 <span class="font-display">Japan<span class="text-[#B33A3A] dark:text-[#D96B6B]">Travel</span></span>
             </div>
             <p class="mt-4 max-w-md text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">
-                {{ __('Kami membantu Anda merancang perjalanan ke Jepang dengan pilihan destinasi, ulasan, dan oleh-oleh terbaik untuk dibawa pulang.') }}
+                {{ __('Platform untuk menemukan destinasi Jepang, membaca ulasan, dan berbelanja oleh-oleh pilihan.') }}
             </p>
         </div>
         <div>
             <h4 class="text-sm font-semibold uppercase tracking-wider text-[#667085] dark:text-[#AEB8C7]">{{ __('Navigasi') }}</h4>
             <ul class="mt-4 space-y-2 text-sm text-[#526071] dark:text-[#D8DEE8]">
-                <li><a href="{{ route('home') }}" class="hover:text-[#8F2E2E] dark:hover:text-[#D96B6B]">{{ __('Wisata') }}</a></li>
+                <li><a href="{{ route('places.index') }}" class="hover:text-[#8F2E2E] dark:hover:text-[#D96B6B]">{{ __('Wisata') }}</a></li>
                 <li><a href="{{ route('shop.index') }}" class="hover:text-[#8F2E2E] dark:hover:text-[#D96B6B]">{{ __('Oleh-oleh') }}</a></li>
                 <li><a href="{{ route('login') }}" class="hover:text-[#8F2E2E] dark:hover:text-[#D96B6B]">{{ __('Masuk') }}</a></li>
             </ul>
         </div>
         <div>
             <h4 class="text-sm font-semibold uppercase tracking-wider text-[#667085] dark:text-[#AEB8C7]">{{ __('Kontak') }}</h4>
-            <ul class="mt-4 space-y-2 text-sm text-[#526071] dark:text-[#D8DEE8]">
-                <li>Tokyo, Japan</li>
-                <li>support@japantravel.com</li>
-                <li>+81 90-1234-5678</li>
-            </ul>
+            <p class="mt-4 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">
+                {{ __('Kontak perjalanan dapat dikonfirmasi melalui kanal resmi yang tersedia pada halaman destinasi.') }}
+            </p>
         </div>
     </div>
     <div class="mx-auto flex max-w-7xl flex-col items-center gap-2 border-t border-[#E7E3DC] px-4 py-5 text-xs text-[#667085] dark:border-[#2A333D] dark:text-[#AEB8C7] sm:px-6 lg:px-8">

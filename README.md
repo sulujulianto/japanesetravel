@@ -120,6 +120,13 @@ Lalu set webhook URL ke `https://<ngrok-id>.ngrok-free.app/payments/webhook/...`
 - Auto-locale dari header browser.
 - Toggle manual: `/lang/id` atau `/lang/en`.
 
+**Travel Inquiry / Contact**
+- Konsultasi perjalanan tersedia melalui CTA WhatsApp pada halaman detail destinasi; website tidak memproses booking atau pembelian jasa travel secara langsung.
+- Pembayaran langsung di website hanya digunakan untuk produk souvenir.
+- `TRAVEL_WHATSAPP_NUMBER` bersifat opsional. Isi dengan nomor format internasional berupa digit saja, tanpa `+`, spasi, atau pesan otomatis.
+- Jika env tersebut kosong, CTA tetap tampil sebagai status informasional nonaktif dan tidak mengarah ke URL WhatsApp yang rusak.
+- Jangan menampilkan email, telepon, atau alamat bisnis sebelum kanal tersebut benar-benar dikonfirmasi.
+
 **Menjalankan Aplikasi**
 ```bash
 php artisan serve

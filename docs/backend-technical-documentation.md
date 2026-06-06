@@ -67,6 +67,11 @@ Yang **belum** aktif:
   - Place detail page.
   - Review list per place.
   - Review submit oleh user authenticated + verified.
+- Travel inquiry:
+  - CTA WhatsApp memakai `TRAVEL_WHATSAPP_NUMBER` dalam format internasional digit-only.
+  - Jika nomor belum tersedia, CTA ditampilkan sebagai state informasional nonaktif.
+  - Link tidak menyisipkan pesan otomatis dan platform tidak memproses booking atau checkout jasa travel.
+  - Checkout/payment aktif hanya untuk produk souvenir.
 - Hardening review:
   - Route review memakai `throttle:6,1`.
   - Guard anti-duplicate pada application layer:
