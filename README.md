@@ -196,9 +196,30 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 - `DevAccountSeeder` hanya untuk visual review pada environment `local`/`testing` dengan credential publik yang terdokumentasi.
 
 **6. Storage / media upload**
-- Saat ini media menggunakan disk lokal/public (`MEDIA_DISK=public`), yang bersifat ephemeral di container Railway.
-- Opsi sementara: mount Railway Volume ke path storage yang sesuai.
-- Opsi production-ready: gunakan object storage (`FILESYSTEM_DISK=s3`) dengan env `AWS_*`.
+- `MEDIA_DISK` mengontrol penyimpanan upload gambar destinasi dan souvenir. `FILESYSTEM_DISK` tetap mengontrol default filesystem Laravel untuk kebutuhan aplikasi lainnya.
+- Baseline deployment portfolio di Railway:
+  ```env
+  FILESYSTEM_DISK=local
+  MEDIA_DISK=public
+  ```
+- Buat Railway Volume pada web service dan mount tepat ke:
+  ```text
+  /var/www/html/storage/app/public
+  ```
+- Runtime harus tetap menjalankan `php artisan storage:link`. Script Railway project ini sudah menyiapkan direktori storage dan memastikan symlink tersebut tersedia.
+- Jangan menjalankan `MEDIA_DISK=public` di production tanpa persistent volume. Filesystem container Railway bersifat ephemeral sehingga upload dapat hilang setelah restart/redeploy, sedangkan path lama masih tersimpan di database dan URL gambar dapat menjadi `404`.
+- Selama memakai local volume, gunakan satu web replica. Multiple replicas dapat melihat filesystem yang berbeda dan bukan target arsitektur deployment portfolio awal ini.
+- Siapkan backup atau export berkala untuk volume karena file media tidak tersimpan di database maupun Git.
+
+Smoke test persistence setelah deployment:
+1. Upload satu gambar destinasi.
+2. Upload satu gambar souvenir.
+3. Simpan dan buka kedua URL gambar untuk memastikan respons `200`.
+4. Restart atau redeploy web service.
+5. Pastikan kedua URL lama tetap merespons `200`.
+6. Uji replace gambar dan delete record untuk memastikan lifecycle file tetap bekerja.
+
+Object storage S3-compatible adalah opsi masa depan untuk kebutuhan CDN, multiple replicas, atau scaling. Project belum memasang adapter `league/flysystem-aws-s3-v3`, sehingga S3 belum siap hanya dengan mengganti environment variable. Migrasi tersebut memerlukan dependency, konfigurasi bucket/endpoint/public URL, dan pengujian URL serta lifecycle media secara terpisah.
 
 **7. Verifikasi sebelum deploy**
 ```bash

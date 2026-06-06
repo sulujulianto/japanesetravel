@@ -208,9 +208,15 @@ CI menjalankan:
 - `DemoSeeder` bersifat destruktif dan hanya diizinkan pada environment `local`/`testing`.
 - `DevAccountSeeder` memakai credential publik untuk visual review dan hanya diizinkan pada environment `local`/`testing`.
 - Database target yang disarankan: MySQL service (selaras lokal MariaDB/MySQL).
-- Storage/media caveat:
-  - default local/public bersifat ephemeral di container.
-  - perlu volume mount atau object storage (S3-compatible).
+- Production media strategy:
+  - `MEDIA_DISK` menentukan disk untuk upload gambar destinasi dan souvenir; `FILESYSTEM_DISK` adalah default disk Laravel untuk kebutuhan lain.
+  - Baseline Railway portfolio memakai `MEDIA_DISK=public` dan `FILESYSTEM_DISK=local`.
+  - Media tersimpan sebagai relative path di database, dengan file fisik di `storage/app/public/uploads/places` atau `storage/app/public/uploads/souvenirs`.
+  - URL publik mengandalkan symlink `public/storage` ke `storage/app/public`; runtime Railway tetap harus menjalankan `php artisan storage:link`.
+  - Railway Volume harus dipasang pada `/var/www/html/storage/app/public` agar file bertahan setelah restart/redeploy.
+  - Public disk tanpa persistent volume tidak production-safe: file dapat hilang sementara relative path tetap ada di database dan URL lama menjadi `404`.
+  - Selama memakai volume lokal, deployment ditujukan untuk satu web replica dan memerlukan backup/export volume.
+  - S3-compatible storage adalah roadmap, bukan konfigurasi yang siap dipakai sekarang. Adapter `league/flysystem-aws-s3-v3` belum terpasang dan migrasi membutuhkan konfigurasi bucket/endpoint/public URL serta pengujian tambahan.
 - Redis/Sentry:
   - konfigurasi siap, aktivasi operasional ditunda tahap berikutnya.
 
@@ -221,7 +227,7 @@ CI menjalankan:
 - Railway deployment belum dieksekusi.
 - Redis belum diaktifkan.
 - Sentry belum diaktifkan di production runtime.
-- Media storage masih local/public bila tanpa volume/object storage.
+- Media production memerlukan Railway Volume; local/public tanpa volume tetap ephemeral.
 
 ## 16) Future Roadmap
 - Fase UI/design refinement (`design.md`).
@@ -229,6 +235,6 @@ CI menjalankan:
 - Aktivasi Redis (cache/session/queue).
 - Aktivasi Sentry production.
 - Load/performance testing (misal k6).
-- Migrasi media ke object storage/S3.
+- Migrasi media ke object storage/S3 setelah adapter dan konfigurasi provider disiapkan.
 - Penambahan unique DB index `place_reviews(place_id, user_id)`.
 - Pengurangan bertahap PHPStan baseline (technical debt cleanup).
