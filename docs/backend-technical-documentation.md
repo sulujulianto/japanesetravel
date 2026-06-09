@@ -90,10 +90,8 @@ Smoke test production:
   - Checkout/payment aktif hanya untuk produk souvenir.
 - Hardening review:
   - Route review memakai `throttle:6,1`.
-  - Guard anti-duplicate pada application layer:
-    - 1 user hanya boleh 1 review per place.
-- Residual recommendation:
-  - Tambah unique DB index `(place_id, user_id)` untuk race-condition safety di tahap terpisah.
+  - Guard anti-duplicate pada application layer memberi respons ramah sebelum insert.
+  - Unique constraint database `(place_id, user_id)` memastikan satu user hanya dapat memberi satu review per destinasi, termasuk saat request bersamaan.
 
 ## 7) Souvenir E-Commerce Flow
 - Shop listing/filter/sort.
@@ -297,7 +295,6 @@ CI menjalankan:
 
 ## 15) Known Limitations
 - Ticketing/booking belum diimplementasikan.
-- Anti-duplicate place review masih application-layer; unique DB index direkomendasikan.
 - Belum ada test concurrency “true parallel” (misal multi-request race test).
 - Railway deployment belum dieksekusi.
 - Dockerfile belum memiliki Docker `HEALTHCHECK`; gunakan Railway HTTP health check `/up`.
@@ -322,5 +319,4 @@ CI menjalankan:
 - Aktivasi Sentry production.
 - Load/performance testing (misal k6).
 - Migrasi media ke object storage/S3 setelah adapter dan konfigurasi provider disiapkan.
-- Penambahan unique DB index `place_reviews(place_id, user_id)`.
 - Pengurangan bertahap PHPStan baseline (technical debt cleanup).

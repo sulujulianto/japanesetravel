@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Place;
 use App\Models\PlaceReview;
 use App\Support\CacheKeys;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,12 +33,16 @@ class ReviewController extends Controller
         }
 
         // 3. Simpan Review
-        PlaceReview::create([
-            'place_id' => $place->id,
-            'user_id' => $userId, // Ambil ID user yang sedang login
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-        ]);
+        try {
+            PlaceReview::create([
+                'place_id' => $place->id,
+                'user_id' => $userId, // Ambil ID user yang sedang login
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return back()->with('error', __('Anda sudah mengulas destinasi ini.'));
+        }
 
         CacheKeys::bump(CacheKeys::REVIEWS_VERSION);
 

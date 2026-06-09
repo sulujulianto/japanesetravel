@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Place;
 use App\Models\PlaceReview;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -85,6 +87,88 @@ class PlaceReviewTest extends TestCase
             ->assertSessionHas('error', 'You have already reviewed this destination.');
 
         $this->assertDatabaseCount('place_reviews', 1);
+    }
+
+    public function test_database_unique_constraint_rejects_duplicate_review(): void
+    {
+        $place = $this->createPlace();
+        $user = User::factory()->create();
+
+        PlaceReview::create([
+            'place_id' => $place->id,
+            'user_id' => $user->id,
+            'rating' => 4,
+            'comment' => 'Review pertama.',
+        ]);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+
+        PlaceReview::create([
+            'place_id' => $place->id,
+            'user_id' => $user->id,
+            'rating' => 5,
+            'comment' => 'Review kedua.',
+        ]);
+    }
+
+    public function test_controller_handles_unique_constraint_race_with_user_friendly_message(): void
+    {
+        $place = $this->createPlace();
+        $user = User::factory()->create();
+        $insertedDuringPrecheck = false;
+
+        DB::listen(function ($query) use ($place, $user, &$insertedDuringPrecheck): void {
+            if ($insertedDuringPrecheck || ! str_contains($query->sql, 'select exists')) {
+                return;
+            }
+
+            $insertedDuringPrecheck = true;
+
+            DB::table('place_reviews')->insert([
+                'place_id' => $place->id,
+                'user_id' => $user->id,
+                'rating' => 4,
+                'comment' => 'Review yang menang dalam race condition.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        $this->actingAs($user)
+            ->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->from(route('place.show', $place->slug))
+            ->post(route('review.store', $place->id), [
+                'rating' => 5,
+                'comment' => 'Review yang kalah dalam race condition.',
+            ])
+            ->assertRedirect(route('place.show', $place->slug))
+            ->assertSessionHas('error', 'Anda sudah mengulas destinasi ini.');
+
+        $this->assertTrue($insertedDuringPrecheck);
+        $this->assertDatabaseCount('place_reviews', 1);
+    }
+
+    public function test_same_user_can_review_different_places(): void
+    {
+        $firstPlace = $this->createPlace();
+        $secondPlace = $this->createPlace();
+        $user = User::factory()->create();
+
+        PlaceReview::create([
+            'place_id' => $firstPlace->id,
+            'user_id' => $user->id,
+            'rating' => 4,
+            'comment' => 'Review destinasi pertama.',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('review.store', $secondPlace->id), [
+                'rating' => 5,
+                'comment' => 'Review destinasi kedua.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseCount('place_reviews', 2);
     }
 
     public function test_different_users_can_submit_review_for_same_place(): void
