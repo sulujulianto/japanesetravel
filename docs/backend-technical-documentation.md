@@ -307,6 +307,13 @@ CI menjalankan:
 - Media production memerlukan Railway Volume; local/public tanpa volume tetap ephemeral dan baseline ini tidak mendukung multiple web replicas.
 - Payment sandbox memerlukan credential, webhook, dan konfigurasi dashboard provider eksternal.
 
+### Demo content
+- `DemoSeeder` hanya boleh berjalan pada environment `local`/`testing` dan mengosongkan tabel aplikasi sebelum mengisi ulang data.
+- Dataset portfolio dibuat kecil dan terkurasi: 10 destinasi, 10 produk oleh-oleh, serta maksimal tiga ulasan per destinasi.
+- Slug destinasi bersifat deterministik agar URL demo stabil setelah seed ulang.
+- Gambar demo sengaja dibiarkan kosong. Gunakan aset legal atau berlisensi dan unggah melalui admin untuk visual review.
+- Production hanya menjalankan migration; jangan menjalankan demo seed atau mengimpor SQL demo.
+
 ## 16) Future Roadmap
 - Fase UI/design refinement (`design.md`).
 - Implementasi ticketing/booking system terpisah.

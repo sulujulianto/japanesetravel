@@ -55,6 +55,8 @@ php artisan migrate --seed
 
 `DatabaseSeeder` memanggil `DemoSeeder`, yang mengosongkan tabel aplikasi sebelum membuat data demo. Seeder ini dibatasi untuk environment `local`/`testing` dan tidak boleh digunakan pada staging atau production.
 
+Katalog demo sengaja dibatasi menjadi 10 destinasi dan 10 produk oleh-oleh yang dikenal luas agar mudah ditinjau sebagai portfolio. Gambar tidak disertakan; tambahkan sendiri aset yang legal atau berlisensi melalui admin saat menyiapkan visual demo.
+
 Alternatif import SQL demo lokal:
 
 ```bash
@@ -62,6 +64,7 @@ mysql -u root -p japantravel < japantravel/japantravel.sql
 ```
 
 Jika memakai import SQL, tidak perlu menjalankan migrasi atau demo seeder lagi.
+Untuk mendapatkan katalog terkurasi terbaru, prioritaskan `php artisan migrate --seed`; snapshot SQL harus diregenerasi terlebih dahulu setelah dataset seeder berubah.
 
 ### Akun demo dari fresh demo setup
 

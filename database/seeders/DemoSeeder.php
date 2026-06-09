@@ -54,13 +54,15 @@ class DemoSeeder extends Seeder
 
         $places = DemoData::places();
 
+        $placesBySlug = [];
+
         foreach ($places as $placeData) {
-            Place::create([
+            $place = Place::create([
                 'name' => [
                     'id' => $placeData['name_id'],
                     'en' => $placeData['name_en'],
                 ],
-                'slug' => Str::slug($placeData['name_en']).'-'.Str::random(6),
+                'slug' => $placeData['slug'],
                 'description' => [
                     'id' => $placeData['description_id'],
                     'en' => $placeData['description_en'],
@@ -72,6 +74,8 @@ class DemoSeeder extends Seeder
                 'open_hours' => $placeData['open_hours'],
                 'created_by' => $admin->id,
             ]);
+
+            $placesBySlug[$place->slug] = $place;
         }
 
         foreach (DemoData::souvenirs() as $souvenirData) {
@@ -90,32 +94,22 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        $reviewTemplates = DemoData::reviewTemplates();
-
-        mt_srand(2026);
-        $placesCollection = Place::all();
         $reviewerPool = $users->values();
-        $templateCount = count($reviewTemplates);
 
-        foreach ($placesCollection as $place) {
-            $reviewCount = mt_rand(2, 5);
-            for ($i = 0; $i < $reviewCount; $i++) {
-                $reviewer = $reviewerPool[mt_rand(0, $reviewerPool->count() - 1)];
-                $template = $reviewTemplates[mt_rand(0, $templateCount - 1)];
-                $date = now()->subDays(mt_rand(1, 120));
+        foreach (DemoData::reviewTemplates() as $reviewData) {
+            $date = now()->subDays($reviewData['days_ago']);
 
-                $review = PlaceReview::create([
-                    'place_id' => $place->id,
-                    'user_id' => $reviewer->id,
-                    'rating' => $template['rating'],
-                    'comment' => $template['comment'],
-                ]);
+            $review = PlaceReview::create([
+                'place_id' => $placesBySlug[$reviewData['place_slug']]->id,
+                'user_id' => $reviewerPool[$reviewData['user_index']]->id,
+                'rating' => $reviewData['rating'],
+                'comment' => $reviewData['comment'],
+            ]);
 
-                $review->forceFill([
-                    'created_at' => $date,
-                    'updated_at' => $date,
-                ])->save();
-            }
+            $review->forceFill([
+                'created_at' => $date,
+                'updated_at' => $date,
+            ])->save();
         }
 
         mt_srand(2027);
