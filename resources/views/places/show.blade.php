@@ -30,7 +30,7 @@
                     {{ __('Rating') }} {{ $ratingValue }}
                 </span>
                 <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
-                    {{ $reviewCount }} {{ __('ulasan') }}
+                    {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}
                 </span>
                 @if($place->open_days || $place->open_hours)
                     <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
@@ -117,7 +117,7 @@
                     <dl class="mt-4 divide-y divide-[#E7E3DC] border-y border-[#E7E3DC] text-sm dark:divide-[#2A333D] dark:border-[#2A333D]">
                         <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
                             <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Rating') }}</dt>
-                            <dd class="text-[#1F2937] dark:text-[#F4F1ED]">{{ $ratingValue }} · {{ $reviewCount }} {{ __('ulasan') }}</dd>
+                            <dd class="text-[#1F2937] dark:text-[#F4F1ED]">{{ $ratingValue }} · {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}</dd>
                         </div>
                         <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
                             <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Lokasi') }}</dt>
@@ -146,7 +146,7 @@
                             <h2 class="mt-2 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Pengalaman dari pengunjung') }}</h2>
                         </div>
                         <span class="inline-flex w-fit rounded-full border border-[#DDD6CC] bg-[#FAF9F6] px-3 py-1.5 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
-                            {{ $reviewCount }} {{ __('ulasan') }}
+                            {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}
                         </span>
                     </div>
 

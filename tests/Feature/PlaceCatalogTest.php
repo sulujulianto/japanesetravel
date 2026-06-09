@@ -83,6 +83,37 @@ class PlaceCatalogTest extends TestCase
             ->assertDontSee('Rating 4,5');
     }
 
+    public function test_destination_catalog_pluralizes_review_count_for_indonesian_locale(): void
+    {
+        $singleReviewPlace = $this->createPlace('Single Review Place', 'single-review-place');
+        $multipleReviewPlace = $this->createPlace('Multiple Review Place', 'multiple-review-place');
+        $this->createReview($singleReviewPlace, 5);
+        $this->createReview($multipleReviewPlace, 4);
+        $this->createReview($multipleReviewPlace, 5);
+
+        $this->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->get(route('places.index'))
+            ->assertOk()
+            ->assertSee('1 ulasan')
+            ->assertSee('2 ulasan');
+    }
+
+    public function test_destination_catalog_pluralizes_review_count_for_english_locale(): void
+    {
+        $singleReviewPlace = $this->createPlace('Single Review Place', 'single-review-place');
+        $multipleReviewPlace = $this->createPlace('Multiple Review Place', 'multiple-review-place');
+        $this->createReview($singleReviewPlace, 5);
+        $this->createReview($multipleReviewPlace, 4);
+        $this->createReview($multipleReviewPlace, 5);
+
+        $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
+            ->get(route('places.index'))
+            ->assertOk()
+            ->assertSee('1 review')
+            ->assertSee('2 reviews')
+            ->assertDontSee('1 reviews');
+    }
+
     private function createPlace(string $name = 'Tokyo Tower', string $slug = 'tokyo-tower'): Place
     {
         return Place::create([

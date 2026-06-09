@@ -91,7 +91,7 @@
                                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Item Pesanan') }}</p>
                                 <h3 class="mt-2 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Rincian oleh-oleh') }}</h3>
                             </div>
-                            <p class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $order->items->count() }} {{ __('item') }}</p>
+                            <p class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ trans_choice('Jumlah item', $order->items->count(), ['count' => $order->items->count()]) }}</p>
                         </div>
 
                         <div class="mt-5 space-y-3">

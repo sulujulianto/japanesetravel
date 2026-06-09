@@ -202,6 +202,42 @@ class LocaleTest extends TestCase
             ->assertDontSee('Rp1.234.567');
     }
 
+    public function test_order_detail_pluralizes_item_count_for_supported_locales(): void
+    {
+        [$user, $order] = $this->createOrderForFormatting();
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('1 item');
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('1 item')
+            ->assertDontSee('1 items');
+
+        $this->addOrderItem($order);
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('2 item');
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('2 items');
+    }
+
     public function test_admin_dashboard_uses_english_copy(): void
     {
         $response = $this
@@ -425,6 +461,24 @@ class LocaleTest extends TestCase
         ]);
 
         return [$user, $order->fresh()];
+    }
+
+    private function addOrderItem(Order $order): void
+    {
+        $souvenir = Souvenir::factory()->create([
+            'price' => 100000,
+            'stock' => 5,
+        ]);
+
+        OrderItem::create([
+            'order_id' => $order->id,
+            'souvenir_id' => $souvenir->id,
+            'quantity' => 1,
+            'price' => 100000,
+            'product_name' => 'Second Formatting Test Souvenir',
+            'product_price' => 100000,
+            'product_image' => null,
+        ]);
     }
 
     /**

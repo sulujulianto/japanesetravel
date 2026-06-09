@@ -71,7 +71,7 @@
                     <div class="flex flex-1 flex-col p-6">
                         <div class="flex items-start justify-between gap-4">
                             <h3 class="text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $place->name }}</h3>
-                            <span class="shrink-0 text-xs font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ $reviewCount }} {{ __('ulasan') }}</span>
+                            <span class="shrink-0 text-xs font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}</span>
                         </div>
                         <p class="mt-2 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ Str::limit($place->description, 110) }}</p>
                         <div class="mt-auto flex items-center justify-between gap-4 pt-4 text-xs font-medium text-[#5F6B7A] dark:text-[#AEB8C7]">
