@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,5 +76,80 @@ class LocaleTest extends TestCase
             ->assertSee('Souvenir cart')
             ->assertSee('Your cart has no souvenirs yet')
             ->assertDontSee('Keranjang oleh-oleh');
+    }
+
+    public function test_login_uses_english_copy(): void
+    {
+        $response = $this->get('/login', [
+            'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Sign in to Japan Travel')
+            ->assertDontSee('Masuk ke Japan Travel');
+    }
+
+    public function test_register_uses_english_copy(): void
+    {
+        $response = $this->get('/register', [
+            'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Create an account')
+            ->assertDontSee('Buat akun');
+    }
+
+    public function test_authenticated_dashboard_uses_english_copy(): void
+    {
+        $user = User::factory()->create(['username' => 'demo-user']);
+
+        $response = $this
+            ->actingAs($user)
+            ->get('/dashboard', [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Hello, demo-user')
+            ->assertSee('Account activity')
+            ->assertDontSee('Aktivitas akun');
+    }
+
+    public function test_profile_uses_english_copy(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get('/profile', [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Profile settings')
+            ->assertSee('Profile Information')
+            ->assertDontSee('Pengaturan profil');
+    }
+
+    public function test_empty_orders_uses_english_copy(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get('/orders', [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Order history')
+            ->assertSee('Your order history is empty')
+            ->assertDontSee('Riwayat pesanan');
     }
 }
