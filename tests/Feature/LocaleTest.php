@@ -152,4 +152,86 @@ class LocaleTest extends TestCase
             ->assertSee('Your order history is empty')
             ->assertDontSee('Riwayat pesanan');
     }
+
+    public function test_admin_dashboard_uses_english_copy(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.dashboard'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Admin Dashboard')
+            ->assertSee('Key Metrics')
+            ->assertDontSee('Metrik Utama');
+    }
+
+    public function test_admin_places_uses_english_copy(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.places.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Manage Destinations')
+            ->assertSee('Destination List')
+            ->assertDontSee('Daftar Destinasi');
+    }
+
+    public function test_admin_souvenirs_uses_english_copy(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.souvenirs.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Manage Souvenirs')
+            ->assertSee('Souvenir List')
+            ->assertDontSee('Daftar Souvenir');
+    }
+
+    public function test_admin_orders_uses_english_copy(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.orders.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Order List')
+            ->assertSee('Order Filters')
+            ->assertDontSee('Filter Pesanan');
+    }
+
+    public function test_admin_low_stock_uses_english_copy(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.inventory.low-stock'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertSee('Low Stock')
+            ->assertSee('Stock Monitoring Threshold')
+            ->assertDontSee('Batas Pemantauan Stok');
+    }
+
+    private function createAdmin(): User
+    {
+        return User::factory()->create([
+            'role' => 'admin',
+        ]);
+    }
 }

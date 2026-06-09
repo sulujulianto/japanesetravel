@@ -261,7 +261,7 @@
                             data: {
                                 labels: payload.revenue.labels,
                                 datasets: [{
-                                    label: 'Revenue',
+                                    label: @json(__('Revenue')),
                                     data: payload.revenue.series,
                                     borderColor: '#B33A3A',
                                     backgroundColor: 'rgba(179, 58, 58, 0.08)',
@@ -300,7 +300,7 @@
                             data: {
                                 labels: payload.orders.labels,
                                 datasets: [{
-                                    label: 'Orders',
+                                    label: @json(__('Orders')),
                                     data: payload.orders.series,
                                     backgroundColor: 'rgba(47, 93, 80, 0.72)',
                                     borderRadius: 5,
