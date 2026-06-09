@@ -57,13 +57,14 @@ class AdminOrderStatusTransitionTest extends TestCase
         $order = $this->createOrderWithStatus('pending', 'Catatan awal');
 
         $response = $this->actingAs($admin, 'admin')
+            ->withHeader('Accept-Language', 'en-US,en;q=0.9')
             ->put(route('admin.orders.update', $order), [
                 'status' => 'completed',
                 'admin_note' => 'Seharusnya tidak tersimpan.',
             ]);
 
         $response->assertRedirect(route('admin.orders.show', $order));
-        $response->assertSessionHas('error');
+        $response->assertSessionHas('error', 'The order status transition is invalid.');
 
         $order->refresh();
         $this->assertSame('pending', $order->status);

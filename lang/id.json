@@ -644,5 +644,19 @@
     "Tren pendapatan bulanan dari pesanan berbayar.": "Tren pendapatan bulanan dari pesanan berbayar.",
     "Ubah atau reset filter untuk melihat pesanan lainnya.": "Ubah atau reset filter untuk melihat pesanan lainnya.",
     "Unggah gambar utama yang representatif dan jelas.": "Unggah gambar utama yang representatif dan jelas.",
-    "Waktu Pesanan": "Waktu Pesanan"
+    "Waktu Pesanan": "Waktu Pesanan",
+    "Gagal memproses pembayaran PayPal. Silakan coba lagi atau hubungi admin.": "Gagal memproses pembayaran PayPal. Silakan coba lagi atau hubungi admin.",
+    "Jumlah di keranjang disesuaikan dengan stok tersedia.": "Jumlah di keranjang disesuaikan dengan stok yang tersedia.",
+    "Kamu sudah pernah memberi ulasan untuk destinasi ini.": "Anda sudah pernah memberi ulasan untuk destinasi ini.",
+    "Keranjang diperbarui dengan penyesuaian stok.": "Keranjang diperbarui sesuai stok yang tersedia.",
+    "Keranjang diperbarui karena ada perubahan ketersediaan stok. Periksa kembali sebelum checkout.": "Keranjang diperbarui karena ketersediaan stok berubah. Periksa kembali sebelum checkout.",
+    "Pembayaran pesanan ini sudah diterima.": "Pembayaran pesanan ini sudah diterima.",
+    "Pembayaran sebelumnya sedang diproses. Silakan cek kembali status pesanan.": "Pembayaran sebelumnya sedang diproses. Silakan periksa kembali status pesanan.",
+    "Pesanan sudah dibatalkan dan tidak dapat dibayar ulang.": "Pesanan yang sudah dibatalkan tidak dapat dibayar ulang.",
+    "Pesanan sudah selesai dan tidak dapat dibayar ulang.": "Pesanan yang sudah selesai tidak dapat dibayar ulang.",
+    "Produk sedang habis.": "Produk sedang habis.",
+    "Produk tidak ditemukan.": "Produk tidak ditemukan.",
+    "Sebagian jumlah barang disesuaikan dengan stok tersedia.": "Sebagian jumlah barang disesuaikan dengan stok yang tersedia.",
+    "Sebagian produk tidak tersedia dan telah dihapus dari keranjang.": "Sebagian produk tidak tersedia dan telah dihapus dari keranjang.",
+    "Transisi status pesanan tidak valid.": "Perubahan status pesanan tidak valid."
 }

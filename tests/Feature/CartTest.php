@@ -40,8 +40,9 @@ class CartTest extends TestCase
             'stock' => 0,
         ]);
 
-        $this->post(route('cart.add', $souvenir->id))
-            ->assertSessionHas('error')
+        $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
+            ->post(route('cart.add', $souvenir->id))
+            ->assertSessionHas('error', 'This product is out of stock.')
             ->assertSessionMissing('cart.'.$souvenir->id);
     }
 

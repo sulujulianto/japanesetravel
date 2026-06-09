@@ -644,5 +644,19 @@
     "Tren pendapatan bulanan dari pesanan berbayar.": "Monthly revenue trend from paid orders.",
     "Ubah atau reset filter untuk melihat pesanan lainnya.": "Change or reset the filters to view other orders.",
     "Unggah gambar utama yang representatif dan jelas.": "Upload a clear, representative main image.",
-    "Waktu Pesanan": "Order Time"
+    "Waktu Pesanan": "Order Time",
+    "Gagal memproses pembayaran PayPal. Silakan coba lagi atau hubungi admin.": "Unable to process the PayPal payment. Please try again or contact an administrator.",
+    "Jumlah di keranjang disesuaikan dengan stok tersedia.": "The cart quantity was adjusted to the available stock.",
+    "Kamu sudah pernah memberi ulasan untuk destinasi ini.": "You have already reviewed this destination.",
+    "Keranjang diperbarui dengan penyesuaian stok.": "Your cart was updated to reflect available stock.",
+    "Keranjang diperbarui karena ada perubahan ketersediaan stok. Periksa kembali sebelum checkout.": "Your cart was updated because stock availability changed. Review it before checking out.",
+    "Pembayaran pesanan ini sudah diterima.": "Payment for this order has already been received.",
+    "Pembayaran sebelumnya sedang diproses. Silakan cek kembali status pesanan.": "The previous payment is still being processed. Check the order status again shortly.",
+    "Pesanan sudah dibatalkan dan tidak dapat dibayar ulang.": "Cancelled orders cannot be paid again.",
+    "Pesanan sudah selesai dan tidak dapat dibayar ulang.": "Completed orders cannot be paid again.",
+    "Produk sedang habis.": "This product is out of stock.",
+    "Produk tidak ditemukan.": "Product not found.",
+    "Sebagian jumlah barang disesuaikan dengan stok tersedia.": "Some item quantities were adjusted to the available stock.",
+    "Sebagian produk tidak tersedia dan telah dihapus dari keranjang.": "Some unavailable products were removed from your cart.",
+    "Transisi status pesanan tidak valid.": "The order status transition is invalid."
 }

@@ -74,13 +74,14 @@ class PlaceReviewTest extends TestCase
         ]);
 
         $this->actingAs($user)
+            ->withHeader('Accept-Language', 'en-US,en;q=0.9')
             ->from(route('place.show', $place->slug))
             ->post(route('review.store', $place->id), [
                 'rating' => 5,
                 'comment' => 'Review kedua.',
             ])
             ->assertRedirect(route('place.show', $place->slug))
-            ->assertSessionHas('error');
+            ->assertSessionHas('error', 'You have already reviewed this destination.');
 
         $this->assertDatabaseCount('place_reviews', 1);
     }

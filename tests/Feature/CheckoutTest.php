@@ -132,6 +132,7 @@ class CheckoutTest extends TestCase
         });
 
         $response = $this->actingAs($user)
+            ->withHeader('Accept-Language', 'en-US,en;q=0.9')
             ->from(route('cart.index'))
             ->withSession(['cart' => [$souvenir->id => 2]])
             ->post(route('checkout.process'), [
@@ -139,7 +140,7 @@ class CheckoutTest extends TestCase
             ]);
 
         $response->assertRedirect(route('cart.index'));
-        $response->assertSessionHas('error');
+        $response->assertSessionHas('error', 'Failed to create payment. Please try again.');
         $response->assertSessionHas('cart.'.$souvenir->id, 2);
 
         $order = Order::first();
