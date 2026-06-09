@@ -240,8 +240,8 @@ Coverage utama saat ini:
 - `ProfileTest`
 
 Current baseline:
-- **77 tests**
-- **315 assertions**
+- **129 tests**
+- **509 assertions**
 
 ## 13) CI and Quality Gates
 CI menjalankan:
@@ -257,7 +257,7 @@ CI menjalankan:
 - Dockerfile tersedia.
 - Railway scripts tersedia.
 - Status deployment Railway: **postponed** (belum go-live).
-- Env production yang dibutuhkan sudah terdokumentasi di `README.md` dan `.env.example`.
+- Detail environment dan runtime deployment tersedia di dokumen ini serta `.env.example`; `README.md` sengaja berfokus pada instalasi lokal dan ringkasan integrasi.
 - Docker multi-stage:
   - Composer stage memasang dependency production dengan `--no-dev`, optimized autoload, dan package discovery.
   - Node stage memakai `npm ci` serta `npm run build`.
@@ -313,7 +313,7 @@ CI menjalankan:
 - Production hanya menjalankan migration; jangan menjalankan demo seed atau mengimpor SQL demo.
 
 ## 16) Future Roadmap
-- Fase UI/design refinement (`design.md`).
+- Perluasan gallery screenshot dan dokumentasi penggunaan untuk review portfolio.
 - Implementasi ticketing/booking system terpisah.
 - Aktivasi Redis (cache/session/queue).
 - Aktivasi Sentry production.
