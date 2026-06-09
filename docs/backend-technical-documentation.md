@@ -259,6 +259,22 @@ CI menjalankan:
 - Railway scripts tersedia.
 - Status deployment Railway: **postponed** (belum go-live).
 - Env production yang dibutuhkan sudah terdokumentasi di `README.md` dan `.env.example`.
+- Docker multi-stage:
+  - Composer stage memasang dependency production dengan `--no-dev`, optimized autoload, dan package discovery.
+  - Node stage memakai `npm ci` serta `npm run build`.
+  - Image final memakai PHP 8.3 + Apache, extension aplikasi, Vite assets, dan permission awal Laravel.
+- Railway runtime:
+  - `start-web.sh` menjalankan `init-app.sh --runtime-only`, menyesuaikan Apache ke `$PORT`, lalu menjalankan Apache foreground.
+  - Runtime membuat direktori storage/cache, memastikan `public/storage`, dan membangun `config:cache` serta `view:cache`.
+  - Runtime sengaja tidak menjalankan migration/seed; migration dilakukan sebagai one-off `init-app.sh --migrate-only`.
+  - `route:cache` belum dijalankan oleh runtime dan merupakan optimasi follow-up, bukan asumsi deployment saat ini.
+- Laravel health endpoint tersedia pada `/up`. Dockerfile belum memiliki directive `HEALTHCHECK`, sehingga Railway perlu dikonfigurasi memakai HTTP health check tersebut.
+- Baseline database drivers:
+  - `SESSION_DRIVER=database`
+  - `CACHE_STORE=database`
+  - `QUEUE_CONNECTION=database`
+  - migration project menyediakan tabel sessions, cache, jobs, dan failed jobs.
+- `run-worker.sh` menjalankan koneksi `database` secara eksplisit serta membaca `DB_QUEUE` untuk nama queue. Mengubah `QUEUE_CONNECTION` ke Redis belum cukup tanpa menyesuaikan script pada fase terpisah.
 - Production migration menggunakan `php artisan migrate --force` tanpa demo seed.
 - Production mail wajib memakai SMTP/provider transactional yang valid; mailer `log` hanya untuk local/development dan tidak mengirim reset-password atau verification email.
 - Payment belum boleh dianggap live-ready hanya karena automated tests lulus. Deployment harus menyelesaikan sandbox matrix, memakai `APP_URL` HTTPS, mendaftarkan webhook, memisahkan credential sandbox/production, dan melakukan smoke test terkontrol sebelum mengaktifkan mode production.
@@ -283,9 +299,13 @@ CI menjalankan:
 - Anti-duplicate place review masih application-layer; unique DB index direkomendasikan.
 - Belum ada test concurrency “true parallel” (misal multi-request race test).
 - Railway deployment belum dieksekusi.
+- Dockerfile belum memiliki Docker `HEALTHCHECK`; gunakan Railway HTTP health check `/up`.
+- `route:cache` belum menjadi bagian runtime preparation.
+- Railway worker saat ini hardcoded ke queue connection `database`.
 - Redis belum diaktifkan.
 - Sentry belum diaktifkan di production runtime.
-- Media production memerlukan Railway Volume; local/public tanpa volume tetap ephemeral.
+- Media production memerlukan Railway Volume; local/public tanpa volume tetap ephemeral dan baseline ini tidak mendukung multiple web replicas.
+- Payment sandbox memerlukan credential, webhook, dan konfigurasi dashboard provider eksternal.
 
 ## 16) Future Roadmap
 - Fase UI/design refinement (`design.md`).

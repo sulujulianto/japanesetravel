@@ -1,6 +1,6 @@
 # Japan Travel
 
-Portfolio-grade travel storefront untuk destinasi Jepang + toko souvenir, lengkap dengan admin dashboard modern, pembayaran nyata, dan UX bilingual (ID/EN).
+Portfolio-grade travel storefront untuk destinasi Jepang + toko souvenir, lengkap dengan admin dashboard modern, integrasi pembayaran, dan UX bilingual (ID/EN).
 
 ![Tampilan Japan Travel](japantravel/japanese-travel.jpg)
 
@@ -215,13 +215,11 @@ CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 - Lihat dokumen lengkap: [`docs/backend-technical-documentation.md`](docs/backend-technical-documentation.md)
 
 **Deployment Checklist**
-- `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`.
-- Ganti `MAIL_MAILER=log` dengan mail provider production yang valid dan verifikasi reset password/email verification.
-- `php artisan storage:link`.
-- `npm run build`.
-- `php artisan optimize` + `config:cache`, `route:cache`, `view:cache`.
-- Pastikan `APP_URL` memakai origin production HTTPS dan webhook Midtrans/PayPal terdaftar pada akun production.
-- Gunakan credential production yang terpisah dan ubah `MIDTRANS_IS_PRODUCTION=true` / `PAYPAL_IS_PRODUCTION=true` hanya setelah sandbox checklist serta smoke test production terkontrol selesai.
+- Gunakan Railway checklist di bawah sebagai sumber utama. Docker image sudah menjalankan Composer production install dan Vite build.
+- Jalankan migrasi sebagai one-off command dengan `php artisan migrate --force`; jangan seed database production.
+- Web runtime menyiapkan permission storage, `storage:link`, `config:cache`, dan `view:cache`.
+- `route:cache` tidak dijalankan oleh script saat ini; perlakukan sebagai optimasi follow-up setelah diuji pada image yang sama.
+- Gunakan `/up` sebagai health check aplikasi.
 
 ## Railway Deployment (No-Deploy Checklist)
 
@@ -230,7 +228,7 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 **1. Services yang disarankan**
 - Web service: Dockerfile project ini.
 - MySQL service: gunakan MySQL Railway agar konsisten dengan lokal MariaDB/MySQL.
-- Optional worker service: untuk queue jika dipakai.
+- Optional worker service: untuk queue database jika ada job asynchronous.
 - Optional cron service: untuk scheduler jika dipakai.
 
 **2. Start command per service**
@@ -238,6 +236,9 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 - One-off migration (manual sebelum go-live): `sh railway/init-app.sh --migrate-only`
 - Worker (optional): `sh railway/run-worker.sh`
 - Cron (optional): `sh railway/run-cron.sh`
+- Health check path: `/up`
+
+Web start tidak menjalankan migrasi. Jalankan one-off migration setelah environment database siap dan sebelum menerima traffic pada release yang membawa migration baru.
 
 **3. Environment variables wajib (tanpa nilai secret)**
 - App: `APP_NAME`, `APP_ENV`, `APP_KEY`, `APP_DEBUG`, `APP_URL`, `TRUSTED_PROXIES`
@@ -253,12 +254,22 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 **4. Production baseline env**
 - `APP_ENV=production`
 - `APP_DEBUG=false`
+- `APP_KEY` dibuat satu kali dengan `php artisan key:generate --show`, lalu disimpan sebagai secret Railway. Jangan membuat key baru pada setiap deploy.
+- `APP_URL` memakai origin Railway/custom-domain HTTPS tanpa trailing path.
 - `SESSION_SECURE_COOKIE=true`
 - `TRUSTED_PROXIES=*`
 - `LOG_CHANNEL=stack`
 - `LOG_STACK=stderr`
+- `DB_CONNECTION=mysql` dengan credential MySQL Railway atau `DB_URL` yang sesuai.
+- `SESSION_DRIVER=database`
+- `CACHE_STORE=database`
+- `QUEUE_CONNECTION=database`
+- `FILESYSTEM_DISK=local`
+- `MEDIA_DISK=public`
 - `MAIL_MAILER` bukan `log`; gunakan SMTP/provider transactional yang sudah dikonfigurasi.
 - `MAIL_FROM_ADDRESS` dan `MAIL_FROM_NAME` sesuai identitas domain/aplikasi production.
+- `TRAVEL_WHATSAPP_NUMBER` opsional; biarkan kosong sampai kanal resmi tersedia.
+- Untuk portfolio/staging payment, gunakan credential sandbox dan pertahankan kedua flag production sebagai `false`.
 
 **5. Migration / seed strategy**
 - Jalankan migrasi dengan `--force` via one-off command (`sh railway/init-app.sh --migrate-only`).
@@ -293,7 +304,19 @@ Smoke test persistence setelah deployment:
 
 Object storage S3-compatible adalah opsi masa depan untuk kebutuhan CDN, multiple replicas, atau scaling. Project belum memasang adapter `league/flysystem-aws-s3-v3`, sehingga S3 belum siap hanya dengan mengganti environment variable. Migrasi tersebut memerlukan dependency, konfigurasi bucket/endpoint/public URL, dan pengujian URL serta lifecycle media secara terpisah.
 
-**7. Verifikasi sebelum deploy**
+**7. Runtime, cache, dan worker**
+- Docker build memakai `composer install --no-dev --optimize-autoloader`, menghasilkan Vite assets melalui `npm ci && npm run build`, dan menyalin hasil build ke image final.
+- `railway/start-web.sh` menjalankan runtime preparation sebelum Apache:
+  - membuat direktori Laravel yang diperlukan;
+  - memperbaiki permission `bootstrap/cache` dan `storage`;
+  - membuat `public/storage` bila belum ada;
+  - membersihkan lalu membangun `config:cache` dan `view:cache`.
+- Runtime tidak menjalankan migration atau seed secara otomatis.
+- Runtime tidak menjalankan `route:cache`. Ini bukan blocker, tetapi dapat dievaluasi terpisah setelah `php artisan route:cache` diuji dalam deployment image.
+- `railway/run-worker.sh` saat ini menjalankan `queue:work database` secara eksplisit dan memakai `DB_QUEUE` untuk nama queue. Jangan mengubah `QUEUE_CONNECTION` ke Redis lalu menganggap script tersebut ikut berubah.
+- Database migrations sudah menyediakan tabel session, cache, jobs, dan failed jobs untuk baseline driver database.
+
+**8. Verifikasi sebelum deploy**
 ```bash
 composer validate
 composer audit
@@ -303,10 +326,43 @@ npm ci
 npm run build
 ```
 
+**9. Final Railway deployment checklist**
+1. Buat Railway project, web service dari Dockerfile, dan MySQL service.
+2. Generate `APP_KEY` sekali, lalu isi seluruh environment tanpa menyimpan secret di Git.
+3. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`, `TRUSTED_PROXIES=*`, dan `SESSION_SECURE_COOKIE=true`.
+4. Hubungkan database dan gunakan baseline database untuk session/cache/queue.
+5. Buat Railway Volume pada web service dan mount ke `/var/www/html/storage/app/public`.
+6. Konfigurasikan mail provider staging/production; jangan gunakan `MAIL_MAILER=log` untuk flow email nyata.
+7. Isi `TRAVEL_WHATSAPP_NUMBER` hanya bila kanal resmi tersedia.
+8. Bila menguji pembayaran, gunakan credential sandbox, daftarkan webhook HTTPS, dan pertahankan production flags `false`.
+9. Jalankan `sh railway/init-app.sh --migrate-only` sebagai one-off command. Jangan menjalankan seed demo atau import SQL demo.
+10. Start web service dengan `sh railway/start-web.sh`; tambahkan worker/cron hanya jika memang dibutuhkan.
+11. Set health check Railway ke `/up`.
+12. Jalankan smoke test:
+    - homepage, places, shop, dan health check merespons;
+    - register/login, user dashboard, admin login, dan guard separation bekerja;
+    - upload destinasi/souvenir bertahan setelah restart/redeploy;
+    - cart dan checkout souvenir sandbox bekerja tanpa memakai uang nyata;
+    - webhook diterima dan duplicate event tetap idempotent;
+    - forgot password/email verification benar-benar terkirim;
+    - WhatsApp tetap disabled bila nomor kosong atau membuka kanal resmi bila diisi;
+    - footer, HTTPS redirect, session cookie, serta log error diperiksa.
+13. Simpan backup database dan Railway Volume sebelum perubahan production berikutnya.
+
+**Known deployment limitations**
+- Dockerfile belum mendefinisikan Docker `HEALTHCHECK`; Railway harus memakai HTTP health check `/up`.
+- `route:cache` belum menjadi bagian runtime script.
+- Worker Railway hanya mendukung koneksi database dalam bentuk saat ini.
+- S3 belum aktif; local media volume membatasi deployment ke satu web replica.
+- Payment sandbox tetap membutuhkan konfigurasi eksternal pada dashboard Midtrans/PayPal.
+- Redis dan Sentry runtime masih opsional/belum diaktifkan sebagai baseline.
+
 **Regenerasi SQL Demo**
 ```bash
 php scripts/generate_demo_sql.php
 ```
+
+Command ini hanya untuk artefak demo lokal. Jangan menjalankannya atau mengimpor hasilnya ke database staging/production.
 
 ## Lisensi
 MIT (mengikuti lisensi bawaan Laravel).
