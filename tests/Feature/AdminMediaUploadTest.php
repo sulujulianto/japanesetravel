@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Place;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Support\Media;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -148,6 +149,82 @@ class AdminMediaUploadTest extends TestCase
         $this->assertNotSame($oldPath, $souvenir->image);
         Storage::disk('public')->assertMissing($oldPath);
         Storage::disk('public')->assertExists($souvenir->image);
+    }
+
+    public function test_admin_media_upload_rejects_images_over_dimension_limit(): void
+    {
+        Storage::fake('public');
+        config([
+            'media.disk' => 'public',
+            'media.max_width' => 6000,
+            'media.max_height' => 6000,
+        ]);
+
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.places.create'))
+            ->post(route('admin.places.store'), [
+                'name_id' => 'Gambar terlalu lebar',
+                'name_en' => 'Oversized image',
+                'description_id' => 'Deskripsi tempat',
+                'description_en' => 'Place description',
+                'address' => 'Tokyo',
+                'facilities' => 'Pusat informasi',
+                'open_days' => 'Setiap hari',
+                'open_hours' => '09:00-18:00',
+                'image' => UploadedFile::fake()->image('oversized-place.jpg', 6001, 10),
+            ])
+            ->assertRedirect(route('admin.places.create'))
+            ->assertSessionHasErrors('image');
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.souvenirs.create'))
+            ->post(route('admin.souvenirs.store'), [
+                'name_id' => 'Produk bergambar besar',
+                'name_en' => 'Oversized product image',
+                'description_id' => 'Deskripsi produk',
+                'description_en' => 'Product description',
+                'price' => 100000,
+                'stock' => 5,
+                'image' => UploadedFile::fake()->image('oversized-souvenir.png', 10, 6001),
+            ])
+            ->assertRedirect(route('admin.souvenirs.create'))
+            ->assertSessionHasErrors('image');
+
+        $this->assertDatabaseCount('places', 0);
+        $this->assertDatabaseCount('souvenirs', 0);
+        Storage::disk('public')->assertDirectoryEmpty('uploads');
+    }
+
+    public function test_media_delete_only_removes_files_from_allowed_upload_directories(): void
+    {
+        Storage::fake('public');
+        config(['media.disk' => 'public']);
+
+        $validPlacePath = 'uploads/places/place.webp';
+        $validSouvenirPath = 'uploads/souvenirs/souvenir.webp';
+        $outsidePath = 'documents/keep.txt';
+        $traversalTarget = 'uploads/keep.txt';
+
+        Storage::disk('public')->put($validPlacePath, 'place');
+        Storage::disk('public')->put($validSouvenirPath, 'souvenir');
+        Storage::disk('public')->put($outsidePath, 'outside');
+        Storage::disk('public')->put($traversalTarget, 'traversal-target');
+
+        Media::delete($validPlacePath);
+        Media::delete($validSouvenirPath);
+        Media::delete($outsidePath);
+        Media::delete('uploads/places/../keep.txt');
+        Media::delete('/uploads/places/absolute.webp');
+        Media::delete('uploads\\places\\windows.webp');
+        Media::delete(null);
+        Media::delete('');
+
+        Storage::disk('public')->assertMissing($validPlacePath);
+        Storage::disk('public')->assertMissing($validSouvenirPath);
+        Storage::disk('public')->assertExists($outsidePath);
+        Storage::disk('public')->assertExists($traversalTarget);
     }
 
     protected function createAdmin(): User

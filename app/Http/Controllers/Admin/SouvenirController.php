@@ -7,6 +7,7 @@ use App\Models\Souvenir;
 use App\Support\CacheKeys;
 use App\Support\Media;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SouvenirController extends Controller
 {
@@ -34,7 +35,15 @@ class SouvenirController extends Controller
             'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:2048',
+                Rule::dimensions()
+                    ->maxWidth((int) config('media.max_width', 6000))
+                    ->maxHeight((int) config('media.max_height', 6000)),
+            ],
         ]);
 
         $description = null;
@@ -82,7 +91,15 @@ class SouvenirController extends Controller
             'description_en' => 'nullable|string|required_with:description_id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:2048',
+                Rule::dimensions()
+                    ->maxWidth((int) config('media.max_width', 6000))
+                    ->maxHeight((int) config('media.max_height', 6000)),
+            ],
         ]);
 
         if ($request->hasFile('image')) {

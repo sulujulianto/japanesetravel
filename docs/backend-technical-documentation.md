@@ -207,7 +207,8 @@ Operational checklist:
   - throttle
   - idempotency table
 - Security headers middleware (CSP, X-Frame-Options, dll).
-- Upload validation (mime/size) + image optimization WebP.
+- Upload validation membatasi MIME, ukuran file 2 MB, dan dimensi maksimum 6000×6000 piksel sebelum optimasi WebP.
+- Penghapusan media dibatasi ke path relatif di `uploads/places` dan `uploads/souvenirs`; path traversal, absolute path, dan path di luar direktori tersebut diabaikan.
 - Quality/security gates:
   - `composer audit` (backend dependency advisories)
   - `npm audit` (frontend dependency advisories)

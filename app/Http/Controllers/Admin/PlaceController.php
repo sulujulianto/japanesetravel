@@ -9,6 +9,7 @@ use App\Support\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PlaceController extends Controller
 {
@@ -34,7 +35,15 @@ class PlaceController extends Controller
             'name_en' => 'required|string|max:150',
             'description_id' => 'nullable|string|required_with:description_en',
             'description_en' => 'nullable|string|required_with:description_id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:2048',
+                Rule::dimensions()
+                    ->maxWidth((int) config('media.max_width', 6000))
+                    ->maxHeight((int) config('media.max_height', 6000)),
+            ],
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
             'open_days' => 'nullable|string|max:100',
@@ -88,7 +97,15 @@ class PlaceController extends Controller
             'name_en' => 'required|string|max:150',
             'description_id' => 'nullable|string|required_with:description_en',
             'description_en' => 'nullable|string|required_with:description_id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'max:2048',
+                Rule::dimensions()
+                    ->maxWidth((int) config('media.max_width', 6000))
+                    ->maxHeight((int) config('media.max_height', 6000)),
+            ],
             'address' => 'nullable|string|max:255',
             'facilities' => 'nullable|string',
             'open_days' => 'nullable|string|max:100',

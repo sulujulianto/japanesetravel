@@ -9,6 +9,8 @@ use RuntimeException;
 
 class Media
 {
+    private const DELETABLE_PATH_PATTERN = '#\Auploads/(?:places|souvenirs)/[^/\\\\\x00]+\z#';
+
     public static function diskName(): string
     {
         return (string) config('media.disk', 'public');
@@ -53,7 +55,7 @@ class Media
 
     public static function delete(?string $path): void
     {
-        if (blank($path)) {
+        if (! self::isDeletablePath($path)) {
             return;
         }
 
@@ -62,6 +64,17 @@ class Media
         if ($disk->exists($path)) {
             $disk->delete($path);
         }
+    }
+
+    private static function isDeletablePath(?string $path): bool
+    {
+        if (blank($path) || ! preg_match(self::DELETABLE_PATH_PATTERN, $path)) {
+            return false;
+        }
+
+        $filename = basename($path);
+
+        return $filename !== '.' && $filename !== '..';
     }
 
     protected static function storeOriginal(UploadedFile $file, string $directory, string $extension): string
