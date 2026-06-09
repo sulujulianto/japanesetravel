@@ -8,7 +8,7 @@ Portfolio-grade travel storefront untuk destinasi Jepang + toko souvenir, lengka
 - Public: listing destinasi, detail + ulasan, toko souvenir, cart, checkout, riwayat pesanan.
 - Admin: dashboard KPI + charts, manajemen destinasi/souvenir, low-stock tooling, manajemen order + payment.
 - Auth terpisah: guard user (web) dan guard admin, login admin via `/admin/login`.
-- Payment production-ready: Midtrans Snap (Indonesia) + PayPal Checkout (internasional) dengan webhook + verifikasi signature + idempotency.
+- Payment integration: Midtrans Snap (Indonesia) + PayPal Checkout (internasional) dengan webhook, verifikasi signature, dan idempotency. Kesiapan live tetap bergantung pada credential, konfigurasi provider, serta smoke test sandbox/production.
 - i18n: auto-locale dari browser, toggle ID/EN, konten DB bilingual (spatie/laravel-translatable).
 - Theme toggle: light/dark berbasis class, tersimpan di localStorage, tanpa flicker.
 - Security: rate limiting login & webhook, security headers, session/cookie hardening, sesi admin terpisah.
@@ -92,29 +92,54 @@ php artisan migrate --force
 Jangan menjalankan `php artisan migrate --seed`, `DemoSeeder`, `DevAccountSeeder`, atau mengimpor SQL demo pada database production.
 
 **Payment Setup (Sandbox)**
-Tambahkan env berikut di `.env`:
+
+Checkout/payment hanya berlaku untuk produk souvenir. Konsultasi dan layanan perjalanan dilakukan melalui WhatsApp dan tidak masuk ke payment gateway.
+
+Gunakan credential sandbox provider dan pertahankan kedua flag production sebagai `false`:
+
 ```env
-MIDTRANS_SERVER_KEY=your_midtrans_server_key
-MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+APP_URL=https://your-public-staging-domain.example
+
+MIDTRANS_SERVER_KEY=your_midtrans_sandbox_server_key
+MIDTRANS_CLIENT_KEY=your_midtrans_sandbox_client_key
 MIDTRANS_IS_PRODUCTION=false
 
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
-PAYPAL_WEBHOOK_ID=your_paypal_webhook_id
+PAYPAL_CLIENT_ID=your_paypal_sandbox_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_sandbox_client_secret
+PAYPAL_WEBHOOK_ID=your_paypal_sandbox_webhook_id
 PAYPAL_IS_PRODUCTION=false
 PAYPAL_CURRENCY=USD
 PAYPAL_EXCHANGE_RATE=15000
 ```
 
-Webhook endpoints:
-- Midtrans: `POST /payments/webhook/midtrans`
-- PayPal: `POST /payments/webhook/paypal`
+`APP_URL` harus menunjuk ke origin publik HTTPS yang benar. Driver PayPal membentuk return/cancel URL dari route aplikasi, sehingga URL yang salah dapat mengembalikan pembeli ke host yang keliru.
+
+Endpoint yang perlu didaftarkan atau dikonfigurasi pada dashboard provider:
+- Midtrans notification/webhook: `POST ${APP_URL}/payments/webhook/midtrans`
+- PayPal webhook: `POST ${APP_URL}/payments/webhook/paypal`
+- PayPal return: `GET ${APP_URL}/payments/paypal/return` (dibuat otomatis saat checkout)
+- PayPal cancel: `GET ${APP_URL}/payments/paypal/cancel` (dibuat otomatis saat checkout)
 
 Untuk uji local, gunakan ngrok (contoh):
 ```bash
 ngrok http 8000
 ```
-Lalu set webhook URL ke `https://<ngrok-id>.ngrok-free.app/payments/webhook/...`
+Lalu set `APP_URL` ke origin HTTPS tunnel tersebut, bersihkan cache konfigurasi, dan daftarkan endpoint webhook yang sesuai. Jangan memakai credential production atau uang nyata untuk pengujian sandbox.
+
+Checklist sandbox sebelum demo portfolio:
+
+1. Isi credential sandbox Midtrans dan PayPal di environment deployment; jangan simpan secret di repository.
+2. Pastikan `MIDTRANS_IS_PRODUCTION=false` dan `PAYPAL_IS_PRODUCTION=false`.
+3. Pastikan `APP_URL` adalah URL staging/deployment HTTPS yang dapat diakses provider.
+4. Daftarkan kedua webhook URL dan salin PayPal sandbox webhook ID ke `PAYPAL_WEBHOOK_ID`.
+5. Jalankan checkout souvenir bernilai kecil dengan akun/test instrument sandbox masing-masing provider.
+6. Pastikan redirect ke provider serta return/cancel PayPal kembali ke deployment yang benar.
+7. Pastikan webhook diterima, signature lolos, payment berubah sesuai event, dan order hanya berpindah mengikuti state yang diizinkan.
+8. Kirim ulang event webhook yang sama dan pastikan tidak membuat efek ganda.
+9. Uji kegagalan pembuatan payment/cancel dan pastikan stok tidak berkurang permanen secara keliru.
+10. Periksa log aplikasi/provider tanpa menyalin credential atau payload sensitif ke dokumentasi.
+
+Sebelum live, buat credential/webhook production yang terpisah, ulangi smoke test terkontrol, verifikasi `PAYPAL_EXCHANGE_RATE` yang digunakan aplikasi, lalu baru ubah flag provider ke `true`. Jangan menganggap keberhasilan automated test sebagai bukti bahwa credential, webhook dashboard, DNS, HTTPS, atau akun provider production sudah benar.
 
 **Mail Setup**
 
@@ -195,8 +220,8 @@ CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 - `php artisan storage:link`.
 - `npm run build`.
 - `php artisan optimize` + `config:cache`, `route:cache`, `view:cache`.
-- Pastikan webhook Midtrans/PayPal mengarah ke domain production.
-- Set `MIDTRANS_IS_PRODUCTION=true` dan `PAYPAL_IS_PRODUCTION=true`.
+- Pastikan `APP_URL` memakai origin production HTTPS dan webhook Midtrans/PayPal terdaftar pada akun production.
+- Gunakan credential production yang terpisah dan ubah `MIDTRANS_IS_PRODUCTION=true` / `PAYPAL_IS_PRODUCTION=true` hanya setelah sandbox checklist serta smoke test production terkontrol selesai.
 
 ## Railway Deployment (No-Deploy Checklist)
 

@@ -141,6 +141,41 @@ Smoke test production:
 - Tabel `payment_webhook_events` dengan unique `(provider, event_id)`.
 - Duplicate webhook event status sama tidak dieksekusi ulang.
 
+### Environment dan sandbox readiness
+- Credential gateway berasal dari `config/services.php`:
+  - Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`.
+  - PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_IS_PRODUCTION`, `PAYPAL_CURRENCY`, `PAYPAL_EXCHANGE_RATE`.
+- `MIDTRANS_IS_PRODUCTION=false` dan `PAYPAL_IS_PRODUCTION=false` adalah baseline sandbox. Credential sandbox dan production harus dipisahkan di environment deployment dan tidak boleh disimpan di repository.
+- `APP_URL` harus berupa origin publik HTTPS yang benar. PayPal `return_url` dan `cancel_url` dibuat melalui named route Laravel, sehingga hasil URL bergantung pada konfigurasi URL aplikasi/proxy.
+- Endpoint provider:
+  - Midtrans notification: `POST /payments/webhook/midtrans`.
+  - PayPal webhook: `POST /payments/webhook/paypal`.
+  - PayPal return/cancel: `GET /payments/paypal/return` dan `GET /payments/paypal/cancel`.
+- Midtrans memverifikasi `signature_key` menggunakan server key. Tidak ada env webhook secret Midtrans terpisah pada implementasi saat ini.
+- PayPal memverifikasi event melalui API `verify-webhook-signature`; `PAYPAL_WEBHOOK_ID` harus berasal dari webhook pada app dan mode yang sama.
+- PayPal mengonversi total IDR menggunakan `PAYPAL_CURRENCY` dan `PAYPAL_EXCHANGE_RATE`. Nilai rate saat ini bersifat konfigurasi manual dan harus diverifikasi secara operasional sebelum demo/live.
+- Automated tests memalsukan gateway/API eksternal. Test tersebut membuktikan kontrak aplikasi, signature handling, idempotency, state guard, serta stock compensation, tetapi tidak membuktikan credential atau konfigurasi dashboard provider benar.
+- Direct payment hanya untuk checkout souvenir. Konsultasi perjalanan melalui WhatsApp tidak membuat order travel dan tidak masuk ke gateway.
+
+Sandbox test matrix minimum:
+
+| Skenario | Midtrans | PayPal | Verifikasi aplikasi |
+|---|---|---|---|
+| Create checkout | sandbox credential | sandbox credential | redirect URL tersedia; order/payment `pending` |
+| Return/cancel | provider redirect | return/cancel URL | user kembali ke deployment yang benar; tidak mengklaim paid sebelum konfirmasi |
+| Success webhook | signed settlement/capture | verified completed event | payment `paid`; pending order menjadi `processing` |
+| Failure/cancel | failed/expired/cancel event | denied/cancel event | status mengikuti guard; terminal order tidak direvive |
+| Duplicate webhook | kirim ulang event sama | kirim ulang event ID sama | tidak ada efek ganda/idempotency record tetap aman |
+| Gateway creation failure | simulasi provider gagal | simulasi provider gagal | payment `failed`, order `cancelled`, stok dikembalikan |
+
+Operational checklist:
+1. Gunakan `APP_URL` staging HTTPS dan credential sandbox.
+2. Daftarkan webhook pada dashboard provider dan simpan PayPal sandbox webhook ID.
+3. Jalankan checkout souvenir kecil dengan test instrument resmi provider; jangan gunakan uang nyata.
+4. Verifikasi redirect, callback, webhook, status payment/order, duplicate delivery, dan stock compensation.
+5. Tinjau log aplikasi/provider untuk kegagalan signature atau callback.
+6. Untuk go-live, buat konfigurasi production terpisah dan ulangi smoke test terkontrol sebelum mengaktifkan kedua flag production.
+
 ## 9) Order / Payment State Machine
 | Event / Action | Payment Status | Order Before | Order After | Allowed / Blocked |
 |---|---|---|---|---|
@@ -226,6 +261,7 @@ CI menjalankan:
 - Env production yang dibutuhkan sudah terdokumentasi di `README.md` dan `.env.example`.
 - Production migration menggunakan `php artisan migrate --force` tanpa demo seed.
 - Production mail wajib memakai SMTP/provider transactional yang valid; mailer `log` hanya untuk local/development dan tidak mengirim reset-password atau verification email.
+- Payment belum boleh dianggap live-ready hanya karena automated tests lulus. Deployment harus menyelesaikan sandbox matrix, memakai `APP_URL` HTTPS, mendaftarkan webhook, memisahkan credential sandbox/production, dan melakukan smoke test terkontrol sebelum mengaktifkan mode production.
 - `DatabaseSeeder` hanya menjalankan demo data pada environment `local`/`testing`.
 - `DemoSeeder` bersifat destruktif dan hanya diizinkan pada environment `local`/`testing`.
 - `DevAccountSeeder` memakai credential publik untuk visual review dan hanya diizinkan pada environment `local`/`testing`.
