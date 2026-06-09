@@ -49,22 +49,22 @@
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <article class="{{ $dashboardCard }}">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Revenue') }}</p>
-                <p class="mt-3 break-words text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($metrics['revenue'] ?? 0, 0, ',', '.') }}</p>
+                <p class="mt-3 break-words text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($metrics['revenue'] ?? 0) }}</p>
                 <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Total pendapatan dari pesanan berbayar.') }}</p>
             </article>
             <article class="{{ $dashboardCard }}">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total Pesanan') }}</p>
-                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ number_format($metrics['orders'] ?? 0) }}</p>
+                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::number($metrics['orders'] ?? 0) }}</p>
                 <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Semua pesanan yang masuk ke sistem.') }}</p>
             </article>
             <article class="{{ $dashboardCard }}">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Pesanan Dibayar') }}</p>
-                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ number_format($metrics['paid_orders'] ?? 0) }}</p>
+                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::number($metrics['paid_orders'] ?? 0) }}</p>
                 <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Pesanan yang sudah diproses pembayaran.') }}</p>
             </article>
             <article class="{{ $dashboardCard }}">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Stok Rendah') }}</p>
-                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ number_format($metrics['low_stock'] ?? 0) }}</p>
+                <p class="mt-3 text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::number($metrics['low_stock'] ?? 0) }}</p>
                 <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Produk dengan stok di bawah batas aman.') }}</p>
             </article>
         </div>
@@ -125,9 +125,9 @@
                     <div class="flex items-center justify-between gap-4 rounded-xl border border-[#E7E3DC] bg-[#FAF8F3] px-4 py-3 dark:border-[#2A333D] dark:bg-[#0E1116]">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $item->name }}</p>
-                            <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ __('Sisa stok') }}: {{ $item->stock }}</p>
+                            <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ __('Sisa stok') }}: {{ \App\Support\Format::number($item->stock) }}</p>
                         </div>
-                        <x-ui.badge variant="warning">{{ $item->stock }}</x-ui.badge>
+                        <x-ui.badge variant="warning">{{ \App\Support\Format::number($item->stock) }}</x-ui.badge>
                     </div>
                 @empty
                     <div class="rounded-xl border border-dashed border-[#E7E3DC] p-5 text-center dark:border-[#2A333D]">
@@ -168,7 +168,7 @@
                                 <div class="font-medium text-[#374151] dark:text-[#D8DEE8]">{{ $order->user?->username }}</div>
                                 <div class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $order->user?->email }}</div>
                             </td>
-                            <td class="whitespace-nowrap px-2 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                            <td class="whitespace-nowrap px-2 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</td>
                             <td class="px-2 py-4">
                                 @if($order->payment)
                                     <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
@@ -208,7 +208,7 @@
                         </div>
                         <a href="{{ route('admin.orders.show', $order) }}" class="shrink-0 text-sm font-semibold text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Detail') }}</a>
                     </div>
-                    <p class="mt-4 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                    <p class="mt-4 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</p>
                     <div class="mt-3 flex flex-wrap gap-2">
                         @if($order->payment)
                             <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
@@ -233,10 +233,14 @@
     @push('scripts')
         <script>
             const chartEndpoint = @json(route('admin.dashboard.charts'));
+            const chartLocale = @json(\App\Support\Format::jsLocale());
 
-            const formatIdr = (value) => new Intl.NumberFormat('id-ID', {
+            const formatIdr = (value) => new Intl.NumberFormat(chartLocale, {
                 style: 'currency',
                 currency: 'IDR',
+                maximumFractionDigits: 0,
+            }).format(value || 0);
+            const formatNumber = (value) => new Intl.NumberFormat(chartLocale, {
                 maximumFractionDigits: 0,
             }).format(value || 0);
 
@@ -350,13 +354,13 @@
                         name.textContent = item.name;
                         const meta = document.createElement('p');
                         meta.className = 'mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]';
-                        meta.textContent = `${item.total} ${@json(__('terjual'))}`;
+                        meta.textContent = `${formatNumber(item.total)} ${@json(__('terjual'))}`;
                         info.appendChild(name);
                         info.appendChild(meta);
 
                         const total = document.createElement('span');
                         total.className = 'shrink-0 text-sm font-semibold text-[#2F5D50] dark:text-[#8AB7A4]';
-                        total.textContent = item.total;
+                        total.textContent = formatNumber(item.total);
 
                         row.appendChild(rank);
                         row.appendChild(info);

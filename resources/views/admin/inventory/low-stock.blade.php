@@ -64,10 +64,10 @@
                                 <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $souvenir->name }}</p>
                                 <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ __('SKU') }} #{{ $souvenir->id }}</p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($souvenir->price, 0, ',', '.') }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($souvenir->price) }}</td>
                             <td class="px-4 py-4">
                                 <x-ui.badge variant="{{ $souvenir->stock === 0 ? 'danger' : 'warning' }}">
-                                    {{ $souvenir->stock === 0 ? __('Habis') : __('Rendah') }} · {{ $souvenir->stock }}
+                                    {{ $souvenir->stock === 0 ? __('Habis') : __('Rendah') }} · {{ \App\Support\Format::number($souvenir->stock) }}
                                 </x-ui.badge>
                             </td>
                             <td class="px-6 py-4">
@@ -102,10 +102,10 @@
                             <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('SKU') }} #{{ $souvenir->id }}</p>
                         </div>
                         <x-ui.badge variant="{{ $souvenir->stock === 0 ? 'danger' : 'warning' }}">
-                            {{ $souvenir->stock === 0 ? __('Habis') : __('Rendah') }} · {{ $souvenir->stock }}
+                            {{ $souvenir->stock === 0 ? __('Habis') : __('Rendah') }} · {{ \App\Support\Format::number($souvenir->stock) }}
                         </x-ui.badge>
                     </div>
-                    <p class="mt-4 border-t border-[#E7E3DC] pt-3 text-sm font-semibold text-[#1F2937] dark:border-[#2A333D] dark:text-[#F4F1ED]">Rp {{ number_format($souvenir->price, 0, ',', '.') }}</p>
+                    <p class="mt-4 border-t border-[#E7E3DC] pt-3 text-sm font-semibold text-[#1F2937] dark:border-[#2A333D] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($souvenir->price) }}</p>
                     <form method="POST" action="{{ route('admin.inventory.restock', $souvenir) }}" class="mt-4 grid gap-2 min-[360px]:grid-cols-[1fr_auto]">
                         @csrf
                         <div>

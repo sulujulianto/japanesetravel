@@ -110,8 +110,8 @@
                                 <p class="font-medium text-[#374151] dark:text-[#D8DEE8]">{{ $order->user?->username ?: __('Pengguna tidak tersedia') }}</p>
                                 <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $order->user?->email ?: '-' }}</p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-[#526071] dark:text-[#AEB8C7]">{{ $order->created_at->format('d M Y') }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 text-[#526071] dark:text-[#AEB8C7]">{{ \App\Support\Format::date($order->created_at) }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</td>
                             <td class="px-4 py-4">
                                 @if($order->payment)
                                     <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
@@ -156,11 +156,11 @@
                     <dl class="mt-4 grid grid-cols-2 gap-3 border-y border-[#E7E3DC] py-3 dark:border-[#2A333D]">
                         <div>
                             <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Tanggal') }}</dt>
-                            <dd class="mt-1 text-sm text-[#374151] dark:text-[#D8DEE8]">{{ $order->created_at->format('d M Y') }}</dd>
+                            <dd class="mt-1 text-sm text-[#374151] dark:text-[#D8DEE8]">{{ \App\Support\Format::date($order->created_at) }}</dd>
                         </div>
                         <div>
                             <dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</dt>
-                            <dd class="mt-1 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</dd>
+                            <dd class="mt-1 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</dd>
                         </div>
                     </dl>
 

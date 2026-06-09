@@ -7,8 +7,10 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Support\CacheKeys;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class LocaleTest extends TestCase
@@ -215,6 +217,103 @@ class LocaleTest extends TestCase
             ->assertDontSee('Metrik Utama');
     }
 
+    public function test_admin_dashboard_formats_revenue_and_chart_locale_for_indonesian(): void
+    {
+        $this->createOrderForFormatting();
+        Cache::forget('admin:dashboard:metrics');
+
+        $this->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.dashboard'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('Rp1.234.567')
+            ->assertSee('const chartLocale = "id-ID"', false);
+    }
+
+    public function test_admin_dashboard_formats_revenue_and_chart_locale_for_english(): void
+    {
+        $this->createOrderForFormatting();
+        Cache::forget('admin:dashboard:metrics');
+
+        $this->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.dashboard'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('IDR 1,234,567')
+            ->assertSee('const chartLocale = "en-US"', false)
+            ->assertDontSee('Rp1.234.567');
+    }
+
+    public function test_admin_order_pages_format_values_for_supported_locales(): void
+    {
+        [, $order] = $this->createOrderForFormatting();
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.orders.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('Rp1.234.567')
+            ->assertSee('9 Jun 2026');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('Rp1.234.567')
+            ->assertSee('Rp617.284')
+            ->assertSee('9 Jun 2026, 14.30');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.orders.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('IDR 1,234,567')
+            ->assertSee('Jun 9, 2026')
+            ->assertDontSee('Rp1.234.567');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('IDR 1,234,567')
+            ->assertSee('IDR 617,284')
+            ->assertSee('Jun 9, 2026, 2:30 PM')
+            ->assertDontSee('Rp1.234.567');
+    }
+
+    public function test_admin_chart_cache_is_isolated_by_locale(): void
+    {
+        $admin = $this->createAdmin();
+        $indonesianPayload = $this->chartPayload('Agu 2026', '9 Agu');
+        $englishPayload = $this->chartPayload('Aug 2026', 'Aug 9');
+
+        Cache::put(CacheKeys::adminDashboardCharts('id'), $indonesianPayload, 60);
+        Cache::put(CacheKeys::adminDashboardCharts('en'), $englishPayload, 60);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard.charts'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertJsonPath('revenue.labels.0', 'Agu 2026')
+            ->assertJsonPath('orders.labels.0', '9 Agu');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard.charts'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertJsonPath('revenue.labels.0', 'Aug 2026')
+            ->assertJsonPath('orders.labels.0', 'Aug 9');
+    }
+
     public function test_admin_places_uses_english_copy(): void
     {
         $response = $this
@@ -326,5 +425,27 @@ class LocaleTest extends TestCase
         ]);
 
         return [$user, $order->fresh()];
+    }
+
+    /**
+     * @return array{
+     *     revenue: array{labels: array<int, string>, series: array<int, float>},
+     *     orders: array{labels: array<int, string>, series: array<int, int>},
+     *     topSouvenirs: array<int, array{name: string, total: int}>
+     * }
+     */
+    private function chartPayload(string $monthLabel, string $dayLabel): array
+    {
+        return [
+            'revenue' => [
+                'labels' => [$monthLabel],
+                'series' => [1234567.0],
+            ],
+            'orders' => [
+                'labels' => [$dayLabel],
+                'series' => [1],
+            ],
+            'topSouvenirs' => [],
+        ];
     }
 }

@@ -8,9 +8,9 @@
             <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED] sm:text-3xl">#ORDER-{{ $order->id }}</h1>
-                    <p class="mt-2 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibuat pada') }} {{ $order->created_at->format('d M Y H:i') }}</p>
+                    <p class="mt-2 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibuat pada') }} {{ \App\Support\Format::dateTime($order->created_at) }}</p>
                 </div>
-                <p class="text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                <p class="text-2xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</p>
             </div>
         </div>
     </x-slot>
@@ -86,8 +86,8 @@
                     </div>
                     <div>
                         <dt class="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Waktu Pesanan') }}</dt>
-                        <dd class="mt-2 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $order->created_at->format('d M Y H:i') }}</dd>
-                        <dd class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Total') }}: Rp {{ number_format($order->total_price, 0, ',', '.') }}</dd>
+                        <dd class="mt-2 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::dateTime($order->created_at) }}</dd>
+                        <dd class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Total') }}: {{ \App\Support\Format::idr($order->total_price) }}</dd>
                     </div>
                 </dl>
 
@@ -130,15 +130,15 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $productName }}</p>
-                                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $item->quantity }} &times; Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ \App\Support\Format::number($item->quantity) }} &times; {{ \App\Support\Format::idr($item->price) }}</p>
                                 </div>
                                 <p class="hidden shrink-0 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED] sm:block">
-                                    Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}
+                                    {{ \App\Support\Format::idr($item->quantity * $item->price) }}
                                 </p>
                             </div>
                             <div class="mt-3 flex items-center justify-between border-t border-[#E7E3DC] pt-3 text-sm sm:hidden dark:border-[#2A333D]">
                                 <span class="text-[#526071] dark:text-[#AEB8C7]">{{ __('Subtotal') }}</span>
-                                <span class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</span>
+                                <span class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($item->quantity * $item->price) }}</span>
                             </div>
                         </article>
                     @endforeach
@@ -163,8 +163,8 @@
                                     <p class="mt-2 break-all text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $payment->provider_ref ?: __('Referensi belum tersedia') }}</p>
                                 </div>
                                 <div class="sm:text-right">
-                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $payment->currency }} {{ number_format($payment->amount, 2, '.', ',') }}</p>
-                                    <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $payment->paid_at?->format('d M Y H:i') ?? __('Belum dibayar') }}</p>
+                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($payment->amount) }}</p>
+                                    <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $payment->paid_at ? \App\Support\Format::dateTime($payment->paid_at) : __('Belum dibayar') }}</p>
                                 </div>
                             </div>
                         </article>

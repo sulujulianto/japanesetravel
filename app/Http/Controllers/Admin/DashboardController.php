@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Souvenir;
+use App\Support\CacheKeys;
+use App\Support\Format;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -40,7 +42,8 @@ class DashboardController extends Controller
 
     public function charts(Request $request): JsonResponse
     {
-        $data = Cache::remember('admin:dashboard:charts', now()->addSeconds(90), function () {
+        $locale = Format::locale();
+        $data = Cache::remember(CacheKeys::adminDashboardCharts($locale), now()->addSeconds(90), function () use ($locale) {
             $paidStatuses = ['processing', 'completed'];
             $startMonth = now()->subMonths(11)->startOfMonth();
             $endMonth = now()->endOfMonth();
@@ -57,7 +60,7 @@ class DashboardController extends Controller
             $cursor = $startMonth->copy();
             while ($cursor <= $endMonth) {
                 $key = $cursor->format('Y-m');
-                $months[] = $cursor->format('M Y');
+                $months[] = $cursor->locale($locale)->isoFormat('MMM YYYY');
                 $revenueSeries[] = (float) ($revenue[$key] ?? 0);
                 $cursor->addMonth();
             }
@@ -75,7 +78,7 @@ class DashboardController extends Controller
             $cursor = $startDay->copy();
             while ($cursor <= $endDay) {
                 $key = $cursor->format('Y-m-d');
-                $days[] = $cursor->format('d M');
+                $days[] = $cursor->locale($locale)->isoFormat('D MMM');
                 $orderSeries[] = (int) ($orders[$key] ?? 0);
                 $cursor->addDay();
             }

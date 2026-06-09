@@ -51,9 +51,9 @@
                                 <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $souvenir->name }}</p>
                                 <p class="mt-1 text-xs text-[#526071] dark:text-[#AEB8C7]">SKU #{{ $souvenir->id }}</p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($souvenir->price, 0, ',', '.') }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($souvenir->price) }}</td>
                             <td class="px-4 py-4">
-                                <x-ui.badge variant="{{ $stockVariant }}">{{ $stockLabel }} · {{ $souvenir->stock }}</x-ui.badge>
+                                <x-ui.badge variant="{{ $stockVariant }}">{{ $stockLabel }} · {{ \App\Support\Format::number($souvenir->stock) }}</x-ui.badge>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-3 text-sm font-semibold">
@@ -91,8 +91,8 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $souvenir->name }}</p>
-                            <p class="mt-1 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($souvenir->price, 0, ',', '.') }}</p>
-                            <div class="mt-2"><x-ui.badge variant="{{ $stockVariant }}">{{ $stockLabel }} · {{ $souvenir->stock }}</x-ui.badge></div>
+                            <p class="mt-1 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($souvenir->price) }}</p>
+                            <div class="mt-2"><x-ui.badge variant="{{ $stockVariant }}">{{ $stockLabel }} · {{ \App\Support\Format::number($souvenir->stock) }}</x-ui.badge></div>
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-end gap-4 border-t border-[#E7E3DC] pt-3 text-sm font-semibold dark:border-[#2A333D]">

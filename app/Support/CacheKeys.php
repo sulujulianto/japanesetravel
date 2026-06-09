@@ -12,6 +12,11 @@ class CacheKeys
 
     public const REVIEWS_VERSION = 'reviews:version';
 
+    public static function adminDashboardCharts(?string $locale = null): string
+    {
+        return 'admin:dashboard:charts:'.Format::locale($locale);
+    }
+
     public static function version(string $key, int $default = 1): int
     {
         return (int) Cache::get($key, $default);
