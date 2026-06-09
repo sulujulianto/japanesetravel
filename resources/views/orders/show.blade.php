@@ -48,7 +48,7 @@
                                 <div class="space-y-2">
                                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Ringkasan Pesanan') }}</p>
                                     <h3 class="text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</h3>
-                                    <p class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibuat pada') }} {{ $order->created_at->format('d M Y') }}</p>
+                                    <p class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibuat pada') }} {{ \App\Support\Format::date($order->created_at) }}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
                                     <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
@@ -68,7 +68,7 @@
                         <div class="grid gap-4 bg-[#FAF8F3]/60 px-5 py-5 dark:bg-slate-950/40 sm:grid-cols-2 lg:grid-cols-4 sm:px-6">
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Tanggal') }}</span>
-                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $order->created_at->format('d M Y') }}</div>
+                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::date($order->created_at) }}</div>
                             </div>
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Status Order') }}</span>
@@ -80,7 +80,7 @@
                             </div>
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</span>
-                                <div class="mt-2 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
+                                <div class="mt-2 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</div>
                             </div>
                         </div>
                     </x-ui.card>
@@ -110,11 +110,11 @@
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $productName }}</p>
-                                        <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Qty') }} {{ $item->quantity }} · Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                                        <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Qty') }} {{ $item->quantity }} · {{ \App\Support\Format::idr($item->price) }}</p>
                                     </div>
                                     <div class="text-left sm:text-right">
                                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Subtotal') }}</p>
-                                        <p class="mt-1 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</p>
+                                        <p class="mt-1 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($item->quantity * $item->price) }}</p>
                                     </div>
                                 </div>
                             @endforeach
@@ -141,11 +141,11 @@
                                 </div>
                                 <div class="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3 dark:border-slate-800">
                                     <span class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Jumlah') }}</span>
-                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $order->payment->currency }} {{ number_format($order->payment->amount, 2, '.', ',') }}</span>
+                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->payment->amount) }}</span>
                                 </div>
                                 <div class="flex items-start justify-between gap-4">
                                     <span class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibayar pada') }}</span>
-                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $order->payment->paid_at?->format('d M Y H:i') ?? '-' }}</span>
+                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::dateTime($order->payment->paid_at) }}</span>
                                 </div>
                             </div>
                         @else
@@ -155,7 +155,7 @@
 
                     <x-ui.card>
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total Pesanan') }}</p>
-                        <p class="mt-2 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                        <p class="mt-2 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</p>
                         <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">
                             {{ __('Status pembayaran mengikuti pembaruan dari provider. Pesanan belum dianggap selesai sampai pembayaran diterima.') }}
                         </p>

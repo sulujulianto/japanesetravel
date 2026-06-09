@@ -18,7 +18,7 @@
 
                 <section class="rounded-2xl border border-[#E7E3DC] bg-white p-5 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total Belanja') }}</p>
-                    <p class="mt-3 text-3xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($data['spent'] ?? 0, 0, ',', '.') }}</p>
+                    <p class="mt-3 text-3xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($data['spent'] ?? 0) }}</p>
                     <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Akumulasi pesanan berstatus diproses atau selesai.') }}</p>
                 </section>
 
@@ -51,9 +51,9 @@
                         <div class="grid gap-3 rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-4 dark:border-[#2A333D] dark:bg-[#1F2630] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-6">
                             <div>
                                 <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</p>
-                                <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $order->created_at->format('d M Y') }}</p>
+                                <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ \App\Support\Format::date($order->created_at) }}</p>
                             </div>
-                            <div class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
+                            <div class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</div>
                             <a href="{{ route('orders.show', $order) }}" class="w-fit text-sm font-semibold text-[#B33A3A] hover:text-[#8F2E2E] dark:text-[#D96B6B] dark:hover:text-[#E18484]">{{ __('Lihat detail') }}</a>
                         </div>
                     @empty

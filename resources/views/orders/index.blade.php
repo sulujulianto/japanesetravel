@@ -41,7 +41,7 @@
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Nomor Order') }}</span>
                                     <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                                    <span class="text-sm font-medium text-[#526071] dark:text-[#AEB8C7]">{{ $order->created_at->format('d M Y') }}</span>
+                                    <span class="text-sm font-medium text-[#526071] dark:text-[#AEB8C7]">{{ \App\Support\Format::date($order->created_at) }}</span>
                                 </div>
                                 <p class="text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</p>
                                 <div class="flex flex-wrap gap-2">
@@ -61,7 +61,7 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-end">
                                 <div class="sm:text-right">
                                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</p>
-                                    <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                                    <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</p>
                                 </div>
                                 <a href="{{ route('orders.show', $order) }}" class="inline-flex items-center justify-center rounded-xl border border-[#B33A3A]/25 px-4 py-2 text-sm font-semibold text-[#B33A3A] transition hover:border-[#B33A3A] hover:bg-[#B33A3A]/5 dark:border-[#D96B6B]/30 dark:text-[#D96B6B] dark:hover:bg-[#D96B6B]/10">
                                     {{ __('Lihat detail') }}
@@ -86,11 +86,11 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $productName }}</p>
-                                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                                    <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $item->quantity }} x {{ \App\Support\Format::idr($item->price) }}</p>
                                 </div>
                                 <div class="text-left sm:text-right">
                                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Subtotal') }}</p>
-                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</p>
+                                    <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($item->quantity * $item->price) }}</p>
                                 </div>
                             </div>
                         @endforeach

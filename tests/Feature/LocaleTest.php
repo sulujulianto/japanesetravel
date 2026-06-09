@@ -2,7 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\Souvenir;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -153,6 +158,48 @@ class LocaleTest extends TestCase
             ->assertDontSee('Riwayat pesanan');
     }
 
+    public function test_orders_index_formats_values_for_indonesian_locale(): void
+    {
+        [$user] = $this->createOrderForFormatting();
+
+        $this->actingAs($user)
+            ->get(route('orders.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('Rp1.234.567')
+            ->assertSee('9 Jun 2026');
+    }
+
+    public function test_orders_index_formats_values_for_english_locale(): void
+    {
+        [$user] = $this->createOrderForFormatting();
+
+        $this->actingAs($user)
+            ->get(route('orders.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('IDR 1,234,567')
+            ->assertSee('Jun 9, 2026')
+            ->assertDontSee('Rp1.234.567');
+    }
+
+    public function test_order_detail_formats_payment_for_english_locale(): void
+    {
+        [$user, $order] = $this->createOrderForFormatting();
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertSee('IDR 1,234,567')
+            ->assertSee('IDR 617,284')
+            ->assertSee('Jun 9, 2026, 2:30 PM')
+            ->assertDontSee('Rp1.234.567');
+    }
+
     public function test_admin_dashboard_uses_english_copy(): void
     {
         $response = $this
@@ -233,5 +280,51 @@ class LocaleTest extends TestCase
         return User::factory()->create([
             'role' => 'admin',
         ]);
+    }
+
+    /**
+     * @return array{User, Order}
+     */
+    private function createOrderForFormatting(): array
+    {
+        $user = User::factory()->create();
+        $souvenir = Souvenir::factory()->create([
+            'price' => 617283.5,
+            'stock' => 5,
+        ]);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 1234567,
+            'status' => 'processing',
+            'note' => 'Formatting test order',
+        ]);
+
+        $order->forceFill([
+            'created_at' => CarbonImmutable::parse('2026-06-09 14:30:00'),
+            'updated_at' => CarbonImmutable::parse('2026-06-09 14:30:00'),
+        ])->saveQuietly();
+
+        OrderItem::create([
+            'order_id' => $order->id,
+            'souvenir_id' => $souvenir->id,
+            'quantity' => 2,
+            'price' => 617283.5,
+            'product_name' => 'Formatting Test Souvenir',
+            'product_price' => 617283.5,
+            'product_image' => null,
+        ]);
+
+        Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'FORMAT-TEST-'.$order->id,
+            'status' => 'paid',
+            'amount' => 617283.5,
+            'currency' => 'IDR',
+            'payload_json' => [],
+            'paid_at' => CarbonImmutable::parse('2026-06-09 14:30:00'),
+        ]);
+
+        return [$user, $order->fresh()];
     }
 }
