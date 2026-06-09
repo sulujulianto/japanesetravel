@@ -116,6 +116,43 @@ ngrok http 8000
 ```
 Lalu set webhook URL ke `https://<ngrok-id>.ngrok-free.app/payments/webhook/...`
 
+**Mail Setup**
+
+Local development boleh mempertahankan konfigurasi berikut:
+
+```env
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS=no-reply@example.test
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Mailer `log` hanya menulis isi email ke log aplikasi dan tidak mengirim email ke inbox. Konfigurasi ini berguna untuk development, tetapi bukan konfigurasi production.
+
+Production harus menggunakan SMTP valid atau provider email transactional seperti Mailgun, Postmark, Resend, maupun provider lain yang kompatibel dengan Laravel. Isi environment deployment sesuai dokumentasi provider; jangan menyimpan username, password, API key, atau secret mail di repository.
+
+Contoh baseline SMTP production tanpa credential nyata:
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=smtp.provider.example
+MAIL_PORT=587
+MAIL_USERNAME=your-production-smtp-username
+MAIL_PASSWORD=your-production-smtp-password
+MAIL_FROM_ADDRESS=no-reply@your-production-domain.example
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Gunakan `MAIL_SCHEME=smtps` dan port yang sesuai jika provider mensyaratkan implicit TLS. Project ini membaca `MAIL_SCHEME` melalui `config/mail.php`, bukan `MAIL_ENCRYPTION`.
+
+Reset password dan verifikasi email bergantung pada delivery mail yang berfungsi. Setelah deployment:
+
+1. Daftarkan atau gunakan akun test pada domain production.
+2. Minta reset password dan pastikan email diterima.
+3. Pastikan link reset valid dan dapat digunakan.
+4. Kirim ulang email verifikasi dan pastikan link signed dapat dibuka.
+5. Periksa folder spam serta reputasi/domain authentication pengirim sesuai panduan provider.
+
 **i18n (ID/EN)**
 - Auto-locale dari header browser.
 - Toggle manual: `/lang/id` atau `/lang/en`.
@@ -154,6 +191,7 @@ CI GitHub Actions menjalankan build, pint, phpstan, test, dan audit.
 
 **Deployment Checklist**
 - `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`.
+- Ganti `MAIL_MAILER=log` dengan mail provider production yang valid dan verifikasi reset password/email verification.
 - `php artisan storage:link`.
 - `npm run build`.
 - `php artisan optimize` + `config:cache`, `route:cache`, `view:cache`.
@@ -182,7 +220,7 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 - Database: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (atau `DB_URL`)
 - Session/cache/queue: `SESSION_DRIVER`, `SESSION_SECURE_COOKIE`, `CACHE_STORE`, `QUEUE_CONNECTION`
 - Storage: `FILESYSTEM_DISK`, `MEDIA_DISK`
-- Mail: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
+- Mail: `MAIL_MAILER`, `MAIL_SCHEME`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
 - Payment Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
 - Payment PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_IS_PRODUCTION`, `PAYPAL_CURRENCY`, `PAYPAL_EXCHANGE_RATE`
 - Monitoring: `SENTRY_LARAVEL_DSN` (+ optional `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE`)
@@ -194,6 +232,8 @@ Panduan ini untuk menyiapkan deployment Railway secara aman, tanpa menjalankan d
 - `TRUSTED_PROXIES=*`
 - `LOG_CHANNEL=stack`
 - `LOG_STACK=stderr`
+- `MAIL_MAILER` bukan `log`; gunakan SMTP/provider transactional yang sudah dikonfigurasi.
+- `MAIL_FROM_ADDRESS` dan `MAIL_FROM_NAME` sesuai identitas domain/aplikasi production.
 
 **5. Migration / seed strategy**
 - Jalankan migrasi dengan `--force` via one-off command (`sh railway/init-app.sh --migrate-only`).

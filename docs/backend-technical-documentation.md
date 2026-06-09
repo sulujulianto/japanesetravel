@@ -60,6 +60,22 @@ Yang **belum** aktif:
 - Isolasi sesi admin/user:
   - cookie sesi terpisah (`web_cookie` vs `admin_cookie`) via `AdminSessionCookie` middleware.
 
+### Mail delivery untuk auth
+
+- Konfigurasi mail mengikuti `config/mail.php` dan environment `MAIL_*`.
+- Default `MAIL_MAILER=log` hanya menulis email ke log aplikasi; tidak ada email yang dikirim ke inbox pengguna.
+- Reset password memakai notification Laravel, sedangkan email verification bergantung pada delivery notification ke alamat user.
+- Production harus menggunakan SMTP valid atau transport provider transactional yang telah dipasang dan dikonfigurasi, misalnya Mailgun, Postmark, Resend, atau provider kompatibel lainnya.
+- `MAIL_FROM_ADDRESS` dan `MAIL_FROM_NAME` harus memakai identitas pengirim production yang sah. Secret mail hanya disimpan pada environment deployment.
+- Konfigurasi project memakai `MAIL_SCHEME` dari `config/mail.php`; `MAIL_ENCRYPTION` bukan env yang dibaca oleh konfigurasi saat ini.
+
+Smoke test production:
+1. Request reset password untuk akun test dan pastikan email diterima.
+2. Buka link reset, pastikan token valid, lalu selesaikan perubahan password.
+3. Request ulang email verification untuk user belum terverifikasi.
+4. Pastikan email diterima, signed link valid, dan status user berubah menjadi verified.
+5. Periksa spam placement dan konfigurasi domain pengirim sesuai panduan provider.
+
 ## 6) Destination / Place Flow
 - `places` adalah katalog destinasi, **bukan** produk tiket.
 - Flow:
@@ -209,6 +225,7 @@ CI menjalankan:
 - Status deployment Railway: **postponed** (belum go-live).
 - Env production yang dibutuhkan sudah terdokumentasi di `README.md` dan `.env.example`.
 - Production migration menggunakan `php artisan migrate --force` tanpa demo seed.
+- Production mail wajib memakai SMTP/provider transactional yang valid; mailer `log` hanya untuk local/development dan tidak mengirim reset-password atau verification email.
 - `DatabaseSeeder` hanya menjalankan demo data pada environment `local`/`testing`.
 - `DemoSeeder` bersifat destruktif dan hanya diizinkan pada environment `local`/`testing`.
 - `DevAccountSeeder` memakai credential publik untuk visual review dan hanya diizinkan pada environment `local`/`testing`.
