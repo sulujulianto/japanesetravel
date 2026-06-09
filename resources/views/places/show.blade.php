@@ -73,15 +73,9 @@
                             @endif
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
-                                <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Lokasi') }}</h3>
-                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ $place->address ?? __('Alamat belum tersedia.') }}</p>
-                            </div>
-                            <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
-                                <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Peta') }}</h3>
-                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ __('Peta interaktif belum tersedia.') }}</p>
-                            </div>
+                        <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
+                            <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Lokasi') }}</h3>
+                            <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ $place->address ?? __('Alamat belum tersedia.') }}</p>
                         </div>
                     </div>
                 </section>
@@ -200,7 +194,7 @@
                             </div>
                             <div>
                                 <x-ui.label value="{{ __('Komentar') }}" />
-                                <x-ui.textarea name="comment" rows="4" placeholder="{{ __('Ceritakan pengalamanmu di sini...') }}"></x-ui.textarea>
+                                <x-ui.textarea name="comment" rows="4" placeholder="{{ __('Ceritakan pengalaman Anda di sini...') }}"></x-ui.textarea>
                             </div>
                             <x-ui.button type="submit" class="w-full sm:w-auto">{{ __('Kirim Ulasan') }}</x-ui.button>
                         </form>

@@ -63,7 +63,7 @@ class SouvenirController extends Controller
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
-        return redirect()->route('admin.souvenirs.index')->with('success', __('Barang berhasil ditambahkan!'));
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Produk berhasil ditambahkan.'));
     }
 
     // 4. FORM EDIT
@@ -110,7 +110,7 @@ class SouvenirController extends Controller
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
-        return redirect()->route('admin.souvenirs.index')->with('success', __('Data barang diperbarui!'));
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Produk berhasil diperbarui.'));
     }
 
     // 6. HAPUS BARANG
@@ -121,6 +121,6 @@ class SouvenirController extends Controller
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
-        return redirect()->route('admin.souvenirs.index')->with('success', __('Barang dihapus dari stok.'));
+        return redirect()->route('admin.souvenirs.index')->with('success', __('Produk berhasil dihapus.'));
     }
 }

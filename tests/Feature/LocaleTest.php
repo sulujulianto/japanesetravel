@@ -23,7 +23,11 @@ class LocaleTest extends TestCase
             'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
         ]);
 
-        $response->assertSee('Temukan destinasi Jepang dan oleh-oleh pilihan.');
+        $response
+            ->assertSee('Temukan destinasi Jepang dan oleh-oleh pilihan.')
+            ->assertSee('Proyek portfolio berbasis Laravel.')
+            ->assertDontSee('❤️')
+            ->assertDontSee('⛩️');
     }
 
     public function test_locale_uses_accept_language_en(): void

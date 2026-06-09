@@ -2,7 +2,7 @@
     <div class="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:px-8">
         <div class="lg:col-span-2">
             <div class="flex items-center gap-2 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">
-                <span class="text-2xl">⛩️</span>
+                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-[#FAF8F3] text-xs font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">JT</span>
                 <span class="font-display">Japan<span class="text-[#B33A3A] dark:text-[#D96B6B]">Travel</span></span>
             </div>
             <p class="mt-4 max-w-md text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">

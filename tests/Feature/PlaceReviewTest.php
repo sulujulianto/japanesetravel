@@ -46,13 +46,14 @@ class PlaceReviewTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
+            ->withHeader('Accept-Language', 'id-ID,id;q=0.9')
             ->from(route('place.show', $place->slug))
             ->post(route('review.store', $place->id), [
                 'rating' => 5,
                 'comment' => 'Tempatnya bagus banget.',
             ])
             ->assertRedirect(route('place.show', $place->slug))
-            ->assertSessionHas('success');
+            ->assertSessionHas('success', 'Ulasan Anda berhasil dikirim.');
 
         $this->assertDatabaseHas('place_reviews', [
             'place_id' => $place->id,

@@ -28,7 +28,7 @@ class ReviewController extends Controller
             ->exists();
 
         if ($alreadyReviewed) {
-            return back()->with('error', __('Kamu sudah pernah memberi ulasan untuk destinasi ini.'));
+            return back()->with('error', __('Anda sudah mengulas destinasi ini.'));
         }
 
         // 3. Simpan Review
@@ -42,6 +42,6 @@ class ReviewController extends Controller
         CacheKeys::bump(CacheKeys::REVIEWS_VERSION);
 
         // 4. Kembali ke halaman sebelumnya
-        return back()->with('success', __('Terima kasih atas ulasanmu!'));
+        return back()->with('success', __('Ulasan Anda berhasil dikirim.'));
     }
 }

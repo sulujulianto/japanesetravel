@@ -58,6 +58,17 @@ class PlaceCatalogTest extends TestCase
         ]))->assertOk();
     }
 
+    public function test_destination_detail_does_not_render_placeholder_map_copy(): void
+    {
+        $place = $this->createPlace();
+
+        $this->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->get(route('place.show', $place->slug))
+            ->assertOk()
+            ->assertSee('Lokasi')
+            ->assertDontSee('Peta interaktif belum tersedia.');
+    }
+
     public function test_destination_catalog_formats_rating_for_indonesian_locale(): void
     {
         $place = $this->createPlace();

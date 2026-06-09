@@ -71,7 +71,7 @@ class PlaceController extends Controller
 
         CacheKeys::bump(CacheKeys::PLACES_VERSION);
 
-        return redirect()->route('admin.places.index')->with('success', __('Destinasi wisata berhasil ditambahkan!'));
+        return redirect()->route('admin.places.index')->with('success', __('Destinasi berhasil ditambahkan.'));
     }
 
     // 4. TAMPILKAN FORM EDIT (BARU)
@@ -128,7 +128,7 @@ class PlaceController extends Controller
 
         CacheKeys::bump(CacheKeys::PLACES_VERSION);
 
-        return redirect()->route('admin.places.index')->with('success', __('Data berhasil diperbarui!'));
+        return redirect()->route('admin.places.index')->with('success', __('Destinasi berhasil diperbarui.'));
     }
 
     // 6. HAPUS DATA (BARU)
@@ -141,6 +141,6 @@ class PlaceController extends Controller
 
         CacheKeys::bump(CacheKeys::PLACES_VERSION);
 
-        return redirect()->route('admin.places.index')->with('success', __('Destinasi wisata telah dihapus.'));
+        return redirect()->route('admin.places.index')->with('success', __('Destinasi berhasil dihapus.'));
     }
 }

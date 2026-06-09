@@ -16,15 +16,19 @@ class CartTest extends TestCase
             'stock' => 10,
         ]);
 
-        $this->post(route('cart.add', $souvenir->id))
-            ->assertSessionHas('cart.'.$souvenir->id, 1);
+        $this->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->post(route('cart.add', $souvenir->id))
+            ->assertSessionHas('cart.'.$souvenir->id, 1)
+            ->assertSessionHas('success', 'Produk ditambahkan ke keranjang.');
 
         $this->post(route('cart.update'), [
             'qty' => [$souvenir->id => 2],
         ])->assertSessionHas('cart.'.$souvenir->id, 2);
 
-        $this->delete(route('cart.items.destroy', $souvenir->id))
-            ->assertSessionMissing('cart.'.$souvenir->id);
+        $this->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->delete(route('cart.items.destroy', $souvenir->id))
+            ->assertSessionMissing('cart.'.$souvenir->id)
+            ->assertSessionHas('success', 'Produk dihapus dari keranjang.');
     }
 
     public function test_add_cart_with_non_existing_souvenir_is_rejected(): void
