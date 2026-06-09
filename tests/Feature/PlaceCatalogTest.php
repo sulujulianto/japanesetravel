@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Place;
+use App\Models\PlaceReview;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -56,6 +58,31 @@ class PlaceCatalogTest extends TestCase
         ]))->assertOk();
     }
 
+    public function test_destination_catalog_formats_rating_for_indonesian_locale(): void
+    {
+        $place = $this->createPlace();
+        $this->createReview($place, 4);
+        $this->createReview($place, 5);
+
+        $this->withHeader('Accept-Language', 'id-ID,id;q=0.9')
+            ->get(route('places.index'))
+            ->assertOk()
+            ->assertSee('Rating 4,5');
+    }
+
+    public function test_destination_catalog_formats_rating_for_english_locale(): void
+    {
+        $place = $this->createPlace();
+        $this->createReview($place, 4);
+        $this->createReview($place, 5);
+
+        $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
+            ->get(route('places.index'))
+            ->assertOk()
+            ->assertSee('Rating 4.5')
+            ->assertDontSee('Rating 4,5');
+    }
+
     private function createPlace(string $name = 'Tokyo Tower', string $slug = 'tokyo-tower'): Place
     {
         return Place::create([
@@ -69,6 +96,16 @@ class PlaceCatalogTest extends TestCase
                 'en' => 'A city destination with an accessible view.',
             ],
             'address' => 'Tokyo, Japan',
+        ]);
+    }
+
+    private function createReview(Place $place, int $rating): PlaceReview
+    {
+        return PlaceReview::create([
+            'place_id' => $place->id,
+            'user_id' => User::factory()->create()->id,
+            'rating' => $rating,
+            'comment' => 'Stable formatting test review.',
         ]);
     }
 }

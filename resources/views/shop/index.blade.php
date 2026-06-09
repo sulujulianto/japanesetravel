@@ -84,7 +84,7 @@
                         <p class="mt-3 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ Str::limit($item->description, 86) }}</p>
 
                         <div class="mt-auto pt-5">
-                            <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($item->price, 0, ',', '.') }}</p>
+                            <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($item->price) }}</p>
                             <form action="{{ route('cart.add', $item->id) }}" method="POST" class="mt-4">
                                 @csrf
                                 <x-ui.button type="submit" size="sm" variant="primary" class="w-full rounded-full px-4 {{ $item->stock <= 0 ? 'cursor-not-allowed opacity-70' : '' }}" :disabled="$item->stock <= 0">

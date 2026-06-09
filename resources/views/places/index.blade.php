@@ -36,7 +36,7 @@
         <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @forelse($places as $place)
                 @php
-                    $ratingValue = $place->reviews_avg_rating ? number_format($place->reviews_avg_rating, 1) : '0.0';
+                    $ratingValue = \App\Support\Format::rating($place->reviews_avg_rating ?? 0);
                     $reviewCount = $place->reviews_count ?? 0;
                 @endphp
                 <a href="{{ route('place.show', $place->slug) }}" class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#E7E3DC] bg-white shadow-sm transition hover:-translate-y-1 hover:border-[#DDD6CC] hover:shadow-md dark:border-[#2A333D] dark:bg-[#161B22] dark:hover:border-[#3A4652]">
@@ -58,7 +58,7 @@
                         <p class="mt-2 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ Str::limit($place->description, 120) }}</p>
                         <div class="mt-auto flex items-center justify-between gap-4 pt-4 text-xs font-medium text-[#5F6B7A] dark:text-[#AEB8C7]">
                             <span>{{ Str::limit($place->address, 32) }}</span>
-                            <span>{{ $place->created_at->diffForHumans() }}</span>
+                            <span>{{ \App\Support\Format::relative($place->created_at) }}</span>
                         </div>
                     </div>
                 </a>

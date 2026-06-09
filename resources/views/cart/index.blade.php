@@ -56,8 +56,8 @@
 
                                 <div class="min-w-0">
                                     <h3 class="text-base font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $item['product']->name }}</h3>
-                                    <p class="mt-1 text-sm font-medium text-[#526071] dark:text-[#AEB8C7]">{{ __('Harga satuan') }}: Rp {{ number_format($item['product']->price, 0, ',', '.') }}</p>
-                                    <p class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Subtotal') }}: Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</p>
+                                    <p class="mt-1 text-sm font-medium text-[#526071] dark:text-[#AEB8C7]">{{ __('Harga satuan') }}: {{ \App\Support\Format::idr($item['product']->price) }}</p>
+                                    <p class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Subtotal') }}: {{ \App\Support\Format::idr($item['subtotal']) }}</p>
                                 </div>
 
                                 <div class="flex flex-col gap-3 sm:col-span-2 lg:col-span-1">
@@ -94,11 +94,11 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-[#526071] dark:text-[#AEB8C7]">{{ __('Subtotal') }}</span>
-                            <span class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                            <span class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($total) }}</span>
                         </div>
                         <div class="flex items-center justify-between gap-4 pt-2 text-lg font-semibold">
                             <span class="text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Total') }}</span>
-                            <span class="text-[#1F2937] dark:text-[#F4F1ED]">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                            <span class="text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($total) }}</span>
                         </div>
                     </div>
 

@@ -4,7 +4,7 @@
 
 @section('content')
     @php
-        $ratingValue = number_format($place->reviews_avg_rating ?? 0, 1);
+        $ratingValue = \App\Support\Format::rating($place->reviews_avg_rating ?? 0);
         $reviewCount = $place->reviews_count ?? 0;
         $travelWhatsappNumber = preg_replace('/\D+/', '', (string) config('services.travel.whatsapp_number'));
         $travelWhatsappUrl = $travelWhatsappNumber !== '' ? 'https://wa.me/'.$travelWhatsappNumber : null;
@@ -160,7 +160,7 @@
                                         </div>
                                         <div>
                                             <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $review->user->username }}</p>
-                                            <p class="text-xs font-medium text-[#667085] dark:text-[#AEB8C7]">{{ $review->created_at->diffForHumans() }}</p>
+                                            <p class="text-xs font-medium text-[#667085] dark:text-[#AEB8C7]">{{ \App\Support\Format::relative($review->created_at) }}</p>
                                         </div>
                                     </div>
                                     <div class="shrink-0 text-sm tracking-wide text-[#8A6A2F] dark:text-[#D2B16F]">
