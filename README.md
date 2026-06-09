@@ -66,7 +66,7 @@ The repository currently includes the interface preview above. A fuller project 
 Clone the repository and install locked dependencies:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sulujulianto/japanesetravel.git
 cd japanesetravel
 composer install
 npm ci
