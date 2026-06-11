@@ -4,8 +4,6 @@ JapanTravel is a Laravel 12 portfolio project for Japanese destination discovery
 
 Travel services are inquiry-only: the application does not sell tickets or process travel bookings. Direct checkout and payment apply only to souvenir products.
 
-![JapanTravel interface preview](japantravel/japanese-travel.jpg)
-
 ## Portfolio Status
 
 - **Live demo:** pending public deployment
