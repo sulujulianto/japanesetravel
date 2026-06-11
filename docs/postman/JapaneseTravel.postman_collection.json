@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "2f78a1a0-0344-4f68-9f8f-3c5a92c2f117",
+    "name": "JapaneseTravel Safe HTTP Checks",
+    "description": "Safe request templates for a server-rendered Laravel portfolio application. No execution results or secrets are included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "place_slug",
+      "value": "senso-ji-temple"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Laravel Health Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/up",
+              "host": ["{{base_url}}"],
+              "path": ["up"]
+            },
+            "description": "Expected to return a successful Laravel health response."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Pages",
+      "item": [
+        {
+          "name": "Homepage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Destination Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/places",
+              "host": ["{{base_url}}"],
+              "path": ["places"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Destination Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/place/{{place_slug}}",
+              "host": ["{{base_url}}"],
+              "path": ["place", "{{place_slug}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Souvenir Shop",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/shop",
+              "host": ["{{base_url}}"],
+              "path": ["shop"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authorization Redirects",
+      "item": [
+        {
+          "name": "Orders Without User Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            },
+            "description": "Expected to redirect to /login."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Without Admin Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin",
+              "host": ["{{base_url}}"],
+              "path": ["admin"]
+            },
+            "description": "Expected to redirect to /admin/login."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment Webhooks - Negative",
+      "item": [
+        {
+          "name": "Midtrans Invalid Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"INVALID-EXAMPLE\",\n  \"status_code\": \"200\",\n  \"gross_amount\": \"10000.00\",\n  \"transaction_status\": \"settlement\",\n  \"transaction_id\": \"invalid-example\",\n  \"signature_key\": \"not-a-valid-signature\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/webhook/midtrans",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "webhook", "midtrans"]
+            },
+            "description": "Negative test only. Expected 400; never replace with a real secret in an exported collection."
+          },
+          "response": []
+        },
+        {
+          "name": "PayPal Invalid Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"INVALID-EVENT\",\n  \"event_type\": \"CHECKOUT.ORDER.COMPLETED\",\n  \"resource\": {\n    \"id\": \"INVALID-ORDER\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/webhook/paypal",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "webhook", "paypal"]
+            },
+            "description": "Negative test only. Valid verification requires official sandbox headers and a private webhook ID."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

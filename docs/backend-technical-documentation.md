@@ -318,5 +318,34 @@ CI menjalankan:
 - Aktivasi Redis (cache/session/queue).
 - Aktivasi Sentry production.
 - Load/performance testing (misal k6).
+
+## 17) Portfolio Evidence and QA Artifacts
+
+Repository documentation deliberately separates implemented behavior from external/manual proof:
+
+- `docs/deployment-checklist.md`: Railway staging configuration and smoke tests.
+- `docs/testing-summary.md`: automated coverage areas, commands, and limitations.
+- `docs/qa/test-cases-japanese-travel.md`: reusable functional test cases.
+- `docs/qa/manual-qa-checklist.md`: manual browser/staging checks.
+- `docs/qa/test-execution-evidence.md`: tester/date/environment/evidence ledger.
+- `docs/postman-api-checking.md`: safe HTTP/webhook checking boundaries.
+- `docs/troubleshooting-case-studies.md`: investigation examples based on the current architecture.
+- `docs/case-study-japanese-travel.md`: recruiter/interview-oriented technical case study.
+
+No manual test, provider account, live deployment, screenshot, or video is considered complete until actual evidence is attached.
+
+## 18) Staging Release Contract
+
+For the documented Railway staging approach:
+
+1. Build the current Dockerfile.
+2. Configure production-safe environment values and secrets.
+3. Mount media persistence at `/var/www/html/storage/app/public`.
+4. Run `sh railway/init-app.sh --migrate-only` as a separate one-off/pre-deploy action.
+5. Start the web service with `sh railway/start-web.sh`.
+6. Configure the HTTP health check at `/up`.
+7. Do not run demo seeders.
+8. Validate mail/payment/WhatsApp only with approved external configuration.
+9. Record smoke-test evidence before adding a live URL to README.
 - Migrasi media ke object storage/S3 setelah adapter dan konfigurasi provider disiapkan.
 - Pengurangan bertahap PHPStan baseline (technical debt cleanup).

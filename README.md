@@ -1,46 +1,65 @@
 # JapanTravel
 
-JapanTravel is a Laravel-based Japanese travel discovery and souvenir commerce project. It combines a bilingual destination catalog, travel inquiries through WhatsApp, and an internal souvenir checkout flow in one portfolio application.
+JapanTravel is a Laravel 12 portfolio project for Japanese destination discovery and souvenir commerce. It combines bilingual travel content, verified-user reviews, optional travel inquiries through WhatsApp, and an internal souvenir checkout flow.
 
-Travel services are not booked or paid for directly through the website. Online checkout is limited to souvenir products.
+Travel services are inquiry-only: the application does not sell tickets or process travel bookings. Direct checkout and payment apply only to souvenir products.
 
 ![JapanTravel interface preview](japantravel/japanese-travel.jpg)
 
-## Key Features
+## Portfolio Status
 
-- Destination catalog, detail pages, and verified-user reviews.
-- Optional WhatsApp travel inquiry CTA on destination pages.
-- Souvenir catalog, cart, checkout, and user order history.
-- User dashboard, profile management, and email verification flows.
+- **Live demo:** pending public deployment
+- **Demo video:** pending recording
+- **Current quality baseline:** 129 tests, 509 assertions
+- **Positioning:** production-oriented portfolio project with documented deployment and integration limitations
+
+Public deployment, screenshots, payment sandbox validation, and video recording require owner-controlled external accounts. The repository includes checklists and evidence templates for those steps.
+
+## Features
+
+- Bilingual Indonesian/English destination catalog and detail pages.
+- Verified-user destination reviews with application and database duplicate protection.
+- Optional WhatsApp travel inquiry CTA.
+- Souvenir catalog, cart, checkout, payment retry, and order history.
+- Midtrans Snap and PayPal Checkout integration structure for sandbox validation.
 - Separate user and admin authentication sessions.
-- Admin dashboard with revenue, order, inventory, and catalog summaries.
-- Admin management for destinations, souvenirs, orders, and low stock.
-- Indonesian and English localization with locale-aware dates and IDR formatting.
-- Midtrans Snap and PayPal Checkout integration structure for sandbox testing.
-- Image upload validation, dimension limits, and WebP conversion.
-- Light and dark themes across public, user, and admin interfaces.
+- User dashboard, profile management, password reset, and email verification.
+- Admin dashboard for revenue, orders, inventory, destinations, and souvenirs.
+- Stock locking during checkout and compensation after gateway creation failure.
+- Signed/idempotent payment webhook handling.
+- Locale-aware dates, numbers, ratings, and IDR formatting.
+- Media validation, dimension limits, WebP conversion, and restricted deletion paths.
+- Responsive light and dark interfaces.
 
 ## Tech Stack
 
 - PHP 8.3 and Laravel 12
 - Blade, Tailwind CSS, Alpine.js, and Vite
 - MySQL/MariaDB or SQLite
-- Chart.js
+- Chart.js bundled through Vite
 - Midtrans PHP SDK and PayPal REST integration
-- PHPUnit, Laravel Pint, and Larastan/PHPStan
+- PHPUnit, Laravel Pint, Larastan/PHPStan
+- GitHub Actions CI
+- Docker/Railway deployment assets
+
+## Architecture Notes
+
+- `routes/web.php` contains public, authenticated, admin, checkout, and webhook routes.
+- `app/Services/Payments/` isolates Midtrans and PayPal gateway behavior behind a shared interface.
+- User and admin authentication use separate guards and session cookie names.
+- Order items store product snapshots so order history remains readable if a product changes.
+- Payment webhook events use a unique provider/event identifier for idempotency.
+- `app/Support/Format.php` centralizes locale-aware presentation formatting.
+- `app/Support/Media.php` centralizes media storage, WebP conversion, and safe deletion.
+- Database-backed cache, session, and queue drivers are the documented deployment baseline.
+
+See [Backend Technical Documentation](docs/backend-technical-documentation.md) for the detailed data flow and state transitions.
 
 ## Screenshots
 
-The repository currently includes the interface preview above. A fuller project gallery can be added under `docs/screenshots/` with:
+The repository currently contains the interface preview above. A complete evidence gallery is still an owner action.
 
-- Homepage
-- Destination catalog
-- Destination detail
-- Souvenir shop
-- Cart and checkout
-- User order history
-- Admin dashboard
-- Admin destination and souvenir management
+See [Screenshot Capture Checklist](docs/screenshots/README.md) for required views, filenames, viewport guidance, and README linking instructions. Do not add placeholder image links before the corresponding files exist.
 
 ## Local Requirements
 
@@ -58,8 +77,10 @@ The repository currently includes the interface preview above. A fuller project 
   - `openssl`
   - `xml`
   - `zip`
-  - `intl` is recommended; the presentation formatter has a deterministic fallback
+  - `intl` recommended; the formatter has a deterministic fallback
 - Writable `storage/` and `bootstrap/cache/` directories
+
+Docker is available for deployment parity but is not required for daily local development.
 
 ## Local Setup
 
@@ -76,7 +97,7 @@ php artisan key:generate
 
 ### Option A: MySQL or MariaDB
 
-Create a local database, for example `japantravel`, then update `.env`:
+Create a database such as `japantravel`, then update `.env`:
 
 ```env
 DB_CONNECTION=mysql
@@ -87,7 +108,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Run migrations and the curated demo seed:
+Run migrations and the curated local demo seed:
 
 ```bash
 php artisan migrate --seed
@@ -95,13 +116,11 @@ php artisan migrate --seed
 
 ### Option B: SQLite Quick Start
 
-Create the SQLite database:
-
 ```bash
 touch database/database.sqlite
 ```
 
-Set the connection and use the absolute path to the new file:
+Set:
 
 ```env
 DB_CONNECTION=sqlite
@@ -114,9 +133,9 @@ Then run:
 php artisan migrate --seed
 ```
 
-> **Local data warning:** `migrate --seed` calls `DemoSeeder`, which clears application tables before loading demo data. It is guarded to `local` and `testing` environments and must not be used for staging or production data.
+> `migrate --seed` is for disposable local/testing data. `DemoSeeder` clears application tables and is guarded against staging/production execution.
 
-Create the dedicated visual-review accounts and sample order history:
+Create the dedicated local visual-review accounts and sample orders:
 
 ```bash
 php artisan db:seed --class=DevAccountSeeder
@@ -133,7 +152,7 @@ php artisan serve
 npm run dev
 ```
 
-Use `npm run dev` while developing. To verify a compiled asset build instead:
+For a compiled asset check:
 
 ```bash
 npm run build
@@ -142,79 +161,120 @@ php artisan serve
 
 ## Demo Accounts
 
-These credentials are only for local visual review and are rejected by their seeder outside `local` or `testing`.
+These credentials are local/testing-only and are rejected by their seeder in other environments.
 
-**User**
+| Role | Email | Password | Login |
+|---|---|---|---|
+| User | `user.demo@japantravel.test` | `Password123!` | `/login` |
+| Admin | `admin.demo@japantravel.test` | `Password123!` | `/admin/login` |
 
-- Email: [user.demo@japantravel.test](mailto:user.demo@japantravel.test)
-- Password: `Password123!`
-- Login: `/login`
+The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Images are intentionally omitted; upload assets that you own or are licensed to use through the admin interface.
 
-**Admin**
-
-- Email: [admin.demo@japantravel.test](mailto:admin.demo@japantravel.test)
-- Password: `Password123!`
-- Login: `/admin/login`
-
-The demo catalog contains 10 destinations, 10 souvenirs, and 15 reviews. Images are intentionally not bundled; upload assets that you own or are licensed to use through the admin interface.
-
-## Testing and Quality Checks
+## Testing and Quality
 
 Current verified baseline: **129 tests and 509 assertions**.
 
 ```bash
 composer validate
 composer audit
-npm audit --json
+npm audit --audit-level=high
 npm run build
 php artisan test
 ./vendor/bin/pint --test
 ./vendor/bin/phpstan analyse --no-progress
 ```
 
-GitHub Actions also runs the project build, test suite, static analysis, formatting check, and dependency audits.
+GitHub Actions runs dependency installation, asset build, formatting, static analysis, tests, and dependency audits.
+
+No coverage percentage is claimed because a coverage driver is not part of the default lightweight setup. See [Testing Summary](docs/testing-summary.md) for coverage instructions and current gaps.
 
 ## Optional Integrations
 
 ### Mail
 
-Local development defaults to `MAIL_MAILER=log`. Password reset and verification messages are written to `storage/logs/laravel.log` rather than sent to an inbox. Real delivery requires a configured SMTP or transactional mail provider.
+Local development uses `MAIL_MAILER=log`; reset and verification messages are written to `storage/logs/laravel.log`. Real delivery requires a valid SMTP or transactional provider configuration.
 
 ### WhatsApp Travel Inquiry
 
-`TRAVEL_WHATSAPP_NUMBER` is optional and must use international digits without `+` or spaces. The destination CTA remains informational and disabled when the value is empty. The application does not process travel bookings.
+`TRAVEL_WHATSAPP_NUMBER` is optional and must contain international digits without `+` or spaces. The CTA stays disabled when it is empty. It does not create a travel booking or payment.
 
 ### Payment Sandbox
 
-Midtrans and PayPal credentials are optional for browsing the catalog, using the admin area, and reviewing the cart. Testing checkout requires valid sandbox credentials, provider webhook configuration, and a reachable callback URL. Automated tests mock external gateway communication and do not prove that a provider account is live-ready.
+Catalog, admin, and cart review do not require gateway credentials. Checkout testing requires Midtrans or PayPal sandbox credentials, a public HTTPS callback URL, and registered webhook configuration. Automated tests mock provider calls and do not prove that an external account is configured correctly.
 
 ### Media
 
-Demo images are not included. Local uploads use the `public` media disk, require `php artisan storage:link`, and should use legal or properly licensed assets.
+Local uploads use the `public` media disk and require `php artisan storage:link`. Railway deployment with local media requires a persistent volume mounted at `/var/www/html/storage/app/public`.
 
-## Security and Demo-Data Notes
+## Deployment Notes
+
+The repository is deployment-ready in the sense that it contains a multi-stage Dockerfile, Railway runtime scripts, environment documentation, and a manual staging checklist. It is **not** presented as an active or fully production-proven deployment.
+
+Key rules:
+
+- Run migrations separately with `php artisan migrate --force`.
+- Do not run `DemoSeeder`, `DevAccountSeeder`, or `migrate --seed` in staging/production.
+- Configure Railway health checks against `/up`.
+- Mount persistent media storage before testing uploads.
+- Keep payment flags in sandbox mode until provider validation is complete.
+- Configure a real mail provider before testing password reset or verification delivery.
+
+See [Deployment Checklist](docs/deployment-checklist.md).
+
+## Security Notes
 
 - User and admin authentication use separate guards and session cookies.
-- Standard web forms use CSRF protection; payment webhook exceptions are limited to webhook endpoints.
+- Standard forms use CSRF protection; only payment webhook endpoints are exempted.
+- Login, review, and webhook routes are rate-limited.
 - Payment webhooks verify provider signatures and record idempotency events.
-- Media uploads are limited to 2 MB and 6000 x 6000 pixels before WebP conversion.
-- Media deletion is restricted to the approved destination and souvenir upload directories.
+- Checkout locks stock and restores it when gateway creation fails.
+- Media uploads are limited to 2 MB and 6000 x 6000 pixels before processing.
+- Media deletion is restricted to approved upload directories.
 - A database constraint enforces one review per user and destination.
-- Demo seeders are restricted to `local` and `testing` environments.
-- Never commit real mail, payment, database, or monitoring credentials.
+- Demo seeders are restricted to local/testing environments.
 
-## Project Scope and Limitations
+These controls reduce common portfolio risks but do not replace a real security review, provider validation, monitoring, backups, or operational testing.
 
-- Travel services use an inquiry flow only; ticketing and direct travel booking are not implemented.
-- Direct checkout applies only to souvenir products.
-- Payment and mail integrations require external sandbox or provider configuration.
-- Demo media is intentionally omitted.
-- The Railway deployment material documents a proposed portfolio/staging setup; it does not claim an active production deployment.
-- S3-compatible media storage is not enabled in the current dependency set.
+## Known Limitations
 
-## Additional Documentation
+- No live deployment, complete screenshot set, or recorded demo is currently claimed.
+- Travel ticketing and direct travel booking are outside project scope.
+- Payment integrations require external sandbox configuration.
+- Real email delivery is not configured by default.
+- PayPal IDR conversion uses a manually configured exchange rate.
+- Media persistence requires a Railway Volume; S3 support is not installed.
+- The local-volume deployment model is intended for a single web replica.
+- There is no measured code coverage percentage.
+- Postman artifacts are request templates, not proof of executed provider tests.
+- The PHPStan baseline contains known type-analysis debt documented for future cleanup.
 
-See [Backend Technical Documentation](docs/backend-technical-documentation.md) for architecture, payment state handling, webhook behavior, security controls, media storage, and Railway deployment notes.
+## Roadmap
+
+- Complete owner-controlled staging deployment and smoke-test evidence.
+- Record the 1–2 minute project walkthrough.
+- Add desktop/mobile/light/dark screenshots.
+- Execute Midtrans and PayPal sandbox matrices.
+- Configure transactional email and verify deliverability.
+- Add measured coverage using PCOV or Xdebug on a suitable environment.
+- Reduce the PHPStan baseline incrementally.
+- Evaluate object storage before multi-replica deployment.
+
+## Portfolio Evidence and Documentation
+
+- [Documentation Index](docs/README.md)
+- [Deployment Checklist](docs/deployment-checklist.md)
+- [Demo Video Script](docs/demo-video-script.md)
+- [Testing Summary](docs/testing-summary.md)
+- [Case Study](docs/case-study-japanese-travel.md)
+- [QA Test Cases](docs/qa/test-cases-japanese-travel.md)
+- [Manual QA Checklist](docs/qa/manual-qa-checklist.md)
+- [Postman/API Checking Guide](docs/postman-api-checking.md)
+- [Troubleshooting Case Studies](docs/troubleshooting-case-studies.md)
+- [SQL Inspection Examples](docs/sql-inspection-examples.md)
+- [Project Workflow](docs/project-workflow.md)
+- [GitHub Issues Backlog](docs/github-issues-backlog.md)
+- [Portfolio Readiness Checklist](docs/portfolio-readiness-checklist.md)
+- [Backend Technical Documentation](docs/backend-technical-documentation.md)
 
 ## License
 
