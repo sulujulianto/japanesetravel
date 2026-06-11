@@ -57,7 +57,18 @@ See [Backend Technical Documentation](docs/backend-technical-documentation.md) f
 
 ## Screenshots
 
-The repository currently contains the interface preview above. A complete evidence gallery is still an owner action.
+The project includes curated visual evidence under [`docs/screenshots`](docs/screenshots).
+
+| View | Screenshot |
+|---|---|
+| Homepage | [`01-homepage.png`](docs/screenshots/01-homepage.png) |
+| Destination catalog | [`02-destinations.png`](docs/screenshots/02-destinations.png) |
+| Destination detail | [`03-destination-detail.png`](docs/screenshots/03-destination-detail.png) |
+| Souvenir shop | [`05-souvenir-shop.png`](docs/screenshots/05-souvenir-shop.png) |
+| Cart | [`06-cart.png`](docs/screenshots/06-cart.png) |
+| Admin dashboard | [`10-admin-dashboard.png`](docs/screenshots/10-admin-dashboard.png) |
+| Mobile responsive view | [`14-mobile-responsive.png`](docs/screenshots/14-mobile-responsive.png) |
+| Dark mode | [`15-dark-mode.png`](docs/screenshots/15-dark-mode.png) |
 
 See [Screenshot Capture Checklist](docs/screenshots/README.md) for required views, filenames, viewport guidance, and README linking instructions. Do not add placeholder image links before the corresponding files exist.
 
