@@ -26,6 +26,10 @@ class Media
             return $path;
         }
 
+        if (Str::startsWith($path, 'demo/')) {
+            return '/'.ltrim($path, '/');
+        }
+
         return Storage::disk(static::diskName())->url($path);
     }
 

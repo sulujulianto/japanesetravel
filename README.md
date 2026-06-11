@@ -168,7 +168,7 @@ These credentials are local/testing-only and are rejected by their seeder in oth
 | User | `user.demo@japantravel.test` | `Password123!` | `/login` |
 | Admin | `admin.demo@japantravel.test` | `Password123!` | `/admin/login` |
 
-The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Images are intentionally omitted; upload assets that you own or are licensed to use through the admin interface.
+The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Local demo images are sourced from Unsplash and documented in [`docs/asset-sources.md`](docs/asset-sources.md); replace them through the admin interface with assets you own or are licensed to use.
 
 ## Testing and Quality
 

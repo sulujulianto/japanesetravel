@@ -67,7 +67,7 @@ class DemoSeeder extends Seeder
                     'id' => $placeData['description_id'],
                     'en' => $placeData['description_en'],
                 ],
-                'image' => null,
+                'image' => $placeData['image'],
                 'address' => $placeData['address'],
                 'facilities' => $placeData['facilities'],
                 'open_days' => $placeData['open_days'],
@@ -90,7 +90,7 @@ class DemoSeeder extends Seeder
                 ],
                 'price' => $souvenirData['price'],
                 'stock' => $souvenirData['stock'],
-                'image' => null,
+                'image' => $souvenirData['image'],
             ]);
         }
 
