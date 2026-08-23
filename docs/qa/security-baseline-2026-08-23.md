@@ -12,6 +12,8 @@ security assessment.
 - CI and security workflow commit: `6cd88d6`
 - GitHub Actions CI run: `32643309689`
 - GitHub Actions Security run: `32643309728`
+- Pull request: `#38`
+- Pull-request Security run: `32644038102`
 
 ## Dependency Remediation
 
@@ -49,14 +51,15 @@ After remediation, `composer audit --locked` and
 | PHPUnit on MariaDB 11.8 | Pass | CI run `32643309689` |
 | Gitleaks full-history scan | Pass | Security run `32643309728` |
 | CodeQL JavaScript/TypeScript | Pass | Security run `32643309728` |
+| Dependency Review | Pass | PR `#38`, Security run `32644038102` |
 
 The MariaDB jobs create an isolated `japantravel_test` database and run
 `migrate:fresh`; they never connect to a developer or production database.
 
 ## Known Limitations
 
-- Dependency Review is pull-request-only and was skipped on the push run. It
-  must pass before this phase can be merged.
+- Dependency Review is pull-request-only. Its push check is skipped by design;
+  the pull-request check passed on PR `#38`.
 - CodeQL does not analyze PHP. PHP currently uses Larastan/PHPStan, tests, and
   dependency auditing; additional PHP-focused SAST remains planned.
 - PHPStan uses a committed baseline. A green result means no new findings
