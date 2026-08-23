@@ -78,7 +78,7 @@ Feature tests prove application contracts around stock, status transitions, auth
 
 ## Testing Approach
 
-The current suite has 129 tests and 509 assertions covering authentication, localization, catalog behavior, reviews, cart, checkout, payment retries, webhooks, admin access, media handling, order transitions, and formatting.
+The current suite has 132 tests and 633 assertions covering authentication, localization, catalog behavior, reviews, cart, checkout, payment retries, webhooks, admin access, media handling, order transitions, and formatting.
 
 Pint, PHPStan/Larastan, Composer Audit, npm Audit, and the Vite production build form additional quality gates. PHPStan currently uses a baseline, which is treated as technical debt rather than hidden.
 
@@ -129,4 +129,3 @@ No live deployment is claimed until a real URL and evidence are added.
 ## Interview Explanation
 
 > “I built JapanTravel as a scoped Laravel portfolio application. Travel content and inquiries are separate from souvenir commerce, so I avoided claiming a full booking platform. The technical areas I focused on were authorization boundaries, stock-safe checkout, payment abstractions, webhook idempotency, localized presentation, admin operations, and reproducible local setup. Automated tests prove internal behavior, while the repository clearly labels deployment, payment sandbox, mail delivery, screenshots, and video as manual owner actions until evidence exists.”
-

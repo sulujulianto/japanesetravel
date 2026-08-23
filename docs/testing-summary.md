@@ -2,8 +2,8 @@
 
 ## Current Baseline
 
-- Automated tests: **129**
-- Assertions: **509**
+- Automated tests: **132**
+- Assertions: **633**
 - Test framework: PHPUnit through Laravel's test runner
 - Static analysis: Larastan/PHPStan level 6 with a committed baseline
 - Formatting: Laravel Pint
@@ -11,6 +11,8 @@
 - Dependency checks: Composer Audit and npm Audit
 
 This count is a point-in-time baseline, not a coverage percentage.
+It was re-verified locally and in GitHub Actions on 2026-08-23. The CI suite
+runs the same tests against SQLite and MariaDB 10.11/11.8.
 
 ## Covered Areas
 
@@ -101,4 +103,3 @@ Before publishing a percentage:
 - Upload persistence test across a real staging redeploy.
 - Queue failure/retry behavior once asynchronous jobs are introduced.
 - Incremental PHPStan baseline reduction.
-

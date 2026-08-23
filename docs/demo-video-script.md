@@ -26,7 +26,7 @@ Target duration: 90–120 seconds. Record at 1080p if practical, hide bookmarks/
 | 0:56–1:04 | Order history | Show user order list and one detail page. | “Authenticated users can review order items, payment status, and retry eligible payments.” |
 | 1:04–1:15 | Admin login/dashboard | Switch to admin session and show operational metrics/charts. | “The separate admin guard provides an operational dashboard for orders, revenue, inventory, and catalog data.” |
 | 1:15–1:27 | Admin management | Show order status panel and destination/souvenir management screens. | “Admins can manage content, upload validated media, restock products, and apply guarded order transitions.” |
-| 1:27–1:38 | Testing/CI | Show terminal test summary or GitHub Actions result. | “The repository currently has 129 automated tests with build, formatting, static analysis, and dependency audits in CI.” |
+| 1:27–1:38 | Testing/CI | Show terminal test summary or GitHub Actions result. | “The repository currently has 132 automated tests with build, formatting, static analysis, dependency audits, and MariaDB integration checks in CI.” |
 | 1:38–1:50 | Honest limitations/closing | Return to homepage or README. | “External mail, payment sandbox accounts, persistent media, and public deployment still require owner configuration. The repository documents each manual verification step.” |
 
 ## Optional Shorter Cut
@@ -41,4 +41,3 @@ For a 60–75 second version, omit profile pages, reduce catalog browsing, and c
 - [ ] No claim of travel booking.
 - [ ] CI/test statement matches the latest verified run.
 - [ ] Limitations are stated verbally or on-screen.
-
