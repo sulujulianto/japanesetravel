@@ -1,4 +1,5 @@
 @php
+    $entrypoints ??= ['resources/css/app.css', 'resources/js/legacy.js'];
     $viteHot = public_path('hot');
     $viteManifest = public_path('build/manifest.json');
     $shouldLoadVite = ! app()->runningInConsole()
@@ -8,5 +9,5 @@
 @endphp
 
 @if($shouldLoadVite)
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite($entrypoints)
 @endif

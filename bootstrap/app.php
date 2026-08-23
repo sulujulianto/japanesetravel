@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             prepend: [\App\Http\Middleware\AdminSessionCookie::class],
             append: [
                 \App\Http\Middleware\Localization::class,
+                HandleInertiaRequests::class,
                 \App\Http\Middleware\SecurityHeaders::class,
             ]
         );
