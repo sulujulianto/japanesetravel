@@ -240,8 +240,8 @@ Coverage utama saat ini:
 - `ProfileTest`
 
 Current baseline:
-- **129 tests**
-- **509 assertions**
+- **132 tests**
+- **633 assertions**
 
 ## 13) CI and Quality Gates
 CI menjalankan:

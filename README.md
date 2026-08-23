@@ -8,7 +8,7 @@ Travel services are inquiry-only: the application does not sell tickets or proce
 
 - **Live demo:** pending public deployment
 - **Demo video:** pending recording
-- **Current quality baseline:** 129 tests, 509 assertions
+- **Current quality baseline:** 132 tests, 633 assertions
 - **Positioning:** production-oriented portfolio project with documented deployment and integration limitations
 
 Public deployment, screenshots, payment sandbox validation, and video recording require owner-controlled external accounts. The repository includes checklists and evidence templates for those steps.
@@ -181,7 +181,7 @@ The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Loca
 
 ## Testing and Quality
 
-Current verified baseline: **129 tests and 509 assertions**.
+Current verified baseline: **132 tests and 633 assertions**.
 
 ```bash
 composer validate
