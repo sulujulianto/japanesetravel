@@ -5,7 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AdminAccountCard from '../Components/Admin/AdminAccountCard.vue';
 import AdminNavigation from '../Components/Admin/AdminNavigation.vue';
 import { useTheme, type Theme } from '../composables/useTheme';
-import type { AdminDashboardCopy, AdminRoutes, NavigationItem, NavigationKey } from '../types/admin';
+import type { AdminShellCopy, AdminShellRoutes, NavigationItem, NavigationKey } from '../types/admin';
 import type { SharedPageProps } from '../types/inertia';
 
 defineOptions({ name: 'AdminLayout' });
@@ -16,8 +16,8 @@ defineSlots<{
 
 const props = defineProps<{
     activeNavigation: NavigationKey;
-    copy: AdminDashboardCopy;
-    routes: AdminRoutes;
+    copy: AdminShellCopy;
+    routes: AdminShellRoutes;
 }>();
 
 const page = usePage<SharedPageProps>();
