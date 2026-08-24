@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
@@ -21,35 +24,43 @@ class Order extends Model
 
     protected $fillable = ['user_id', 'total_price', 'status', 'note', 'admin_note'];
 
-    public function items()
+    /** @return HasMany<OrderItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function payment()
+    /** @return HasOne<Payment, $this> */
+    public function payment(): HasOne
     {
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
-    public function payments()
+    /** @return HasMany<Payment, $this> */
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
     public function canTransitionTo(string $nextStatus): bool
     {
+        return in_array($nextStatus, $this->allowedStatusUpdates(), true);
+    }
+
+    /** @return list<string> */
+    public function allowedStatusUpdates(): array
+    {
         $currentStatus = (string) $this->status;
-        if ($currentStatus === $nextStatus) {
-            return true;
-        }
 
-        $allowedNextStatuses = self::ALLOWED_STATUS_TRANSITIONS[$currentStatus] ?? [];
-
-        return in_array($nextStatus, $allowedNextStatuses, true);
+        return array_values(array_unique([
+            $currentStatus,
+            ...(self::ALLOWED_STATUS_TRANSITIONS[$currentStatus] ?? []),
+        ]));
     }
 }

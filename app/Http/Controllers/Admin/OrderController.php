@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Souvenir;
 use App\Models\User;
 use App\Support\AdminShell;
 use App\Support\Format;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -86,14 +90,30 @@ class OrderController extends Controller
         ]);
     }
 
-    public function show(Order $order)
+    public function show(Order $order): Response
     {
-        $order->load(['user', 'items.product', 'payments']);
+        $order->load([
+            'items.product',
+            'payment',
+            'payments' => fn ($query) => $query->orderBy('id'),
+            'user',
+        ]);
 
-        return view('admin.orders.show', compact('order'));
+        return Inertia::render('Admin/Orders/Show', [
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->detailCopy(),
+            ],
+            'order' => $this->serializeOrderDetail($order),
+            'routes' => [
+                ...AdminShell::routes(),
+                'updateOrder' => route('admin.orders.update', $order, absolute: false),
+            ],
+            'statusOptions' => $this->orderStatusOptions($order->allowedStatusUpdates()),
+        ]);
     }
 
-    public function update(UpdateOrderStatusRequest $request, Order $order)
+    public function update(UpdateOrderStatusRequest $request, Order $order): RedirectResponse
     {
         $nextStatus = (string) $request->input('status');
         if (! $order->canTransitionTo($nextStatus)) {
@@ -148,12 +168,7 @@ class OrderController extends Controller
     private function filterOptions(): array
     {
         return [
-            'orderStatuses' => [
-                ['value' => 'pending', 'label' => __('Menunggu')],
-                ['value' => 'processing', 'label' => __('Diproses')],
-                ['value' => 'completed', 'label' => __('Selesai')],
-                ['value' => 'cancelled', 'label' => __('Dibatalkan')],
-            ],
+            'orderStatuses' => $this->orderStatusOptions(),
             'paymentStatuses' => [
                 ['value' => 'unpaid', 'label' => __('Belum ada pembayaran')],
                 ['value' => 'pending', 'label' => __('Pending')],
@@ -163,6 +178,24 @@ class OrderController extends Controller
                 ['value' => 'refunded', 'label' => __('Refunded')],
             ],
         ];
+    }
+
+    /**
+     * @param  list<string>  $statuses
+     * @return list<array{value: string, label: string}>
+     */
+    private function orderStatusOptions(array $statuses = self::ORDER_STATUSES): array
+    {
+        return array_map(fn (string $status): array => [
+            'value' => $status,
+            'label' => match ($status) {
+                'pending' => __('Menunggu'),
+                'processing' => __('Diproses'),
+                'completed' => __('Selesai'),
+                'cancelled' => __('Dibatalkan'),
+                default => __(strtoupper($status)),
+            },
+        ], $statuses);
     }
 
     /** @return array<string, mixed> */
@@ -193,6 +226,106 @@ class OrderController extends Controller
             ],
             'url' => route('admin.orders.show', $order, absolute: false),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeOrderDetail(Order $order): array
+    {
+        $user = $order->getRelation('user');
+        $payment = $order->getRelation('payment');
+        /** @var Collection<int, OrderItem> $items */
+        $items = $order->getRelation('items');
+        /** @var Collection<int, Payment> $payments */
+        $payments = $order->getRelation('payments');
+        $createdAt = $order->getAttribute('created_at');
+        $totalPrice = $order->getAttribute('total_price');
+        $status = (string) $order->getAttribute('status');
+
+        return [
+            'adminNote' => $this->nullableString($order->getAttribute('admin_note')),
+            'createdAt' => Format::dateTime($createdAt instanceof DateTimeInterface || is_string($createdAt) ? $createdAt : null),
+            'customer' => [
+                'email' => $user instanceof User ? (string) $user->email : '',
+                'username' => $user instanceof User ? (string) $user->username : __('Pengguna tidak tersedia'),
+            ],
+            'id' => (int) $order->getKey(),
+            'items' => $items->map(fn (OrderItem $item): array => $this->serializeOrderItem($item))->values()->all(),
+            'latestPayment' => $payment instanceof Payment ? $this->serializePaymentStatus($payment) : null,
+            'note' => $this->nullableString($order->getAttribute('note')),
+            'payments' => $payments->map(fn (Payment $item): array => $this->serializePayment($item))->values()->all(),
+            'reference' => '#ORDER-'.$order->getKey(),
+            'status' => [
+                'label' => __(strtoupper($status)),
+                'value' => $status,
+            ],
+            'total' => Format::idr(is_numeric($totalPrice) ? $totalPrice : 0),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeOrderItem(OrderItem $item): array
+    {
+        $product = $item->getRelation('product');
+        $productName = $product instanceof Souvenir ? trim((string) $product->name) : '';
+        if ($productName === '') {
+            $productName = trim((string) $item->getAttribute('product_name'));
+        }
+
+        $quantity = $item->getAttribute('quantity');
+        $price = $item->getAttribute('price');
+        $numericQuantity = is_numeric($quantity) ? (float) $quantity : 0.0;
+        $numericPrice = is_numeric($price) ? (float) $price : 0.0;
+
+        return [
+            'id' => (int) $item->getKey(),
+            'imageUrl' => $item->getResolvedImageUrlAttribute(),
+            'name' => $productName !== '' ? $productName : __('Produk tidak tersedia'),
+            'quantity' => Format::number($numericQuantity),
+            'subtotal' => Format::idr($numericQuantity * $numericPrice),
+            'unitPrice' => Format::idr($numericPrice),
+        ];
+    }
+
+    /** @return array{label: string, status: string} */
+    private function serializePaymentStatus(Payment $payment): array
+    {
+        $provider = strtoupper((string) $payment->getAttribute('provider'));
+        $status = (string) $payment->getAttribute('status');
+
+        return [
+            'label' => $provider.' · '.__(strtoupper($status)),
+            'status' => $status,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializePayment(Payment $payment): array
+    {
+        $amount = $payment->getAttribute('amount');
+        $paidAt = $payment->getAttribute('paid_at');
+
+        return [
+            'amount' => Format::idr(is_numeric($amount) ? $amount : 0),
+            'id' => (int) $payment->getKey(),
+            'paidAt' => $paidAt instanceof DateTimeInterface || is_string($paidAt) ? Format::dateTime($paidAt) : null,
+            'provider' => strtoupper((string) $payment->getAttribute('provider')),
+            'reference' => $this->nullableString($payment->getAttribute('provider_ref')),
+            'status' => [
+                'label' => __(strtoupper((string) $payment->getAttribute('status'))),
+                'value' => (string) $payment->getAttribute('status'),
+            ],
+        ];
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value !== '' ? $value : null;
     }
 
     /**
@@ -277,6 +410,42 @@ class OrderController extends Controller
             'status' => __('Status'),
             'title' => __('Daftar Pesanan'),
             'total' => __('Total'),
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function detailCopy(): array
+    {
+        return [
+            'adminNote' => __('Catatan Admin'),
+            'back' => __('Kembali ke daftar pesanan'),
+            'createdOn' => __('Dibuat pada'),
+            'customer' => __('Pelanggan'),
+            'emptyItems' => __('Belum ada item untuk pesanan ini.'),
+            'emptyPaymentsDescription' => __('Riwayat akan tampil setelah proses pembayaran dibuat oleh sistem.'),
+            'emptyPaymentsTitle' => __('Belum ada pembayaran untuk pesanan ini.'),
+            'eyebrow' => __('Detail Pesanan'),
+            'formError' => __('Periksa kembali perubahan status pesanan.'),
+            'internalNoteHelp' => __('Catatan bersifat internal dan membantu pelacakan proses pesanan.'),
+            'itemsDescription' => __('Produk, jumlah, harga satuan, dan subtotal yang tercatat pada pesanan.'),
+            'itemsTitle' => __('Item Pesanan'),
+            'noPayment' => __('Belum ada pembayaran'),
+            'notPaid' => __('Belum dibayar'),
+            'orderNote' => __('Catatan Pesanan'),
+            'orderTime' => __('Waktu Pesanan'),
+            'paymentDescription' => __('Catatan transaksi dari provider pembayaran yang terhubung dengan pesanan.'),
+            'paymentTitle' => __('Riwayat Pembayaran'),
+            'referenceUnavailable' => __('Referensi belum tersedia'),
+            'save' => __('Simpan Perubahan'),
+            'saving' => __('Menyimpan'),
+            'status' => __('Status Pesanan'),
+            'subtotal' => __('Subtotal'),
+            'summaryDescription' => __('Status operasional dan pembayaran terkini untuk pesanan ini.'),
+            'summaryTitle' => __('Ringkasan Pesanan'),
+            'title' => __('Detail Pesanan'),
+            'total' => __('Total'),
+            'updateDescription' => __('Pilih status berikutnya sesuai progres operasional pesanan.'),
+            'updateTitle' => __('Update Status'),
         ];
     }
 }

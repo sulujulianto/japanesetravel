@@ -35,8 +35,19 @@ class HandleInertiaRequests extends Middleware
                 'admin' => fn (): ?array => $this->serializeUser(Auth::guard('admin')->user()),
                 'user' => fn (): ?array => $this->serializeUser($request->user()),
             ],
+            'flash' => [
+                'error' => fn (): ?string => $this->sessionMessage($request, 'error'),
+                'success' => fn (): ?string => $this->sessionMessage($request, 'success'),
+            ],
             'locale' => app()->getLocale(),
         ];
+    }
+
+    private function sessionMessage(Request $request, string $key): ?string
+    {
+        $message = $request->session()->get($key);
+
+        return is_string($message) ? $message : null;
     }
 
     /**
