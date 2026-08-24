@@ -17,5 +17,9 @@ export interface SharedPageProps extends PageProps {
         admin: AuthenticatedUser | null;
         user: AuthenticatedUser | null;
     };
+    flash: {
+        error: string | null;
+        success: string | null;
+    };
     locale: Locale;
 }

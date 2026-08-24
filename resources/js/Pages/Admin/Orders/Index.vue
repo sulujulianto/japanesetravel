@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { reactive, watch } from 'vue';
 
 import PaginationControls from '../../../Components/Admin/PaginationControls.vue';
@@ -151,7 +151,7 @@ const reset = (): void => {
                                 <span v-else class="text-xs text-[var(--admin-muted)]">{{ copy.noPayment }}</span>
                             </td>
                             <td class="px-4 py-4"><StatusBadge :label="order.status.label" :status="order.status.value" /></td>
-                            <td class="px-6 py-4 text-right"><a :href="order.url" class="text-sm font-semibold text-[var(--admin-accent)] transition-colors hover:text-[var(--admin-accent-active)]">{{ copy.detail }}</a></td>
+                            <td class="px-6 py-4 text-right"><Link :href="order.url" class="text-sm font-semibold text-[var(--admin-accent)] transition-colors hover:text-[var(--admin-accent-active)]">{{ copy.detail }}</Link></td>
                         </tr>
                     </tbody>
                 </table>
@@ -164,7 +164,7 @@ const reset = (): void => {
                             <p class="font-semibold">{{ order.reference }}</p>
                             <p class="mt-1 truncate text-sm text-[var(--admin-muted)]">{{ order.customer.username }}</p>
                         </div>
-                        <a :href="order.url" class="shrink-0 text-sm font-semibold text-[var(--admin-accent)]">{{ copy.detail }}</a>
+                        <Link :href="order.url" class="shrink-0 text-sm font-semibold text-[var(--admin-accent)]">{{ copy.detail }}</Link>
                     </div>
                     <dl class="mt-4 grid grid-cols-2 gap-3 border-y border-[var(--admin-border)] py-3">
                         <div><dt class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--admin-muted)]">{{ copy.date }}</dt><dd class="mt-1 text-sm">{{ order.date }}</dd></div>

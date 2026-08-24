@@ -13,18 +13,6 @@ parameters:
 			path: app/Http/Controllers/Admin/DashboardController.php
 
 		-
-			message: '#^Relation ''payment'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\Admin\\InventoryController\:\:lowStock\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -35,30 +23,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: app/Http/Controllers/Admin/InventoryController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\OrderController\:\:show\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/OrderController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\OrderController\:\:update\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/OrderController.php
-
-		-
-			message: '#^Relation ''payment'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 3
-			path: app/Http/Controllers/Admin/OrderController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 2
-			path: app/Http/Controllers/Admin/OrderController.php
 
 		-
 			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:create\(\) has no return type specified\.$#'
@@ -193,12 +157,6 @@ parameters:
 			path: app/Http/Controllers/CheckoutController.php
 
 		-
-			message: '#^Relation ''items'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/CheckoutController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\HomeController\:\:index\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -259,44 +217,8 @@ parameters:
 			path: app/Models/Order.php
 
 		-
-			message: '#^Method App\\Models\\Order\:\:items\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Models/Order.php
-
-		-
-			message: '#^Method App\\Models\\Order\:\:payment\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Models/Order.php
-
-		-
-			message: '#^Method App\\Models\\Order\:\:payments\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Models/Order.php
-
-		-
-			message: '#^Method App\\Models\\Order\:\:user\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Models/Order.php
-
-		-
 			message: '#^Class App\\Models\\OrderItem uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
 			identifier: missingType.generics
-			count: 1
-			path: app/Models/OrderItem.php
-
-		-
-			message: '#^Method App\\Models\\OrderItem\:\:order\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Models/OrderItem.php
-
-		-
-			message: '#^Method App\\Models\\OrderItem\:\:product\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: app/Models/OrderItem.php
 
@@ -395,12 +317,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: app/Models/User.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Order\:\:\$items\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/Payments/Drivers/MidtransSnapDriver.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -527,9 +443,3 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: database/seeders/DemoSeeder.php
-
-		-
-			message: '#^Relation ''items'' is not found in App\\Models\\Order model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: routes/web.php

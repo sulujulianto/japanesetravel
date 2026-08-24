@@ -314,9 +314,13 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('Rp1.234.567')
-            ->assertSee('Rp617.284')
-            ->assertSee('9 Jun 2026, 14.30');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Orders/Show')
+                ->where('locale', 'id')
+                ->where('order.total', 'Rp1.234.567')
+                ->where('order.items.0.unitPrice', 'Rp617.284')
+                ->where('order.createdAt', '9 Jun 2026, 14.30')
+            );
 
         $this->actingAs($admin, 'admin')
             ->get(route('admin.orders.index'), [
@@ -335,10 +339,13 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('IDR 1,234,567')
-            ->assertSee('IDR 617,284')
-            ->assertSee('Jun 9, 2026, 2:30 PM')
-            ->assertDontSee('Rp1.234.567');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Orders/Show')
+                ->where('locale', 'en')
+                ->where('order.total', 'IDR 1,234,567')
+                ->where('order.items.0.unitPrice', 'IDR 617,284')
+                ->where('order.createdAt', 'Jun 9, 2026, 2:30 PM')
+            );
     }
 
     public function test_admin_chart_cache_is_isolated_by_locale(): void
