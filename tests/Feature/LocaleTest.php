@@ -11,6 +11,7 @@ use App\Support\CacheKeys;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class LocaleTest extends TestCase
@@ -252,12 +253,14 @@ class LocaleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Admin Dashboard')
-            ->assertSee('Key Metrics')
-            ->assertDontSee('Metrik Utama');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Dashboard/Index')
+                ->where('copy.title', 'Admin Dashboard')
+                ->where('copy.metricsTitle', 'Key Metrics')
+            );
     }
 
-    public function test_admin_dashboard_formats_revenue_and_chart_locale_for_indonesian(): void
+    public function test_admin_dashboard_formats_revenue_for_indonesian_locale(): void
     {
         $this->createOrderForFormatting();
         Cache::forget('admin:dashboard:metrics');
@@ -267,11 +270,13 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('Rp1.234.567')
-            ->assertSee('const chartLocale = "id-ID"', false);
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('locale', 'id')
+                ->where('metrics.0.value', 'Rp1.234.567')
+            );
     }
 
-    public function test_admin_dashboard_formats_revenue_and_chart_locale_for_english(): void
+    public function test_admin_dashboard_formats_revenue_for_english_locale(): void
     {
         $this->createOrderForFormatting();
         Cache::forget('admin:dashboard:metrics');
@@ -281,9 +286,10 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('IDR 1,234,567')
-            ->assertSee('const chartLocale = "en-US"', false)
-            ->assertDontSee('Rp1.234.567');
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('locale', 'en')
+                ->where('metrics.0.value', 'IDR 1,234,567')
+            );
     }
 
     public function test_admin_order_pages_format_values_for_supported_locales(): void

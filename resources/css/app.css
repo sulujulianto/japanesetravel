@@ -26,6 +26,23 @@
         --auth-danger: #9F2A2A;
         --auth-success: #245B49;
         --auth-focus: rgba(181, 58, 58, 0.24);
+        --admin-canvas: #F5F2ED;
+        --admin-surface: #FFFFFF;
+        --admin-muted-surface: #F0ECE5;
+        --admin-border: #DDD7CE;
+        --admin-ink: #172033;
+        --admin-muted: #667085;
+        --admin-accent: #A83A35;
+        --admin-accent-active: #842D29;
+        --admin-accent-soft: #F7E8E5;
+        --admin-success: #276451;
+        --admin-success-soft: #DDF3E9;
+        --admin-warning: #8A5A00;
+        --admin-warning-soft: #FFF1C7;
+        --admin-danger: #A52B35;
+        --admin-danger-soft: #FCE3E5;
+        --admin-info: #17658A;
+        --admin-info-soft: #DFF1FA;
     }
 
     .dark {
@@ -42,6 +59,23 @@
         --auth-danger: #F0A0A0;
         --auth-success: #A7D8C5;
         --auth-focus: rgba(217, 107, 107, 0.28);
+        --admin-canvas: #0D1117;
+        --admin-surface: #161B22;
+        --admin-muted-surface: #1F2630;
+        --admin-border: #2B3440;
+        --admin-ink: #F0F3F7;
+        --admin-muted: #AEB8C7;
+        --admin-accent: #DC6F69;
+        --admin-accent-active: #EC8D88;
+        --admin-accent-soft: #342326;
+        --admin-success: #8BD0B6;
+        --admin-success-soft: #17372E;
+        --admin-warning: #F4CD69;
+        --admin-warning-soft: #3B321C;
+        --admin-danger: #F0A0A8;
+        --admin-danger-soft: #44242A;
+        --admin-info: #89C9E8;
+        --admin-info-soft: #173444;
     }
 
     [x-cloak] {
@@ -178,6 +212,10 @@
 }
 
 @layer components {
+    .admin-mobile-drawer::backdrop {
+        background: rgba(0, 0, 0, 0.45);
+    }
+
     .account-menu > summary {
         list-style: none;
     }
@@ -186,11 +224,4 @@
         display: none;
     }
 
-    .admin-mobile-menu > summary {
-        list-style: none;
-    }
-
-    .admin-mobile-menu > summary::-webkit-details-marker {
-        display: none;
-    }
 }

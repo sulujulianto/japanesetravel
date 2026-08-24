@@ -13,18 +13,6 @@ parameters:
 			path: app/Http/Controllers/Admin/DashboardController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\DashboardController\:\:index\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\OrderItem\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
 			message: '#^Relation ''payment'' is not found in App\\Models\\Order model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -33,12 +21,6 @@ parameters:
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Order model\.$#'
 			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Admin/DashboardController.php
-
-		-
-			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\OrderItem\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: method.unresolvableReturnType
 			count: 1
 			path: app/Http/Controllers/Admin/DashboardController.php
 

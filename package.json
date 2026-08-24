@@ -5,7 +5,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "lint": "eslint \"resources/js/**/*.{ts,vue}\" --max-warnings=0",
+        "lint": "eslint \"resources/js/**/*.{js,ts,vue}\" --max-warnings=0",
         "type-check": "vue-tsc --noEmit"
     },
     "devDependencies": {

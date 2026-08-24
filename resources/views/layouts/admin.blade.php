@@ -11,28 +11,28 @@
     @includeIf('partials.vite')
     @stack('styles')
 </head>
-<body class="min-h-dvh bg-[#F7F5F1] font-sans text-[#1F2937] antialiased dark:bg-[#0E1116] dark:text-[#E5E7EB]">
+<body class="min-h-dvh bg-[var(--admin-canvas)] font-sans text-[var(--admin-ink)] antialiased">
     @php
         $adminUser = Auth::guard('admin')->user();
         $navLink = 'flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold transition';
-        $navLinkIdle = 'text-[#526071] hover:bg-[#F1EEE8] hover:text-[#1F2937] dark:text-[#AEB8C7] dark:hover:bg-[#1F2630] dark:hover:text-[#F4F1ED]';
-        $navLinkActive = 'bg-[#F1EEE8] text-[#8F2E2E] dark:bg-[#1F2630] dark:text-[#D96B6B]';
-        $mobileLink = 'block rounded-lg px-3 py-2.5 text-sm font-semibold text-[#374151] transition hover:bg-[#F1EEE8] hover:text-[#8F2E2E] dark:text-[#D8DEE8] dark:hover:bg-[#0E1116] dark:hover:text-[#D96B6B]';
-        $utilityControl = 'inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:text-[#D8DEE8] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]';
+        $navLinkIdle = 'text-[var(--admin-muted)] hover:bg-[var(--admin-muted-surface)] hover:text-[var(--admin-ink)]';
+        $navLinkActive = 'bg-[var(--admin-muted-surface)] text-[var(--admin-accent)]';
+        $utilityControl = 'items-center rounded-full border border-[var(--admin-border)] px-3 py-2 text-xs font-semibold text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-accent)]';
     @endphp
 
-    <div class="flex min-h-dvh flex-col lg:flex-row">
-        <aside class="hidden h-dvh w-64 shrink-0 flex-col border-r border-[#E7E3DC] bg-white lg:sticky lg:top-0 lg:flex dark:border-[#2A333D] dark:bg-[#161B22]">
-            <div class="border-b border-[#E7E3DC] px-5 py-5 dark:border-[#2A333D]">
-                <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2.5 text-[#222222] transition hover:text-[#8F2E2E] dark:text-[#F4F1ED] dark:hover:text-[#D96B6B]">
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-[#FAF8F3] text-xs font-bold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">JT</span>
-                    <span class="text-sm font-semibold tracking-tight">
-                        JapanTravel<span class="text-[#A6423A] dark:text-[#D96B6B]">.admin</span>
+    <div class="min-h-screen">
+        <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col border-r border-[var(--admin-border)] bg-[var(--admin-surface)] lg:flex">
+            <div class="border-b border-[var(--admin-border)] px-6 py-6">
+                <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-3">
+                    <span aria-hidden="true" class="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] font-display text-sm text-[var(--admin-accent)]">JT</span>
+                    <span>
+                        <strong class="block text-sm">{{ config('app.name', 'Japan Travel') }}</strong>
+                        <span class="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">Admin</span>
                     </span>
                 </a>
             </div>
 
-            <nav class="flex-1 space-y-1 px-4 py-5" aria-label="{{ __('Navigasi admin') }}">
+            <nav class="flex-1 space-y-1 px-4 py-6" aria-label="{{ __('Navigasi admin') }}">
                 <a href="{{ route('admin.dashboard') }}" class="{{ $navLink }} {{ request()->routeIs('admin.dashboard') ? $navLinkActive : $navLinkIdle }}">
                     {{ __('Dashboard') }}
                 </a>
@@ -50,102 +50,128 @@
                 </a>
             </nav>
 
-            <div class="border-t border-[#E7E3DC] p-4 dark:border-[#2A333D]">
-                <div class="rounded-xl border border-[#E7E3DC] bg-[#FAF8F3] p-3 dark:border-[#2A333D] dark:bg-[#0E1116]">
-                    <p class="truncate text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $adminUser?->username ?? __('Admin') }}</p>
-                    <p class="mt-1 truncate text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $adminUser?->email }}</p>
-                    <form method="POST" action="{{ route('admin.logout') }}" class="mt-3 border-t border-[#E7E3DC] pt-3 dark:border-[#2A333D]">
-                        @csrf
-                        <button type="submit" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[#9F2A2A] transition hover:bg-red-50 dark:text-[#F0A0A0] dark:hover:bg-red-950/30">
-                            {{ __('Keluar') }}
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </aside>
-
-        <div class="flex min-w-0 flex-1 flex-col">
-            <nav class="sticky top-0 z-50 border-b border-[#E7E3DC] bg-white lg:hidden dark:border-[#2A333D] dark:bg-[#161B22]">
-                <details class="admin-mobile-menu">
-                    <summary class="block cursor-pointer select-none">
-                        <div class="flex min-h-16 items-center justify-between gap-3 px-4">
-                            <span class="inline-flex min-w-0 items-center gap-2.5 text-[#222222] dark:text-[#F4F1ED]">
-                                <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#DDD6CC] bg-[#FAF8F3] text-[11px] font-bold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">JT</span>
-                                <span class="truncate text-sm font-semibold tracking-tight">
-                                    JapanTravel<span class="text-[#A6423A] dark:text-[#D96B6B]">.admin</span>
-                                </span>
-                            </span>
-                            <span class="flex shrink-0 items-center gap-2">
-                                <button onclick="event.preventDefault(); event.stopPropagation(); toggleTheme();" class="{{ $utilityControl }}" title="{{ __('Ganti tema') }}" type="button">
-                                    {{ __('Tema') }}
-                                </button>
-                                <span class="{{ $utilityControl }}">{{ __('Menu') }}</span>
-                            </span>
-                        </div>
-                    </summary>
-
-                    <div class="border-t border-[#E7E3DC] bg-white px-4 py-4 dark:border-[#2A333D] dark:bg-[#161B22]">
-                        <div class="border-b border-[#E7E3DC] px-3 pb-3 dark:border-[#2A333D]">
-                            <p class="truncate text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $adminUser?->username ?? __('Admin') }}</p>
-                            <p class="mt-1 truncate text-xs text-[#526071] dark:text-[#AEB8C7]">{{ $adminUser?->email }}</p>
-                        </div>
-
-                        <div class="mt-2 space-y-1">
-                            <a href="{{ route('admin.dashboard') }}" class="{{ $mobileLink }}">{{ __('Dashboard') }}</a>
-                            <a href="{{ route('admin.orders.index') }}" class="{{ $mobileLink }}">{{ __('Pesanan') }}</a>
-                            <a href="{{ route('admin.places.index') }}" class="{{ $mobileLink }}">{{ __('Destinasi') }}</a>
-                            <a href="{{ route('admin.souvenirs.index') }}" class="{{ $mobileLink }}">{{ __('Souvenir') }}</a>
-                            <a href="{{ route('admin.inventory.low-stock') }}" class="{{ $mobileLink }}">{{ __('Stok Rendah') }}</a>
-                        </div>
-
-                        <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-[#E7E3DC] px-3 pt-3 text-xs font-semibold dark:border-[#2A333D]">
-                            <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1.5 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-[#F4F1ED] dark:text-[#0E1116]' : 'text-[#526071] dark:border-[#2A333D] dark:text-[#AEB8C7]' }}">ID</a>
-                            <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1.5 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-[#F4F1ED] dark:text-[#0E1116]' : 'text-[#526071] dark:border-[#2A333D] dark:text-[#AEB8C7]' }}">EN</a>
-                            <a href="{{ route('home') }}" class="ml-auto rounded-full border border-[#E7E3DC] px-3 py-1.5 text-[#526071] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:text-[#AEB8C7] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]">
-                                {{ __('Lihat Situs') }}
-                            </a>
-                        </div>
-
-                        <form method="POST" action="{{ route('admin.logout') }}" class="mt-3 border-t border-[#E7E3DC] px-3 pt-3 dark:border-[#2A333D]">
+            @if ($adminUser)
+                <div class="border-t border-[var(--admin-border)] p-4">
+                    <div class="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] p-3">
+                        <p class="truncate text-sm font-semibold">{{ $adminUser->username }}</p>
+                        <p class="mt-1 truncate text-xs text-[var(--admin-muted)]">{{ $adminUser->email }}</p>
+                        <form method="POST" action="{{ route('admin.logout') }}" class="mt-3 border-t border-[var(--admin-border)] pt-3">
                             @csrf
-                            <button type="submit" class="block w-full rounded-lg py-2.5 text-left text-sm font-semibold text-[#9F2A2A] transition hover:text-[#7A1F1F] dark:text-[#F0A0A0]">
+                            <button type="submit" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--admin-accent)] transition hover:bg-[var(--admin-surface)]">
                                 {{ __('Keluar') }}
                             </button>
                         </form>
                     </div>
-                </details>
-            </nav>
+                </div>
+            @endif
+        </aside>
 
-            <header class="sticky top-0 z-40 hidden border-b border-[#E7E3DC] bg-white lg:block dark:border-[#2A333D] dark:bg-[#161B22]">
-                <div class="mx-auto flex min-h-16 max-w-[90rem] items-center justify-between gap-6 px-6 lg:px-8">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Admin Workspace') }}</p>
-                        <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Pantau operasional harian') }}</p>
+        <div class="lg:pl-72">
+            <header class="sticky top-0 z-30 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]/95 backdrop-blur-sm">
+                <div class="mx-auto flex min-h-16 max-w-[96rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <button
+                            data-admin-menu-open
+                            aria-controls="admin-mobile-navigation"
+                            aria-expanded="false"
+                            aria-label="{{ __('Menu') }}"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--admin-border)] text-lg lg:hidden"
+                            type="button"
+                        >
+                            <span aria-hidden="true" class="space-y-1">
+                                <span class="block h-0.5 w-4 bg-current"></span>
+                                <span class="block h-0.5 w-4 bg-current"></span>
+                                <span class="block h-0.5 w-4 bg-current"></span>
+                            </span>
+                        </button>
+
+                        <div class="min-w-0">
+                            <p class="truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{{ __('Admin Workspace') }}</p>
+                            <p class="truncate text-sm font-semibold">{{ __('Pantau operasional harian') }}</p>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <div class="inline-flex items-center rounded-full border border-[#E7E3DC] bg-[#FAF8F3] p-1 text-xs font-semibold dark:border-[#2A333D] dark:bg-[#0E1116]">
-                            <a href="{{ route('lang.switch', 'id') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-[#F4F1ED] dark:text-[#0E1116]' : 'text-[#526071] hover:text-[#8F2E2E] dark:text-[#AEB8C7] dark:hover:text-[#D96B6B]' }}">ID</a>
-                            <a href="{{ route('lang.switch', 'en') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-[#F4F1ED] dark:text-[#0E1116]' : 'text-[#526071] hover:text-[#8F2E2E] dark:text-[#AEB8C7] dark:hover:text-[#D96B6B]' }}">EN</a>
+                    <div class="flex shrink-0 items-center gap-2 text-xs font-semibold">
+                        <div class="hidden rounded-full border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] p-1 sm:flex">
+                            <a href="{{ route('lang.switch', 'id') }}" aria-current="{{ App::getLocale() === 'id' ? 'page' : 'false' }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'id' ? 'bg-[var(--admin-ink)] text-[var(--admin-surface)]' : 'text-[var(--admin-muted)]' }}">ID</a>
+                            <a href="{{ route('lang.switch', 'en') }}" aria-current="{{ App::getLocale() === 'en' ? 'page' : 'false' }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'en' ? 'bg-[var(--admin-ink)] text-[var(--admin-surface)]' : 'text-[var(--admin-muted)]' }}">EN</a>
                         </div>
-                        <button onclick="toggleTheme()" class="{{ $utilityControl }}" title="{{ __('Ganti tema') }}" type="button">
+                        <button onclick="toggleTheme()" class="inline-flex {{ $utilityControl }}" title="{{ __('Ganti tema') }}" type="button">
                             {{ __('Tema') }}
                         </button>
-                        <a href="{{ route('home') }}" class="{{ $utilityControl }}">{{ __('Lihat Situs') }}</a>
+                        <a href="{{ route('home') }}" class="hidden {{ $utilityControl }} sm:inline-flex">{{ __('Lihat Situs') }}</a>
                     </div>
                 </div>
             </header>
 
             @isset($header)
-                <div class="mx-auto w-full max-w-[90rem] px-4 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+                <div class="mx-auto w-full max-w-[96rem] px-4 pt-6 sm:px-6 lg:px-8 lg:pt-8">
                     {{ $header }}
                 </div>
             @endisset
 
-            <main class="mx-auto w-full max-w-[90rem] flex-1 px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-12">
+            <main class="mx-auto w-full max-w-[96rem] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-12">
                 {{ $slot }}
             </main>
         </div>
+
+        <dialog
+            id="admin-mobile-navigation"
+            data-admin-menu-dialog
+            aria-labelledby="admin-mobile-navigation-title"
+            class="admin-mobile-drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-[min(22rem,88vw)] max-w-none border-0 border-r border-[var(--admin-border)] bg-[var(--admin-surface)] p-0 text-[var(--admin-ink)] shadow-2xl lg:hidden"
+        >
+            <div class="flex h-full flex-col">
+                <div class="flex items-center justify-between border-b border-[var(--admin-border)] px-5 py-5">
+                    <strong id="admin-mobile-navigation-title" class="text-sm">{{ config('app.name', 'Japan Travel') }} · Admin</strong>
+                    <button
+                        data-admin-menu-close
+                        aria-label="{{ __('Tutup menu') }}"
+                        class="h-10 w-10 rounded-lg border border-[var(--admin-border)]"
+                        type="button"
+                    >×</button>
+                </div>
+
+                <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-5" aria-label="{{ __('Navigasi admin') }}">
+                    <a href="{{ route('admin.dashboard') }}" class="{{ $navLink }} {{ request()->routeIs('admin.dashboard') ? $navLinkActive : $navLinkIdle }}">
+                        {{ __('Dashboard') }}
+                    </a>
+                    <a href="{{ route('admin.orders.index') }}" class="{{ $navLink }} {{ request()->routeIs('admin.orders.*') ? $navLinkActive : $navLinkIdle }}">
+                        {{ __('Pesanan') }}
+                    </a>
+                    <a href="{{ route('admin.places.index') }}" class="{{ $navLink }} {{ request()->routeIs('admin.places.*') ? $navLinkActive : $navLinkIdle }}">
+                        {{ __('Destinasi') }}
+                    </a>
+                    <a href="{{ route('admin.souvenirs.index') }}" class="{{ $navLink }} {{ request()->routeIs('admin.souvenirs.*') ? $navLinkActive : $navLinkIdle }}">
+                        {{ __('Souvenir') }}
+                    </a>
+                    <a href="{{ route('admin.inventory.low-stock') }}" class="{{ $navLink }} {{ request()->routeIs('admin.inventory.*') ? $navLinkActive : $navLinkIdle }}">
+                        {{ __('Stok Rendah') }}
+                    </a>
+
+                    <div class="mt-5 flex items-center gap-2 border-t border-[var(--admin-border)] pt-5 text-xs font-semibold">
+                        <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-[var(--admin-border)] px-3 py-2">ID</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-[var(--admin-border)] px-3 py-2">EN</a>
+                        <a href="{{ route('home') }}" class="ml-auto text-[var(--admin-accent)]">{{ __('Lihat Situs') }}</a>
+                    </div>
+                </nav>
+
+                @if ($adminUser)
+                    <div class="border-t border-[var(--admin-border)] p-4">
+                        <div class="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] p-3">
+                            <p class="truncate text-sm font-semibold">{{ $adminUser->username }}</p>
+                            <p class="mt-1 truncate text-xs text-[var(--admin-muted)]">{{ $adminUser->email }}</p>
+                            <form method="POST" action="{{ route('admin.logout') }}" class="mt-3 border-t border-[var(--admin-border)] pt-3">
+                                @csrf
+                                <button type="submit" class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--admin-accent)] transition hover:bg-[var(--admin-surface)]">
+                                    {{ __('Keluar') }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </dialog>
     </div>
 
     @stack('scripts')

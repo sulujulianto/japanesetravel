@@ -73,7 +73,7 @@ class AdminInertiaLoginTest extends TestCase
         $this->assertAuthenticatedAs($admin, 'admin');
     }
 
-    public function test_inertia_login_uses_an_external_redirect_while_dashboard_is_still_blade(): void
+    public function test_inertia_login_redirects_to_the_inertia_dashboard(): void
     {
         $admin = User::factory()->create([
             'role' => 'admin',
@@ -87,9 +87,7 @@ class AdminInertiaLoginTest extends TestCase
                 'password' => 'password',
             ]);
 
-        $response
-            ->assertStatus(409)
-            ->assertHeader('X-Inertia-Location', route('admin.dashboard'));
+        $response->assertRedirect(route('admin.dashboard', absolute: false));
         $this->assertAuthenticatedAs($admin, 'admin');
     }
 }

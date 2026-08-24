@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -46,15 +45,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming admin authentication request.
      */
-    public function store(AdminLoginRequest $request): SymfonyResponse
+    public function store(AdminLoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return Inertia::location(
-            redirect()->intended(route('admin.dashboard', absolute: false))
-        );
+        return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 
     /**
