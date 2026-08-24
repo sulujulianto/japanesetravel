@@ -212,6 +212,22 @@
 }
 
 @layer components {
+    .admin-order-field {
+        @apply mt-2 w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition;
+        border-color: var(--admin-border);
+        background: var(--admin-surface);
+        color: var(--admin-ink);
+    }
+
+    .admin-order-field::placeholder {
+        color: var(--admin-muted);
+    }
+
+    .admin-order-field:focus {
+        border-color: var(--admin-accent);
+        box-shadow: 0 0 0 3px var(--admin-accent-soft);
+    }
+
     .admin-mobile-drawer::backdrop {
         background: rgba(0, 0, 0, 0.45);
     }

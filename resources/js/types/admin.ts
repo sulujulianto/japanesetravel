@@ -1,57 +1,59 @@
-export interface AdminDashboardCopy {
+export interface AdminShellCopy {
+    closeMenu: string;
+    dashboard: string;
+    logout: string;
+    lowStock: string;
+    menu: string;
+    navigation: string;
+    orders: string;
+    places: string;
+    souvenirs: string;
+    theme: string;
+    themeToggle: string;
+    viewSite: string;
+    workspace: string;
+    workspaceDescription: string;
+}
+
+export interface AdminDashboardCopy extends AdminShellCopy {
     allStockSafe: string;
     allStockSafeDescription: string;
     chartsError: string;
     checkStock: string;
-    closeMenu: string;
     criticalStockDescription: string;
     criticalStockTitle: string;
     customer: string;
-    dashboard: string;
     description: string;
     detail: string;
     eyebrow: string;
     loadingCharts: string;
-    logout: string;
-    lowStock: string;
     manageOrders: string;
-    menu: string;
     metricsDescription: string;
     metricsTitle: string;
-    navigation: string;
     noOrdersChart: string;
     noRecentOrders: string;
     noRevenueChart: string;
     noSales: string;
     order: string;
-    orders: string;
     ordersChartDescription: string;
     ordersChartTitle: string;
     payment: string;
-    places: string;
     recentOrdersDescription: string;
     recentOrdersTitle: string;
     remainingStock: string;
     revenueChartDescription: string;
     revenueChartTitle: string;
     sold: string;
-    souvenirs: string;
     status: string;
-    theme: string;
-    themeToggle: string;
     title: string;
     topSouvenirsDescription: string;
     topSouvenirsTitle: string;
     total: string;
     view: string;
     viewAllOrders: string;
-    viewSite: string;
-    workspace: string;
-    workspaceDescription: string;
 }
 
-export interface AdminRoutes {
-    charts: string;
+export interface AdminShellRoutes {
     dashboard: string;
     home: string;
     localeEn: string;
@@ -61,6 +63,10 @@ export interface AdminRoutes {
     orders: string;
     places: string;
     souvenirs: string;
+}
+
+export interface AdminRoutes extends AdminShellRoutes {
+    charts: string;
 }
 
 export interface DashboardMetric {

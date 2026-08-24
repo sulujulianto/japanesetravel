@@ -5,55 +5,85 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Models\Order;
+use App\Models\Payment;
+use App\Models\User;
+use App\Support\AdminShell;
+use App\Support\Format;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    /** @var list<string> */
+    private const ORDER_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
+
+    /** @var list<string> */
+    private const PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'failed', 'expired', 'refunded'];
+
+    public function index(Request $request): Response
     {
+        $filters = $this->filters($request);
         $query = Order::query()->with(['user', 'payment']);
 
-        $status = $request->string('status')->toString();
-        if ($status !== '') {
-            $query->where('status', $status);
+        if ($filters['status'] !== '') {
+            $query->where('status', $filters['status']);
         }
 
-        $paymentStatus = $request->string('payment_status')->toString();
-        if ($paymentStatus === 'unpaid') {
+        if ($filters['paymentStatus'] === 'unpaid') {
             $query->whereDoesntHave('payment');
-        } elseif ($paymentStatus !== '') {
-            $query->whereHas('payment', function ($paymentQuery) use ($paymentStatus) {
-                $paymentQuery->where('status', $paymentStatus);
+        } elseif ($filters['paymentStatus'] !== '') {
+            $query->whereHas('payment', function ($paymentQuery) use ($filters) {
+                $paymentQuery->where('status', $filters['paymentStatus']);
             });
         }
 
-        $dateFrom = $request->string('date_from')->toString();
-        if ($dateFrom !== '') {
-            $query->whereDate('created_at', '>=', $dateFrom);
+        if ($filters['dateFrom'] !== '') {
+            $query->whereDate('created_at', '>=', $filters['dateFrom']);
         }
 
-        $dateTo = $request->string('date_to')->toString();
-        if ($dateTo !== '') {
-            $query->whereDate('created_at', '<=', $dateTo);
+        if ($filters['dateTo'] !== '') {
+            $query->whereDate('created_at', '<=', $filters['dateTo']);
         }
 
-        $search = $request->string('q')->toString();
-        if ($search !== '') {
-            $query->where(function ($searchQuery) use ($search) {
-                if (is_numeric($search)) {
-                    $searchQuery->where('id', (int) $search);
+        if ($filters['search'] !== '') {
+            $query->where(function ($searchQuery) use ($filters) {
+                if (is_numeric($filters['search'])) {
+                    $searchQuery->where('id', (int) $filters['search']);
                 }
 
-                $searchQuery->orWhereHas('user', function ($userQuery) use ($search) {
-                    $userQuery->where('email', 'like', '%'.$search.'%')
-                        ->orWhere('username', 'like', '%'.$search.'%');
+                $searchQuery->orWhereHas('user', function ($userQuery) use ($filters) {
+                    $userQuery->where('email', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('username', 'like', '%'.$filters['search'].'%');
                 });
             });
         }
 
-        $orders = $query->latest()->paginate(15)->withQueryString();
+        $orders = $query->latest()->paginate(15)->appends(array_filter([
+            'q' => $filters['search'],
+            'status' => $filters['status'],
+            'payment_status' => $filters['paymentStatus'],
+            'date_from' => $filters['dateFrom'],
+            'date_to' => $filters['dateTo'],
+        ], fn (string $value): bool => $value !== ''));
 
-        return view('admin.orders.index', compact('orders', 'status', 'paymentStatus', 'dateFrom', 'dateTo', 'search'));
+        return Inertia::render('Admin/Orders/Index', [
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->copy(),
+            ],
+            'filters' => $filters,
+            'options' => $this->filterOptions(),
+            'orders' => [
+                'data' => $orders->getCollection()
+                    ->map(fn (Order $order): array => $this->serializeOrder($order)),
+                'pagination' => $this->pagination($orders),
+            ],
+            'routes' => AdminShell::routes(),
+        ]);
     }
 
     public function show(Order $order)
@@ -78,5 +108,175 @@ class OrderController extends Controller
 
         return redirect()->route('admin.orders.show', $order)
             ->with('success', __('Status pesanan berhasil diperbarui.'));
+    }
+
+    /**
+     * @return array{search: string, status: string, paymentStatus: string, dateFrom: string, dateTo: string}
+     */
+    private function filters(Request $request): array
+    {
+        $status = $request->string('status')->trim()->toString();
+        $paymentStatus = $request->string('payment_status')->trim()->toString();
+        $dateFrom = $this->validDate($request->string('date_from')->trim()->toString());
+        $dateTo = $this->validDate($request->string('date_to')->trim()->toString());
+
+        if ($dateFrom !== '' && $dateTo !== '' && $dateTo < $dateFrom) {
+            $dateTo = '';
+        }
+
+        return [
+            'search' => mb_substr($request->string('q')->trim()->toString(), 0, 255),
+            'status' => in_array($status, self::ORDER_STATUSES, true) ? $status : '',
+            'paymentStatus' => in_array($paymentStatus, self::PAYMENT_STATUSES, true) ? $paymentStatus : '',
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+        ];
+    }
+
+    private function validDate(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date instanceof DateTimeImmutable && $date->format('Y-m-d') === $value ? $value : '';
+    }
+
+    /** @return array{orderStatuses: list<array{value: string, label: string}>, paymentStatuses: list<array{value: string, label: string}>} */
+    private function filterOptions(): array
+    {
+        return [
+            'orderStatuses' => [
+                ['value' => 'pending', 'label' => __('Menunggu')],
+                ['value' => 'processing', 'label' => __('Diproses')],
+                ['value' => 'completed', 'label' => __('Selesai')],
+                ['value' => 'cancelled', 'label' => __('Dibatalkan')],
+            ],
+            'paymentStatuses' => [
+                ['value' => 'unpaid', 'label' => __('Belum ada pembayaran')],
+                ['value' => 'pending', 'label' => __('Pending')],
+                ['value' => 'paid', 'label' => __('Paid')],
+                ['value' => 'failed', 'label' => __('Failed')],
+                ['value' => 'expired', 'label' => __('Expired')],
+                ['value' => 'refunded', 'label' => __('Refunded')],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeOrder(Order $order): array
+    {
+        $payment = $order->getRelation('payment');
+        $user = $order->getRelation('user');
+        $createdAt = $order->getAttribute('created_at');
+        $totalPrice = $order->getAttribute('total_price');
+        $status = (string) $order->getAttribute('status');
+
+        return [
+            'id' => (int) $order->getKey(),
+            'reference' => '#ORDER-'.$order->getKey(),
+            'customer' => [
+                'username' => $user instanceof User ? (string) $user->username : __('Pengguna tidak tersedia'),
+                'email' => $user instanceof User ? (string) $user->email : '',
+            ],
+            'date' => Format::date($createdAt instanceof DateTimeInterface || is_string($createdAt) ? $createdAt : null),
+            'total' => Format::idr(is_numeric($totalPrice) ? $totalPrice : 0),
+            'payment' => ! $payment instanceof Payment ? null : [
+                'label' => strtoupper((string) $payment->provider).' · '.__(strtoupper((string) $payment->status)),
+                'status' => (string) $payment->status,
+            ],
+            'status' => [
+                'label' => __(strtoupper($status)),
+                'value' => $status,
+            ],
+            'url' => route('admin.orders.show', $order, absolute: false),
+        ];
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, Order>  $orders
+     * @return array<string, mixed>
+     */
+    private function pagination(LengthAwarePaginator $orders): array
+    {
+        $currentPage = $orders->currentPage();
+        $lastPage = $orders->lastPage();
+        $pageNumbers = array_values(array_unique(array_filter(
+            [1, $currentPage - 1, $currentPage, $currentPage + 1, $lastPage],
+            fn (int $page): bool => $page >= 1 && $page <= $lastPage
+        )));
+        sort($pageNumbers);
+
+        return [
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+            'from' => $orders->firstItem(),
+            'to' => $orders->lastItem(),
+            'total' => $orders->total(),
+            'previousUrl' => $this->relativeUrl($orders->previousPageUrl()),
+            'nextUrl' => $this->relativeUrl($orders->nextPageUrl()),
+            'pages' => array_map(fn (int $page): array => [
+                'page' => $page,
+                'url' => $this->relativeUrl($orders->url($page)) ?? $orders->url($page),
+                'active' => $page === $currentPage,
+            ], $pageNumbers),
+            'summary' => __('Menampilkan :from–:to dari :total pesanan', [
+                'from' => Format::number($orders->firstItem() ?? 0),
+                'to' => Format::number($orders->lastItem() ?? 0),
+                'total' => Format::number($orders->total()),
+            ]),
+        ];
+    }
+
+    private function relativeUrl(?string $url): ?string
+    {
+        if ($url === null) {
+            return null;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        $query = parse_url($url, PHP_URL_QUERY);
+        if (! is_string($path)) {
+            return $url;
+        }
+
+        return $path.(is_string($query) && $query !== '' ? '?'.$query : '');
+    }
+
+    /** @return array<string, string> */
+    private function copy(): array
+    {
+        return [
+            'actions' => __('Aksi'),
+            'all' => __('Semua'),
+            'applyFilters' => __('Terapkan Filter'),
+            'customer' => __('Pelanggan'),
+            'date' => __('Tanggal'),
+            'dateFrom' => __('Dari'),
+            'dateTo' => __('Sampai'),
+            'description' => __('Cari dan pantau status pesanan serta pembayaran pelanggan dari satu daftar operasional.'),
+            'detail' => __('Detail'),
+            'emptyDescription' => __('Ubah atau reset filter untuk melihat pesanan lainnya.'),
+            'emptyTitle' => __('Belum ada pesanan yang sesuai.'),
+            'eyebrow' => __('Manajemen Order'),
+            'filtersDescription' => __('Gunakan satu atau beberapa filter untuk mempersempit daftar operasional.'),
+            'filtersTitle' => __('Filter Pesanan'),
+            'next' => __('Berikutnya'),
+            'noPayment' => __('Belum ada pembayaran'),
+            'order' => __('Order'),
+            'payment' => __('Pembayaran'),
+            'paymentStatus' => __('Status Payment'),
+            'previous' => __('Sebelumnya'),
+            'reset' => __('Reset'),
+            'resultsDescription' => __('Pesanan terbaru ditampilkan lebih dahulu dengan status operasional dan pembayaran terkini.'),
+            'resultsTitle' => __('Hasil Pesanan'),
+            'search' => __('Cari'),
+            'searchPlaceholder' => __('ID order, email, atau nama'),
+            'status' => __('Status'),
+            'title' => __('Daftar Pesanan'),
+            'total' => __('Total'),
+        ];
     }
 }

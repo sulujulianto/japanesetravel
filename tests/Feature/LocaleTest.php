@@ -302,8 +302,12 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'id-ID,id;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('Rp1.234.567')
-            ->assertSee('9 Jun 2026');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Orders/Index')
+                ->where('locale', 'id')
+                ->where('orders.data.0.total', 'Rp1.234.567')
+                ->where('orders.data.0.date', '9 Jun 2026')
+            );
 
         $this->actingAs($admin, 'admin')
             ->get(route('admin.orders.show', $order), [
@@ -319,9 +323,12 @@ class LocaleTest extends TestCase
                 'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
             ])
             ->assertOk()
-            ->assertSee('IDR 1,234,567')
-            ->assertSee('Jun 9, 2026')
-            ->assertDontSee('Rp1.234.567');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Orders/Index')
+                ->where('locale', 'en')
+                ->where('orders.data.0.total', 'IDR 1,234,567')
+                ->where('orders.data.0.date', 'Jun 9, 2026')
+            );
 
         $this->actingAs($admin, 'admin')
             ->get(route('admin.orders.show', $order), [

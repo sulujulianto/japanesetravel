@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Support\AdminShell;
 use App\Support\CacheKeys;
 use App\Support\Format;
 use Illuminate\Http\JsonResponse;
@@ -70,7 +71,10 @@ class DashboardController extends Controller
             ]);
 
         return Inertia::render('Admin/Dashboard/Index', [
-            'copy' => $this->copy(),
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->copy(),
+            ],
             'metrics' => [
                 ['key' => 'revenue', 'label' => __('Revenue'), 'value' => Format::idr($metrics['revenue']), 'description' => __('Total pendapatan dari pesanan berbayar.')],
                 ['key' => 'orders', 'label' => __('Total Pesanan'), 'value' => Format::number($metrics['orders']), 'description' => __('Semua pesanan yang masuk ke sistem.')],
@@ -80,16 +84,8 @@ class DashboardController extends Controller
             'recentOrders' => $recentOrders,
             'lowStockItems' => $lowStockItems,
             'routes' => [
+                ...AdminShell::routes(),
                 'charts' => route('admin.dashboard.charts', absolute: false),
-                'dashboard' => route('admin.dashboard', absolute: false),
-                'home' => route('home', absolute: false),
-                'localeEn' => route('lang.switch', ['locale' => 'en'], absolute: false),
-                'localeId' => route('lang.switch', ['locale' => 'id'], absolute: false),
-                'logout' => route('admin.logout', absolute: false),
-                'lowStock' => route('admin.inventory.low-stock', absolute: false),
-                'orders' => route('admin.orders.index', absolute: false),
-                'places' => route('admin.places.index', absolute: false),
-                'souvenirs' => route('admin.souvenirs.index', absolute: false),
             ],
         ]);
     }
@@ -166,51 +162,37 @@ class DashboardController extends Controller
             'allStockSafeDescription' => __('Tidak ada produk di bawah batas stok saat ini.'),
             'chartsError' => __('Gagal memuat data grafik.'),
             'checkStock' => __('Cek Stok'),
-            'closeMenu' => __('Tutup menu'),
             'criticalStockDescription' => __('Produk yang perlu segera diperiksa atau direstock.'),
             'criticalStockTitle' => __('Stok Kritis'),
             'customer' => __('Pelanggan'),
-            'dashboard' => __('Dashboard'),
             'description' => __('Pantau penjualan, pesanan, dan stok dari data operasional terbaru.'),
             'detail' => __('Detail'),
             'eyebrow' => __('Ringkasan Operasional'),
             'loadingCharts' => __('Memuat data grafik...'),
-            'logout' => __('Keluar'),
-            'lowStock' => __('Stok Rendah'),
             'manageOrders' => __('Kelola Pesanan'),
-            'menu' => __('Menu'),
             'metricsDescription' => __('Snapshot terbaru untuk penjualan, pesanan, dan persediaan.'),
             'metricsTitle' => __('Metrik Utama'),
-            'navigation' => __('Navigasi admin'),
             'noOrdersChart' => __('Belum ada pesanan untuk periode ini.'),
             'noRecentOrders' => __('Belum ada pesanan terbaru.'),
             'noRevenueChart' => __('Belum ada data revenue untuk periode ini.'),
             'noSales' => __('Belum ada data penjualan.'),
             'order' => __('Order'),
-            'orders' => __('Pesanan'),
             'ordersChartDescription' => __('Frekuensi pesanan harian selama 30 hari terakhir.'),
             'ordersChartTitle' => __('Pesanan 30 Hari'),
             'payment' => __('Pembayaran'),
-            'places' => __('Destinasi'),
             'recentOrdersDescription' => __('Transaksi terbaru yang memerlukan pemantauan operasional.'),
             'recentOrdersTitle' => __('Pesanan Terbaru'),
             'remainingStock' => __('Sisa stok'),
             'revenueChartDescription' => __('Tren pendapatan bulanan dari pesanan berbayar.'),
             'revenueChartTitle' => __('Revenue 12 Bulan'),
             'sold' => __('terjual'),
-            'souvenirs' => __('Souvenir'),
             'status' => __('Status'),
-            'theme' => __('Tema'),
-            'themeToggle' => __('Ganti tema'),
             'title' => __('Dashboard Admin'),
             'topSouvenirsDescription' => __('Produk terlaris dari pesanan berbayar 30 hari terakhir.'),
             'topSouvenirsTitle' => __('Top 5 Souvenir'),
             'total' => __('Total'),
             'view' => __('Lihat'),
             'viewAllOrders' => __('Lihat semua pesanan'),
-            'viewSite' => __('Lihat Situs'),
-            'workspace' => __('Admin Workspace'),
-            'workspaceDescription' => __('Pantau operasional harian'),
         ];
     }
 }
