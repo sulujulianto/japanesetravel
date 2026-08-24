@@ -11,7 +11,7 @@ export default withVueTs(
     pluginVue.configs['flat/essential'],
     vueTsConfigs.recommended,
     {
-        files: ['resources/js/**/*.{ts,vue}'],
+        files: ['resources/js/**/*.{js,ts,vue}'],
         rules: {
             'no-duplicate-imports': 'error',
         },
