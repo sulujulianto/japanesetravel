@@ -34,6 +34,71 @@ class AdminInertiaPlacesTest extends TestCase
         );
     }
 
+    public function test_admin_place_create_form_is_rendered_by_inertia_with_explicit_contract(): void
+    {
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->withCookie('locale', 'en')
+            ->get(route('admin.places.create'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Places/Form')
+            ->where('mode', 'create')
+            ->where('copy.title', 'Add New Destination')
+            ->where('routes.places', '/admin/places')
+            ->where('routes.submitPlace', '/admin/places')
+            ->where('initialValues.nameId', '')
+            ->where('initialValues.currentImageUrl', null)
+            ->where('initialValues.hasSchedule', false)
+            ->has('scheduleOptions.days', 7)
+            ->where('scheduleOptions.days.0.value', 'monday')
+            ->where('scheduleOptions.hours.0', 1)
+            ->where('scheduleOptions.periods.1', 'PM')
+            ->where('scheduleValues.open_day_start', '')
+        );
+    }
+
+    public function test_admin_place_edit_form_serializes_only_explicit_fields(): void
+    {
+        Storage::fake('public');
+        config(['media.disk' => 'public']);
+        Storage::disk('public')->put('uploads/places/edit.webp', 'image');
+
+        $place = $this->createPlace([
+            'address' => 'Kyoto',
+            'description' => ['id' => 'Deskripsi Kyoto', 'en' => 'Kyoto description'],
+            'facilities' => 'WiFi',
+            'image' => 'uploads/places/edit.webp',
+            'name' => ['id' => 'Kuil Kyoto', 'en' => 'Kyoto Temple'],
+        ]);
+
+        $response = $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->withCookie('locale', 'en')
+            ->get(route('admin.places.edit', $place));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Places/Form')
+            ->where('mode', 'edit')
+            ->where('copy.title', 'Edit Destination')
+            ->where('routes.submitPlace', '/admin/places/'.$place->id)
+            ->where('initialValues.nameId', 'Kuil Kyoto')
+            ->where('initialValues.nameEn', 'Kyoto Temple')
+            ->where('initialValues.descriptionId', 'Deskripsi Kyoto')
+            ->where('initialValues.descriptionEn', 'Kyoto description')
+            ->where('initialValues.address', 'Kyoto')
+            ->where('initialValues.facilities', 'WiFi')
+            ->where('initialValues.currentImageAlt', 'Kyoto Temple')
+            ->where('initialValues.currentImageUrl', Storage::disk('public')->url('uploads/places/edit.webp'))
+            ->where('initialValues.hasSchedule', false)
+            ->missing('initialValues.slug')
+            ->missing('initialValues.created_by')
+            ->missing('initialValues.opening_hours')
+        );
+    }
+
     public function test_places_are_localized_and_serialized_without_exposing_models(): void
     {
         Storage::fake('public');
@@ -130,6 +195,7 @@ class AdminInertiaPlacesTest extends TestCase
             'name' => ['id' => 'Destinasi', 'en' => 'Destination'],
             'open_days' => null,
             'open_hours' => null,
+            'opening_hours' => null,
             'slug' => 'destination-'.uniqid(),
         ], $attributes));
     }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Place;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AdminPlaceScheduleTest extends TestCase
@@ -17,16 +18,19 @@ class AdminPlaceScheduleTest extends TestCase
             ->actingAs($this->createAdmin(), 'admin')
             ->get(route('admin.places.create'));
 
-        $response
-            ->assertOk()
-            ->assertSee('name="open_day_start"', false)
-            ->assertSee('name="open_day_end"', false)
-            ->assertSee('name="open_time_start_hour"', false)
-            ->assertSee('name="open_time_end_period"', false)
-            ->assertSee('value="AM"', false)
-            ->assertSee('value="PM"', false)
-            ->assertDontSee('name="open_days"', false)
-            ->assertDontSee('name="open_hours"', false);
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Places/Form')
+            ->where('mode', 'create')
+            ->has('scheduleOptions.days', 7)
+            ->has('scheduleOptions.hours', 12)
+            ->where('scheduleOptions.periods.0', 'AM')
+            ->where('scheduleOptions.periods.1', 'PM')
+            ->where('scheduleValues.open_day_start', '')
+            ->where('scheduleValues.open_day_end', '')
+            ->where('scheduleValues.open_time_start_hour', '')
+            ->where('scheduleValues.open_time_end_period', '')
+        );
     }
 
     public function test_admin_can_store_a_structured_place_schedule(): void
@@ -70,11 +74,20 @@ class AdminPlaceScheduleTest extends TestCase
             ->actingAs($this->createAdmin(), 'admin')
             ->get(route('admin.places.edit', $place));
 
-        $response
-            ->assertOk()
-            ->assertSee('value="monday" selected', false)
-            ->assertSee('<option value="PM" selected>PM</option>', false)
-            ->assertSee('name="clear_schedule"', false);
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Places/Form')
+            ->where('mode', 'edit')
+            ->where('initialValues.hasSchedule', true)
+            ->where('initialValues.legacyScheduleLabel', null)
+            ->where('scheduleValues.open_day_start', 'monday')
+            ->where('scheduleValues.open_day_end', 'friday')
+            ->where('scheduleValues.open_time_start_hour', '9')
+            ->where('scheduleValues.open_time_start_minute', '30')
+            ->where('scheduleValues.open_time_end_hour', '5')
+            ->where('scheduleValues.open_time_end_minute', '45')
+            ->where('scheduleValues.open_time_end_period', 'PM')
+        );
     }
 
     public function test_updating_other_fields_preserves_a_legacy_free_form_schedule(): void
@@ -83,6 +96,19 @@ class AdminPlaceScheduleTest extends TestCase
             'open_days' => 'Setiap hari kecuali hari libur nasional',
             'open_hours' => 'Area terbuka; fasilitas memiliki jadwal masing-masing',
         ]);
+
+        $this
+            ->actingAs($this->createAdmin(), 'admin')
+            ->withCookie('locale', 'id')
+            ->get(route('admin.places.edit', $place))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('initialValues.hasSchedule', true)
+                ->where(
+                    'initialValues.legacyScheduleLabel',
+                    'Jadwal tersimpan sebelumnya: Setiap hari kecuali hari libur nasional · Area terbuka; fasilitas memiliki jadwal masing-masing',
+                )
+                ->where('scheduleValues.open_day_start', '')
+            );
 
         $response = $this
             ->actingAs($this->createAdmin(), 'admin')

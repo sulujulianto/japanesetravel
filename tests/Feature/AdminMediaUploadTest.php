@@ -65,7 +65,8 @@ class AdminMediaUploadTest extends TestCase
             'created_by' => $admin->id,
         ]);
 
-        $response = $this->actingAs($admin, 'admin')->put(route('admin.places.update', $place), [
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.places.update', $place), [
+            '_method' => 'put',
             'name_id' => 'Baru',
             'name_en' => 'New',
             'description_id' => 'Deskripsi baru',
