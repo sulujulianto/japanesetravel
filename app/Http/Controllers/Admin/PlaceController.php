@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,12 +49,9 @@ class PlaceController extends Controller
     }
 
     // 2. TAMPILKAN FORM TAMBAH
-    public function create(): View
+    public function create(): Response
     {
-        return view('admin.places.create', [
-            'scheduleOptions' => PlaceSchedule::options(),
-            'scheduleValues' => PlaceSchedule::formValues(null),
-        ]);
+        return Inertia::render('Admin/Places/Form', $this->formProps());
     }
 
     // 3. SIMPAN DATA BARU
@@ -120,20 +116,9 @@ class PlaceController extends Controller
     }
 
     // 4. TAMPILKAN FORM EDIT (BARU)
-    public function edit(Place $place): View
+    public function edit(Place $place): Response
     {
-        $scheduleValues = PlaceSchedule::formValues($place->opening_hours);
-        $hasStructuredSchedule = $scheduleValues['open_day_start'] !== '';
-
-        return view('admin.places.edit', [
-            'hasSchedule' => $hasStructuredSchedule || filled($place->open_days) || filled($place->open_hours),
-            'legacySchedule' => $hasStructuredSchedule ? null : collect([$place->open_days, $place->open_hours])
-                ->filter(fn (mixed $value): bool => filled($value))
-                ->implode(' · '),
-            'place' => $place,
-            'scheduleOptions' => PlaceSchedule::options(),
-            'scheduleValues' => $scheduleValues,
-        ]);
+        return Inertia::render('Admin/Places/Form', $this->formProps($place));
     }
 
     // 5. UPDATE DATA (BARU)
@@ -215,6 +200,108 @@ class PlaceController extends Controller
         CacheKeys::bump(CacheKeys::PLACES_VERSION);
 
         return redirect()->route('admin.places.index')->with('success', __('Destinasi berhasil dihapus.'));
+    }
+
+    /** @return array<string, mixed> */
+    private function formProps(?Place $place = null): array
+    {
+        $editing = $place !== null;
+        $scheduleValues = PlaceSchedule::formValues($place?->opening_hours);
+        $hasStructuredSchedule = $scheduleValues['open_day_start'] !== '';
+        $hasSchedule = $place !== null && ($hasStructuredSchedule || filled($place->open_days) || filled($place->open_hours));
+        $legacySchedule = null;
+
+        if ($place !== null && ! $hasStructuredSchedule) {
+            $legacySchedule = collect([$place->open_days, $place->open_hours])
+                ->filter(fn (mixed $value): bool => filled($value))
+                ->implode(' · ');
+        }
+
+        return [
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->formCopy($editing),
+            ],
+            'initialValues' => [
+                'address' => (string) ($place->address ?? ''),
+                'currentImageAlt' => $place !== null
+                    ? trim($place->getTranslation('name', app()->getLocale()))
+                    : null,
+                'currentImageUrl' => $place !== null
+                    ? ($place->getImageUrlAttribute() ?? asset('demo/place-placeholder.svg'))
+                    : null,
+                'descriptionEn' => (string) ($place?->getTranslation('description', 'en') ?? ''),
+                'descriptionId' => (string) ($place?->getTranslation('description', 'id') ?? ''),
+                'facilities' => (string) ($place->facilities ?? ''),
+                'hasSchedule' => $hasSchedule,
+                'legacyScheduleLabel' => filled($legacySchedule)
+                    ? __('Jadwal tersimpan sebelumnya: :schedule', ['schedule' => $legacySchedule])
+                    : null,
+                'nameEn' => (string) ($place?->getTranslation('name', 'en') ?? ''),
+                'nameId' => (string) ($place?->getTranslation('name', 'id') ?? ''),
+            ],
+            'mode' => $editing ? 'edit' : 'create',
+            'routes' => [
+                ...AdminShell::routes(),
+                'submitPlace' => $place !== null
+                    ? route('admin.places.update', $place, absolute: false)
+                    : route('admin.places.store', absolute: false),
+            ],
+            'scheduleOptions' => PlaceSchedule::options(),
+            'scheduleValues' => $scheduleValues,
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function formCopy(bool $editing): array
+    {
+        return [
+            'address' => __('Alamat'),
+            'amPm' => __('AM/PM'),
+            'cancel' => __('Batal'),
+            'clearSchedule' => __('Hapus jadwal operasional'),
+            'closingTime' => __('Jam Selesai'),
+            'currentImage' => __('Gambar Saat Ini'),
+            'description' => $editing
+                ? __('Perbarui konten dan informasi kunjungan tanpa mengubah struktur katalog destinasi.')
+                : __('Lengkapi konten bilingual, informasi kunjungan, dan gambar destinasi untuk katalog publik.'),
+            'descriptionEn' => __('Deskripsi (EN)'),
+            'descriptionHelp' => __('Jelaskan karakter, suasana, dan informasi penting destinasi secara ringkas.'),
+            'descriptionId' => __('Deskripsi (ID)'),
+            'enContentDescription' => __('Gunakan terjemahan yang natural dan konsisten dengan konten Indonesia.'),
+            'enContentTitle' => __('Konten Bahasa Inggris'),
+            'eyebrow' => __('Destinasi'),
+            'facilities' => __('Fasilitas (pisahkan dengan koma)'),
+            'facilitiesHelp' => __('Contoh: WiFi, Restoran, Area parkir.'),
+            'formError' => __('Periksa kembali data yang belum valid.'),
+            'fromDay' => __('Dari Hari'),
+            'hour' => __('Jam'),
+            'idContentDescription' => __('Informasi utama yang dibaca pengunjung berbahasa Indonesia.'),
+            'idContentTitle' => __('Konten Bahasa Indonesia'),
+            'legacyScheduleHelp' => __('Pilih jadwal baru untuk mengganti jadwal lama.'),
+            'media' => __('Media'),
+            'mediaDescription' => $editing
+                ? __('Gambar baru akan menggantikan gambar yang sedang digunakan.')
+                : __('Unggah gambar utama yang representatif dan jelas.'),
+            'mediaHelp' => $editing
+                ? __('Kosongkan jika tidak ingin mengganti gambar. Format JPG, PNG, GIF, atau WebP; maksimal 2 MB.')
+                : __('Format gambar yang didukung: JPG, PNG, GIF, atau WebP. Maksimal 2 MB.'),
+            'minute' => __('Menit'),
+            'nameEn' => __('Nama Destinasi (EN)'),
+            'nameId' => __('Nama Destinasi (ID)'),
+            'openDays' => __('Hari Buka'),
+            'openingTime' => __('Jam Mulai'),
+            'period' => __('Periode'),
+            'saving' => __('Menyimpan'),
+            'scheduleHelp' => __('Kosongkan semua pilihan jika jadwal belum tersedia.'),
+            'selectDay' => __('Pilih hari'),
+            'submit' => $editing ? __('Simpan Perubahan') : __('Simpan'),
+            'title' => $editing ? __('Edit Destinasi') : __('Tambah Destinasi Baru'),
+            'toDay' => __('Sampai Hari'),
+            'uploadImage' => __('Upload Gambar'),
+            'visitDescription' => __('Data operasional yang membantu pengunjung memahami lokasi dan waktu kunjungan.'),
+            'visitTitle' => __('Informasi Kunjungan'),
+        ];
     }
 
     /** @return array<string, mixed> */
