@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Support\AdminPagination;
 use App\Support\AdminShell;
 use App\Support\Format;
 use DateTimeImmutable;
@@ -16,7 +17,6 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -84,7 +84,11 @@ class OrderController extends Controller
             'orders' => [
                 'data' => $orders->getCollection()
                     ->map(fn (Order $order): array => $this->serializeOrder($order)),
-                'pagination' => $this->pagination($orders),
+                'pagination' => AdminPagination::serialize($orders, __('Menampilkan :from–:to dari :total pesanan', [
+                    'from' => Format::number($orders->firstItem() ?? 0),
+                    'to' => Format::number($orders->lastItem() ?? 0),
+                    'total' => Format::number($orders->total()),
+                ])),
             ],
             'routes' => AdminShell::routes(),
         ]);
@@ -326,56 +330,6 @@ class OrderController extends Controller
         $value = trim($value);
 
         return $value !== '' ? $value : null;
-    }
-
-    /**
-     * @param  LengthAwarePaginator<int, Order>  $orders
-     * @return array<string, mixed>
-     */
-    private function pagination(LengthAwarePaginator $orders): array
-    {
-        $currentPage = $orders->currentPage();
-        $lastPage = $orders->lastPage();
-        $pageNumbers = array_values(array_unique(array_filter(
-            [1, $currentPage - 1, $currentPage, $currentPage + 1, $lastPage],
-            fn (int $page): bool => $page >= 1 && $page <= $lastPage
-        )));
-        sort($pageNumbers);
-
-        return [
-            'currentPage' => $currentPage,
-            'lastPage' => $lastPage,
-            'from' => $orders->firstItem(),
-            'to' => $orders->lastItem(),
-            'total' => $orders->total(),
-            'previousUrl' => $this->relativeUrl($orders->previousPageUrl()),
-            'nextUrl' => $this->relativeUrl($orders->nextPageUrl()),
-            'pages' => array_map(fn (int $page): array => [
-                'page' => $page,
-                'url' => $this->relativeUrl($orders->url($page)) ?? $orders->url($page),
-                'active' => $page === $currentPage,
-            ], $pageNumbers),
-            'summary' => __('Menampilkan :from–:to dari :total pesanan', [
-                'from' => Format::number($orders->firstItem() ?? 0),
-                'to' => Format::number($orders->lastItem() ?? 0),
-                'total' => Format::number($orders->total()),
-            ]),
-        ];
-    }
-
-    private function relativeUrl(?string $url): ?string
-    {
-        if ($url === null) {
-            return null;
-        }
-
-        $path = parse_url($url, PHP_URL_PATH);
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($path)) {
-            return $url;
-        }
-
-        return $path.(is_string($query) && $query !== '' ? '?'.$query : '');
     }
 
     /** @return array<string, string> */

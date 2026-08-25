@@ -384,9 +384,12 @@ class LocaleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Manage Destinations')
-            ->assertSee('Destination List')
-            ->assertDontSee('Daftar Destinasi');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Places/Index')
+                ->where('locale', 'en')
+                ->where('copy.title', 'Manage Destinations')
+                ->where('copy.resultsTitle', 'Destination List')
+            );
     }
 
     public function test_admin_souvenirs_uses_english_copy(): void

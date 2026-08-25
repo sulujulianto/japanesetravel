@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-import type { PaginationPage } from '../../types/adminOrders';
+import type { PaginationPage } from '../../types/pagination';
 
 defineOptions({ name: 'PaginationControls' });
 

@@ -25,42 +25,6 @@ parameters:
 			path: app/Http/Controllers/Admin/InventoryController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:create\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:destroy\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:edit\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:index\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:store\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\Admin\\PlaceController\:\:update\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/Admin/PlaceController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\Admin\\SouvenirController\:\:create\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
