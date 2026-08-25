@@ -85,16 +85,7 @@
                     <p class="{{ $helpClass }}">{{ __('Contoh: WiFi, Restoran, Area parkir.') }}</p>
                     @error('facilities')<p class="{{ $errorClass }}">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label for="open_days" class="{{ $labelClass }}">{{ __('Hari Buka') }}</label>
-                    <input id="open_days" name="open_days" value="{{ old('open_days') }}" class="{{ $inputClass }}">
-                    @error('open_days')<p class="{{ $errorClass }}">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label for="open_hours" class="{{ $labelClass }}">{{ __('Jam Buka') }}</label>
-                    <input id="open_hours" name="open_hours" value="{{ old('open_hours') }}" class="{{ $inputClass }}">
-                    @error('open_hours')<p class="{{ $errorClass }}">{{ $message }}</p>@enderror
-                </div>
+                @include('admin.places._schedule-fields', ['hasSchedule' => false, 'legacySchedule' => null])
             </div>
         </section>
 

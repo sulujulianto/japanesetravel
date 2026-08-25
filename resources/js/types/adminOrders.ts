@@ -1,4 +1,5 @@
 import type { AdminShellCopy, AdminShellRoutes } from './admin';
+import type { Pagination } from './pagination';
 
 export interface AdminOrderCopy extends AdminShellCopy {
     actions: string;
@@ -55,23 +56,7 @@ export interface AdminOrderListItem {
     url: string;
 }
 
-export interface PaginationPage {
-    active: boolean;
-    page: number;
-    url: string;
-}
-
-export interface AdminOrderPagination {
-    currentPage: number;
-    from: number | null;
-    lastPage: number;
-    nextUrl: string | null;
-    pages: PaginationPage[];
-    previousUrl: string | null;
-    summary: string;
-    to: number | null;
-    total: number;
-}
+export type AdminOrderPagination = Pagination;
 
 export interface AdminOrderOptions {
     orderStatuses: AdminOrderFilterOption[];

@@ -16,7 +16,7 @@ class AdminLegacyShellTest extends TestCase
 
         $response = $this
             ->actingAs($admin, 'admin')
-            ->get(route('admin.places.index'));
+            ->get(route('admin.souvenirs.index'));
 
         $response
             ->assertOk()
