@@ -10,13 +10,13 @@ class AdminLegacyShellTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_legacy_admin_shell_uses_csp_safe_dialog_controls(): void
+    public function test_remaining_legacy_admin_shell_uses_csp_safe_dialog_controls(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this
             ->actingAs($admin, 'admin')
-            ->get(route('admin.souvenirs.index'));
+            ->get(route('admin.inventory.low-stock'));
 
         $response
             ->assertOk()

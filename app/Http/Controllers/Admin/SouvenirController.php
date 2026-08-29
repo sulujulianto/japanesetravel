@@ -4,19 +4,45 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Souvenir;
+use App\Support\AdminPagination;
+use App\Support\AdminShell;
 use App\Support\CacheKeys;
+use App\Support\Format;
 use App\Support\Media;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SouvenirController extends Controller
 {
     // 1. DAFTAR BARANG
-    public function index()
+    public function index(): Response
     {
-        $souvenirs = Souvenir::latest()->paginate(10);
+        $souvenirs = Souvenir::latest()->orderByDesc('id')->paginate(10);
 
-        return view('admin.souvenirs.index', compact('souvenirs'));
+        return Inertia::render('Admin/Souvenirs/Index', [
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->copy(),
+            ],
+            'souvenirs' => [
+                'data' => $souvenirs->getCollection()
+                    ->map(fn (Souvenir $souvenir): array => $this->serializeSouvenir($souvenir))
+                    ->values()
+                    ->all(),
+                'pagination' => AdminPagination::serialize($souvenirs, __('Menampilkan :from–:to dari :total souvenir', [
+                    'from' => Format::number($souvenirs->firstItem() ?? 0),
+                    'to' => Format::number($souvenirs->lastItem() ?? 0),
+                    'total' => Format::number($souvenirs->total()),
+                ])),
+            ],
+            'routes' => [
+                ...AdminShell::routes(),
+                'createSouvenir' => route('admin.souvenirs.create', absolute: false),
+            ],
+        ]);
     }
 
     // 2. FORM TAMBAH
@@ -131,7 +157,7 @@ class SouvenirController extends Controller
     }
 
     // 6. HAPUS BARANG
-    public function destroy(Souvenir $souvenir)
+    public function destroy(Souvenir $souvenir): RedirectResponse
     {
         Media::delete($souvenir->image);
         $souvenir->delete();
@@ -139,5 +165,64 @@ class SouvenirController extends Controller
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
         return redirect()->route('admin.souvenirs.index')->with('success', __('Produk berhasil dihapus.'));
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeSouvenir(Souvenir $souvenir): array
+    {
+        $name = trim($souvenir->getTranslation('name', app()->getLocale()));
+        $stock = (int) $souvenir->stock;
+        $stockStatus = match (true) {
+            $stock === 0 => 'out-of-stock',
+            $stock <= 5 => 'low',
+            default => 'available',
+        };
+        $stockLabel = match ($stockStatus) {
+            'out-of-stock' => __('Habis'),
+            'low' => __('Rendah'),
+            default => __('Tersedia'),
+        };
+
+        return [
+            'deleteConfirmation' => __('Yakin ingin menghapus :name? Data tidak bisa dikembalikan.', [
+                'name' => $name,
+            ]),
+            'deleteUrl' => route('admin.souvenirs.destroy', $souvenir, absolute: false),
+            'editUrl' => route('admin.souvenirs.edit', $souvenir, absolute: false),
+            'id' => (int) $souvenir->getKey(),
+            'imageUrl' => $souvenir->getImageUrlAttribute() ?? asset('demo/souvenir-placeholder.svg'),
+            'name' => $name,
+            'price' => Format::idr($souvenir->price),
+            'reference' => __('SKU').' #'.$souvenir->getKey(),
+            'stock' => $stock,
+            'stockCount' => Format::number($stock),
+            'stockLabel' => $stockLabel,
+            'stockStatus' => $stockStatus,
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function copy(): array
+    {
+        return [
+            'actions' => __('Aksi'),
+            'add' => __('Tambah Souvenir'),
+            'delete' => __('Hapus'),
+            'deleting' => __('Menghapus'),
+            'description' => __('Kelola informasi produk, harga, stok, dan media yang tampil di toko oleh-oleh.'),
+            'edit' => __('Edit'),
+            'emptyDescription' => __('Tambahkan produk pertama untuk mulai mengisi toko.'),
+            'emptyTitle' => __('Belum ada data souvenir.'),
+            'eyebrow' => __('Master Data'),
+            'image' => __('Gambar'),
+            'name' => __('Nama Produk'),
+            'next' => __('Berikutnya'),
+            'previous' => __('Sebelumnya'),
+            'price' => __('Harga'),
+            'resultsDescription' => __('Pantau informasi produk dan ketersediaan stok dari satu daftar.'),
+            'resultsTitle' => __('Daftar Souvenir'),
+            'stock' => __('Stok'),
+            'title' => __('Kelola Souvenir'),
+        ];
     }
 }
