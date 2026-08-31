@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import PaginationControls from '../../../Components/Admin/PaginationControls.vue';
@@ -48,9 +48,9 @@ const destroy = (souvenir: AdminSouvenirListItem): void => {
                 <h1 class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{{ copy.title }}</h1>
                 <p class="mt-2 text-sm leading-6 text-[var(--admin-muted)]">{{ copy.description }}</p>
             </div>
-            <a :href="routes.createSouvenir" class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-accent)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[var(--admin-accent-active)]">
+            <Link :href="routes.createSouvenir" class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-accent)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[var(--admin-accent-active)]">
                 + {{ copy.add }}
-            </a>
+            </Link>
         </header>
 
         <div v-if="page.props.flash.success" class="mt-6 rounded-xl border border-[var(--admin-success)]/25 bg-[var(--admin-success-soft)] px-4 py-3 text-sm font-medium text-[var(--admin-success)]" role="status">
@@ -91,7 +91,7 @@ const destroy = (souvenir: AdminSouvenirListItem): void => {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-3 text-sm font-semibold">
-                                    <a :href="souvenir.editUrl" class="text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-accent)]">{{ copy.edit }}</a>
+                                    <Link :href="souvenir.editUrl" class="text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-accent)]">{{ copy.edit }}</Link>
                                     <button
                                         :aria-busy="deletingId === souvenir.id"
                                         class="text-[var(--admin-danger)] transition-colors hover:opacity-75 disabled:cursor-wait disabled:opacity-60"
@@ -123,7 +123,7 @@ const destroy = (souvenir: AdminSouvenirListItem): void => {
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-end gap-4 border-t border-[var(--admin-border)] pt-3 text-sm font-semibold">
-                        <a :href="souvenir.editUrl" class="text-[var(--admin-muted)]">{{ copy.edit }}</a>
+                        <Link :href="souvenir.editUrl" class="text-[var(--admin-muted)]">{{ copy.edit }}</Link>
                         <button
                             :aria-busy="deletingId === souvenir.id"
                             class="text-[var(--admin-danger)] disabled:cursor-wait disabled:opacity-60"
