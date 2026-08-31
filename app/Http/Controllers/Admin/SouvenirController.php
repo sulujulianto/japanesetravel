@@ -46,23 +46,23 @@ class SouvenirController extends Controller
     }
 
     // 2. FORM TAMBAH
-    public function create()
+    public function create(): Response
     {
-        return view('admin.souvenirs.create');
+        return Inertia::render('Admin/Souvenirs/Form', $this->formProps());
     }
 
     // 3. SIMPAN BARANG
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name_id' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
-            'description_id' => 'nullable|string|required_with:description_en',
-            'description_en' => 'nullable|string|required_with:description_id',
+            'description_id' => 'required|string',
+            'description_en' => 'required|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image' => [
-                'nullable',
+                'required',
                 'image',
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
@@ -72,13 +72,10 @@ class SouvenirController extends Controller
             ],
         ]);
 
-        $description = null;
-        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
-            $description = [
-                'id' => $validated['description_id'],
-                'en' => $validated['description_en'],
-            ];
-        }
+        $description = [
+            'id' => $validated['description_id'],
+            'en' => $validated['description_en'],
+        ];
 
         $imagePath = null;
         if ($request->hasFile('image')) {
@@ -102,23 +99,23 @@ class SouvenirController extends Controller
     }
 
     // 4. FORM EDIT
-    public function edit(Souvenir $souvenir)
+    public function edit(Souvenir $souvenir): Response
     {
-        return view('admin.souvenirs.edit', compact('souvenir'));
+        return Inertia::render('Admin/Souvenirs/Form', $this->formProps($souvenir));
     }
 
     // 5. UPDATE BARANG
-    public function update(Request $request, Souvenir $souvenir)
+    public function update(Request $request, Souvenir $souvenir): RedirectResponse
     {
         $validated = $request->validate([
             'name_id' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
-            'description_id' => 'nullable|string|required_with:description_en',
-            'description_en' => 'nullable|string|required_with:description_id',
+            'description_id' => 'required|string',
+            'description_en' => 'required|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image' => [
-                'nullable',
+                filled($souvenir->image) ? 'nullable' : 'required',
                 'image',
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
@@ -132,13 +129,10 @@ class SouvenirController extends Controller
             $souvenir->image = Media::replaceUploadedImage($request->file('image'), $souvenir->image, 'uploads/souvenirs');
         }
 
-        $description = null;
-        if (! empty($validated['description_id']) || ! empty($validated['description_en'])) {
-            $description = [
-                'id' => $validated['description_id'],
-                'en' => $validated['description_en'],
-            ];
-        }
+        $description = [
+            'id' => $validated['description_id'],
+            'en' => $validated['description_en'],
+        ];
 
         $souvenir->update([
             'name' => [
@@ -165,6 +159,103 @@ class SouvenirController extends Controller
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
         return redirect()->route('admin.souvenirs.index')->with('success', __('Produk berhasil dihapus.'));
+    }
+
+    /** @return array<string, mixed> */
+    private function formProps(?Souvenir $souvenir = null): array
+    {
+        $editing = $souvenir !== null;
+        $currentImageAlt = null;
+        $currentImageUrl = null;
+        $descriptionEn = '';
+        $descriptionId = '';
+        $imageRequired = true;
+        $nameEn = '';
+        $nameId = '';
+        $price = '';
+        $stock = '';
+
+        if ($souvenir !== null) {
+            $descriptionEn = (string) $souvenir->getTranslation('description', 'en');
+            $descriptionId = (string) $souvenir->getTranslation('description', 'id');
+            $nameEn = (string) $souvenir->getTranslation('name', 'en');
+            $nameId = (string) $souvenir->getTranslation('name', 'id');
+            $price = (string) $souvenir->price;
+            $stock = (string) $souvenir->stock;
+
+            if (filled($souvenir->image)) {
+                $currentImageAlt = trim($souvenir->getTranslation('name', app()->getLocale()));
+                $currentImageUrl = $souvenir->getImageUrlAttribute();
+                $imageRequired = false;
+            }
+        }
+
+        return [
+            'copy' => [
+                ...AdminShell::copy(),
+                ...$this->formCopy($editing, $imageRequired),
+            ],
+            'initialValues' => [
+                'currentImageAlt' => $currentImageAlt,
+                'currentImageUrl' => $currentImageUrl,
+                'descriptionEn' => $descriptionEn,
+                'descriptionId' => $descriptionId,
+                'imageRequired' => $imageRequired,
+                'nameEn' => $nameEn,
+                'nameId' => $nameId,
+                'price' => $price,
+                'stock' => $stock,
+            ],
+            'mode' => $editing ? 'edit' : 'create',
+            'routes' => [
+                ...AdminShell::routes(),
+                'submitSouvenir' => $souvenir !== null
+                    ? route('admin.souvenirs.update', $souvenir, absolute: false)
+                    : route('admin.souvenirs.store', absolute: false),
+            ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function formCopy(bool $editing, bool $imageRequired): array
+    {
+        return [
+            'cancel' => __('Batal'),
+            'currentImage' => __('Gambar Saat Ini'),
+            'description' => $editing
+                ? __('Perbarui informasi produk, stok, harga, atau gambar yang tampil di toko.')
+                : __('Lengkapi konten bilingual, harga, stok, dan gambar produk untuk katalog toko.'),
+            'descriptionEn' => __('Deskripsi (EN)'),
+            'descriptionHelp' => __('Jelaskan karakter produk, bahan, atau asalnya tanpa klaim promosi yang tidak tersedia.'),
+            'descriptionId' => __('Deskripsi (ID)'),
+            'enContentDescription' => __('Gunakan terjemahan yang natural dan konsisten dengan informasi produk.'),
+            'enContentTitle' => __('Konten Bahasa Inggris'),
+            'eyebrow' => __('Souvenir'),
+            'formError' => __('Periksa kembali data yang belum valid.'),
+            'idContentDescription' => __('Nama dan deskripsi utama untuk pelanggan berbahasa Indonesia.'),
+            'idContentTitle' => __('Konten Bahasa Indonesia'),
+            'media' => __('Media'),
+            'mediaDescription' => $editing && ! $imageRequired
+                ? __('Gambar baru akan menggantikan gambar yang sedang digunakan.')
+                : __('Gunakan gambar produk yang jelas dengan komposisi sederhana.'),
+            'mediaHelp' => $imageRequired
+                ? __('Format gambar yang didukung: JPG, PNG, GIF, atau WebP. Maksimal 2 MB.')
+                : __('Kosongkan jika tidak ingin mengganti gambar. Format JPG, PNG, GIF, atau WebP; maksimal 2 MB.'),
+            'nameEn' => __('Nama Produk (EN)'),
+            'nameId' => __('Nama Produk (ID)'),
+            'price' => __('Harga'),
+            'priceHelp' => __('Masukkan nilai harga tanpa pemisah ribuan.'),
+            'salesDescription' => $editing
+                ? __('Perubahan harga dan stok akan digunakan langsung oleh alur toko dan keranjang.')
+                : __('Harga dan stok digunakan langsung oleh alur toko dan keranjang.'),
+            'salesTitle' => __('Informasi Penjualan'),
+            'saving' => __('Menyimpan'),
+            'stock' => __('Stok'),
+            'stockHelp' => __('Stok nol akan ditampilkan sebagai habis di katalog.'),
+            'submit' => $editing ? __('Simpan Perubahan') : __('Simpan'),
+            'title' => $editing ? __('Edit Souvenir') : __('Tambah Souvenir Baru'),
+            'uploadImage' => __('Upload Gambar'),
+        ];
     }
 
     /** @return array<string, mixed> */
