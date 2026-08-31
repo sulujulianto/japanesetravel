@@ -105,6 +105,7 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/dashboard/charts', [DashboardController::class, 'charts'])->name('dashboard.charts');
     Route::resource('orders', OrderController::class)->only(['index', 'show', 'update']);
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
+    Route::post('inventory/{souvenir}/deduct', [InventoryController::class, 'deduct'])->name('inventory.deduct');
     Route::post('inventory/{souvenir}/restock', [InventoryController::class, 'restock'])->name('inventory.restock');
     Route::resource('places', PlaceController::class)->except(['show']);
     Route::resource('souvenirs', SouvenirController::class)->except(['show']);

@@ -435,9 +435,12 @@ class LocaleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Low Stock')
-            ->assertSee('Stock Monitoring Threshold')
-            ->assertDontSee('Batas Pemantauan Stok');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Inventory/LowStock')
+                ->where('locale', 'en')
+                ->where('copy.title', 'Low Stock')
+                ->where('copy.filterTitle', 'Stock Monitoring Threshold')
+            );
     }
 
     private function createAdmin(): User
