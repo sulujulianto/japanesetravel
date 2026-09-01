@@ -5,14 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Japan Travel') }}</title>
+        <title>{{ \App\Support\Brand::name() }}</title>
 
         @includeIf('partials.theme-script')
         @includeIf('partials.vite')
     </head>
-    <body class="min-h-dvh bg-[#FAF9F6] font-sans text-[#1F2937] antialiased dark:bg-[#0E1116] dark:text-[#F4F1ED]">
-        <div class="flex min-h-dvh flex-col">
-            @include('layouts.navigation')
+    <body class="public-shell min-h-dvh font-sans antialiased">
+        <div data-public-shell class="flex min-h-dvh flex-col">
+            @include('partials.site-nav')
 
             @isset($header)
                 <header class="border-b border-[#E7E3DC] bg-white dark:border-[#2A333D] dark:bg-[#161B22]">
@@ -22,9 +22,11 @@
                 </header>
             @endisset
 
-            <main class="flex-1">
+            <main class="ui-reveal flex-1">
                 {{ $slot }}
             </main>
+
+            @include('partials.site-footer')
         </div>
 
         @stack('scripts')

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ThemeToggle from '../Components/ThemeToggle.vue';
 import { useTheme } from '../composables/useTheme';
 import type { Locale } from '../types/inertia';
 
@@ -6,7 +7,11 @@ interface LayoutCopy {
     eyebrow: string;
     footer: string;
     theme: string;
+    themeDark: string;
+    themeLight: string;
     themeToggle: string;
+    useDarkTheme: string;
+    useLightTheme: string;
 }
 
 interface LayoutRoutes {
@@ -19,6 +24,7 @@ defineOptions({ name: 'AdminGuestLayout' });
 
 defineProps<{
     activeLocale: Locale;
+    appMark: string;
     appName: string;
     copy: LayoutCopy;
     routes: LayoutRoutes;
@@ -38,7 +44,7 @@ const { theme, toggleTheme } = useTheme();
                     aria-hidden="true"
                     class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--auth-hairline)] bg-[var(--auth-surface)] font-display text-sm"
                 >
-                    JT
+                    {{ appMark }}
                 </span>
                 <span>{{ appName }}</span>
             </a>
@@ -60,20 +66,19 @@ const { theme, toggleTheme } = useTheme();
                 >
                     EN
                 </a>
-                <button
-                    :aria-label="copy.themeToggle"
-                    :aria-pressed="theme === 'dark'"
-                    class="auth-control px-3 py-1.5"
-                    type="button"
-                    @click="toggleTheme"
-                >
-                    {{ copy.theme }}
-                </button>
+                <ThemeToggle
+                    :dark-label="copy.themeDark"
+                    :light-label="copy.themeLight"
+                    :theme="theme"
+                    :use-dark-label="copy.useDarkTheme"
+                    :use-light-label="copy.useLightTheme"
+                    @toggle="toggleTheme"
+                />
             </div>
         </header>
 
         <main class="flex flex-1 items-center justify-center px-5 pb-12 pt-4 sm:px-8">
-            <div class="w-full max-w-[440px]">
+            <div class="ui-reveal w-full max-w-[440px]">
                 <div class="mb-5 text-center">
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-helper)]">
                         {{ copy.eyebrow }}

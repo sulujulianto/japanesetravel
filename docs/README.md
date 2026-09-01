@@ -8,6 +8,7 @@ This directory separates recruiter-facing evidence, engineering documentation, o
 - [Case Study](case-study-japanese-travel.md)
 - [Portfolio Readiness Checklist](portfolio-readiness-checklist.md)
 - [Backend Technical Documentation](backend-technical-documentation.md)
+- [Design System and Rebranding](design-system-and-rebranding.md)
 
 ## Deployment and Operations
 
@@ -45,4 +46,3 @@ This directory separates recruiter-facing evidence, engineering documentation, o
 - External integrations remain owner actions until provider account evidence exists.
 - Simulated tickets/incidents must remain labelled as simulated.
 - Never commit credentials, cookies, personal data, or unredacted provider payloads.
-

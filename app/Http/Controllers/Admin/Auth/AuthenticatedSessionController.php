@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminLoginRequest;
+use App\Support\Brand;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,13 +24,17 @@ class AuthenticatedSessionController extends Controller
                 'description' => __('Masuk sebagai admin untuk mengelola konten dan pesanan.'),
                 'email' => __('Email'),
                 'emailPlaceholder' => __('admin@email.com'),
-                'eyebrow' => __('Destinasi dan oleh-oleh Jepang'),
-                'footer' => __('Temukan destinasi Jepang, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.'),
+                'eyebrow' => __('Destinasi dan oleh-oleh :region', ['region' => Brand::region()]),
+                'footer' => __('Temukan destinasi :region, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.', ['region' => Brand::region()]),
                 'password' => __('Password'),
                 'remember' => __('Ingat Saya'),
                 'submit' => __('Masuk Admin'),
                 'theme' => __('Tema'),
+                'themeDark' => __('Tema gelap'),
+                'themeLight' => __('Tema terang'),
                 'themeToggle' => __('Ganti tema'),
+                'useDarkTheme' => __('Gunakan tema gelap'),
+                'useLightTheme' => __('Gunakan tema terang'),
                 'title' => __('Admin Portal'),
             ],
             'routes' => [

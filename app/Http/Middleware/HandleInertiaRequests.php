@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -28,12 +29,13 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            'app' => [
-                'name' => (string) config('app.name', 'Japan Travel'),
-            ],
+            'app' => Brand::props(),
             'auth' => [
                 'admin' => fn (): ?array => $this->serializeUser(Auth::guard('admin')->user()),
                 'user' => fn (): ?array => $this->serializeUser($request->user()),
+            ],
+            'cart' => [
+                'count' => fn (): int => $this->cartCount($request),
             ],
             'flash' => [
                 'error' => fn (): ?string => $this->sessionMessage($request, 'error'),
@@ -48,6 +50,22 @@ class HandleInertiaRequests extends Middleware
         $message = $request->session()->get($key);
 
         return is_string($message) ? $message : null;
+    }
+
+    private function cartCount(Request $request): int
+    {
+        $cart = $request->session()->get('cart', []);
+        if (! is_array($cart)) {
+            return 0;
+        }
+
+        return (int) collect($cart)->sum(function (mixed $quantity): int {
+            if (! is_int($quantity) && ! is_numeric($quantity)) {
+                return 0;
+            }
+
+            return max(0, (int) $quantity);
+        });
     }
 
     /**

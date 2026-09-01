@@ -240,8 +240,9 @@ Coverage utama saat ini:
 - `ProfileTest`
 
 Current baseline:
-- **132 tests**
-- **633 assertions**
+- Run `composer test` on the exact commit being reviewed.
+- Record the resulting test and assertion totals with the commit hash.
+- Do not reuse an older total as evidence for a newer branch.
 
 ## 13) CI and Quality Gates
 CI menjalankan:

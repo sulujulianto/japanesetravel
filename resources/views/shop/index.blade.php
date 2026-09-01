@@ -1,108 +1,147 @@
 @extends('layouts.site')
 
-@section('title', __('Toko Oleh-oleh') . ' · ' . __('Japan Travel'))
+@section('title', __('Toko Oleh-oleh') . ' · ' . \App\Support\Brand::name())
 
 @section('content')
-    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F5D50] dark:text-[#8AB7A4]">{{ __('Oleh-oleh Jepang') }}</p>
-            <h1 class="mt-3 text-4xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F4F1ED] sm:text-5xl">{{ __('Katalog oleh-oleh pilihan') }}</h1>
-            <p class="mt-4 text-base leading-7 text-[#374151] dark:text-[#D8DEE8]">
-                {{ __('Temukan produk souvenir untuk melengkapi perjalanan Anda, dari camilan khas sampai kerajinan kecil yang mudah dibawa pulang.') }}
-            </p>
-        </div>
+    <section data-shop-catalog class="ui-reveal mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <header class="page-hero overflow-hidden rounded-[24px] border border-[var(--public-border)] px-6 py-9 sm:px-9 sm:py-11 lg:px-12">
+            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div class="max-w-3xl">
+                    <p class="ui-eyebrow text-[var(--public-secondary)]">{{ __('Oleh-oleh :region', ['region' => \App\Support\Brand::region()]) }}</p>
+                    <h1 class="ui-heading mt-3 text-4xl sm:text-5xl">{{ __('Katalog oleh-oleh pilihan') }}</h1>
+                    <p class="ui-copy mt-4 max-w-2xl text-base">
+                        {{ __('Temukan produk souvenir untuk melengkapi perjalanan Anda, dari camilan khas sampai kerajinan kecil yang mudah dibawa pulang.') }}
+                    </p>
+                </div>
+                <div class="w-fit rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] px-4 py-3">
+                    <strong class="block text-2xl text-[var(--public-ink)]">{{ \App\Support\Format::number($souvenirs->total()) }}</strong>
+                    <span class="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--public-muted)]">{{ __('Produk ditemukan') }}</span>
+                </div>
+            </div>
+        </header>
 
-        <div class="mt-10 rounded-[24px] border border-[#E7E3DC] bg-white p-4 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-5">
-            <form method="GET" class="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_150px_150px_180px_170px] lg:items-end">
-                <div>
-                    <x-ui.label value="{{ __('Cari Produk') }}" />
-                    <x-ui.input name="search" value="{{ $search }}" placeholder="{{ __('Matcha, kerajinan, fashion...') }}" />
-                </div>
-                <div>
-                    <x-ui.label value="{{ __('Harga Minimum') }}" />
-                    <x-ui.input type="number" name="min_price" value="{{ $minPrice }}" placeholder="0" />
-                </div>
-                <div>
-                    <x-ui.label value="{{ __('Harga Maksimum') }}" />
-                    <x-ui.input type="number" name="max_price" value="{{ $maxPrice }}" placeholder="500000" />
-                </div>
-                <div>
-                    <x-ui.label value="{{ __('Ketersediaan') }}" />
-                    <x-ui.select name="availability">
-                        <option value="">{{ __('Semua') }}</option>
-                        <option value="in_stock" @selected($availability === 'in_stock')>{{ __('Hanya yang tersedia') }}</option>
-                    </x-ui.select>
-                </div>
-                <div>
-                    <x-ui.label value="{{ __('Urutkan') }}" />
-                    <x-ui.select name="sort">
-                        <option value="latest" @selected($sort === 'latest')>{{ __('Terbaru') }}</option>
-                        <option value="price_low" @selected($sort === 'price_low')>{{ __('Harga Terendah') }}</option>
-                        <option value="price_high" @selected($sort === 'price_high')>{{ __('Harga Tertinggi') }}</option>
-                    </x-ui.select>
-                </div>
-                <div class="flex flex-col gap-3 border-t border-[#E7E3DC] pt-4 dark:border-[#2A333D] sm:flex-row sm:items-center lg:col-span-5">
-                    <x-ui.button type="submit" class="w-full sm:w-auto">{{ __('Terapkan') }}</x-ui.button>
-                    <a href="{{ route('shop.index') }}" class="inline-flex items-center justify-center rounded-full border border-[#DDD6CC] bg-white px-5 py-2.5 text-sm font-semibold text-[#374151] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]">
-                        {{ __('Reset') }}
-                    </a>
-                </div>
-            </form>
-        </div>
+        <div class="mt-8 space-y-7">
+            <aside aria-label="{{ __('Filter produk') }}">
+                <details data-shop-filter class="shop-filter ui-surface rounded-[18px]" open>
+                    <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-[var(--public-ink)] lg:hidden">
+                        <span>{{ __('Filter dan urutkan') }}</span>
+                        <span aria-hidden="true">＋</span>
+                    </summary>
 
-        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            @forelse($souvenirs as $item)
-                @php
-                    $stockLabel = $item->stock <= 0 ? __('Habis') : ($item->stock <= 5 ? __('Stok rendah') : __('Tersedia'));
-                    $stockClass = $item->stock <= 0
-                        ? 'border-[#DDD6CC] bg-[#F1EEE8] text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]'
-                        : ($item->stock <= 5
-                            ? 'border-[#D2B16F] bg-[#FFF8E6] text-[#6D541F] dark:border-[#8A6A2F] dark:bg-[#241F14] dark:text-[#D2B16F]'
-                            : 'border-[#C9DDD4] bg-[#F0F8F4] text-[#245B49] dark:border-[#2F5D50] dark:bg-[#15241F] dark:text-[#8AB7A4]');
-                @endphp
+                    <div class="shop-filter-panel border-t border-[var(--public-border)] p-4 sm:p-5 lg:border-t-0">
+                        <form method="GET" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,1.4fr)_9rem_9rem_11rem_10rem_17rem] xl:items-end">
+                            <div>
+                                <x-ui.label for="shop-search" value="{{ __('Cari Produk') }}" />
+                                <x-ui.input id="shop-search" name="search" value="{{ $search }}" placeholder="{{ __('Matcha, kerajinan, fashion...') }}" />
+                            </div>
 
-                <article class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#E7E3DC] bg-white shadow-sm transition hover:-translate-y-1 hover:border-[#DDD6CC] hover:shadow-md dark:border-[#2A333D] dark:bg-[#161B22] dark:hover:border-[#3A4652]">
-                    <div class="relative aspect-square overflow-hidden bg-[#F1EEE8] dark:bg-[#1F2630]">
-                        @if($item->image_url)
-                            <img src="{{ $item->image_url }}" alt="{{ $item->name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
-                        @else
-                            <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $item->name }}" class="h-full w-full object-cover">
-                        @endif
-                        <span class="absolute left-4 top-4 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm {{ $stockClass }}">
-                            {{ $stockLabel }}
+                            <div>
+                                <x-ui.label for="shop-min-price" value="{{ __('Harga Minimum') }}" />
+                                <x-ui.input id="shop-min-price" type="number" min="0" name="min_price" value="{{ $minPrice }}" placeholder="0" />
+                            </div>
+
+                            <div>
+                                <x-ui.label for="shop-max-price" value="{{ __('Harga Maksimum') }}" />
+                                <x-ui.input id="shop-max-price" type="number" min="0" name="max_price" value="{{ $maxPrice }}" placeholder="500000" />
+                            </div>
+
+                            <div>
+                                <x-ui.label for="shop-availability" value="{{ __('Ketersediaan') }}" />
+                                <x-ui.select id="shop-availability" name="availability">
+                                    <option value="">{{ __('Semua produk') }}</option>
+                                    <option value="in_stock" @selected($availability === 'in_stock')>{{ __('Hanya yang tersedia') }}</option>
+                                </x-ui.select>
+                            </div>
+
+                            <div>
+                                <x-ui.label for="shop-sort" value="{{ __('Urutkan') }}" />
+                                <x-ui.select id="shop-sort" name="sort">
+                                    <option value="latest" @selected($sort === 'latest')>{{ __('Terbaru') }}</option>
+                                    <option value="price_low" @selected($sort === 'price_low')>{{ __('Harga Terendah') }}</option>
+                                    <option value="price_high" @selected($sort === 'price_high')>{{ __('Harga Tertinggi') }}</option>
+                                </x-ui.select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 border-t border-[var(--public-border)] pt-3 sm:col-span-2 lg:col-span-1 lg:border-t-0 lg:pt-0">
+                                <x-ui.button type="submit" class="w-full px-3">{{ __('Terapkan filter') }}</x-ui.button>
+                                <a href="{{ route('shop.index') }}" class="ui-button-quiet w-full px-3 py-2.5 text-sm">{{ __('Hapus filter') }}</a>
+                            </div>
+                        </form>
+                    </div>
+                </details>
+            </aside>
+
+            <div class="min-w-0">
+                <div class="mb-5 flex flex-col gap-2 border-b border-[var(--public-border)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 class="ui-heading text-xl">{{ __('Pilihan untuk Anda') }}</h2>
+                        <p class="mt-1 text-sm text-[var(--public-muted)]">
+                            {{ trans_choice('Menampilkan hasil produk', $souvenirs->count(), ['count' => $souvenirs->count(), 'total' => $souvenirs->total()]) }}
+                        </p>
+                    </div>
+                    @if($search !== '')
+                        <span class="w-fit rounded-lg bg-[var(--public-accent-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--public-accent)]">
+                            “{{ $search }}”
                         </span>
-                    </div>
-
-                    <div class="flex flex-1 flex-col p-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <h2 class="text-base font-semibold leading-6 text-[#1F2937] dark:text-[#F4F1ED]">{{ $item->name }}</h2>
-                            <span class="shrink-0 rounded-full border border-[#E7E3DC] bg-[#FAF9F6] px-2.5 py-1 text-xs font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
-                                {{ __('Stok') }} {{ $item->stock }}
-                            </span>
-                        </div>
-
-                        <p class="mt-3 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ Str::limit($item->description, 86) }}</p>
-
-                        <div class="mt-auto pt-5">
-                            <p class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($item->price) }}</p>
-                            <form action="{{ route('cart.add', $item->id) }}" method="POST" class="mt-4">
-                                @csrf
-                                <x-ui.button type="submit" size="sm" variant="primary" class="w-full rounded-full px-4 {{ $item->stock <= 0 ? 'cursor-not-allowed opacity-70' : '' }}" :disabled="$item->stock <= 0">
-                                    {{ $item->stock <= 0 ? __('Stok habis') : __('Tambah ke keranjang') }}
-                                </x-ui.button>
-                            </form>
-                        </div>
-                    </div>
-                </article>
-            @empty
-                <div class="col-span-full rounded-[22px] border border-dashed border-[#DDD6CC] bg-white p-10 text-center dark:border-[#2A333D] dark:bg-[#161B22]">
-                    <p class="text-sm font-medium text-[#526071] dark:text-[#D8DEE8]">{{ __('Belum ada produk yang cocok dengan filter ini.') }}</p>
+                    @endif
                 </div>
-            @endforelse
-        </div>
 
-        <div class="mt-8">
-            {{ $souvenirs->links() }}
+                <div data-product-grid class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    @forelse($souvenirs as $item)
+                        @php
+                            $stockLabel = $item->stock <= 0 ? __('Habis') : ($item->stock <= 5 ? __('Stok rendah') : __('Tersedia'));
+                            $stockClass = $item->stock <= 0
+                                ? 'bg-[var(--public-surface-muted)] text-[var(--public-muted)]'
+                                : ($item->stock <= 5
+                                    ? 'bg-[var(--admin-warning-soft)] text-[var(--public-warning)]'
+                                    : 'bg-[var(--public-secondary-soft)] text-[var(--public-secondary)]');
+                        @endphp
+
+                        <article data-product-card class="ui-card ui-surface group flex h-full flex-col overflow-hidden rounded-[18px]">
+                            <div class="relative aspect-[4/3] overflow-hidden bg-[var(--public-surface-muted)]">
+                                <img
+                                    src="{{ $item->image_url ?: asset('demo/souvenir-placeholder.svg') }}"
+                                    alt="{{ $item->name }}"
+                                    class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                                <span class="absolute left-3 top-3 rounded-lg px-2.5 py-1 text-[11px] font-semibold shadow-sm {{ $stockClass }}">
+                                    {{ $stockLabel }}
+                                </span>
+                            </div>
+
+                            <div class="flex flex-1 flex-col p-5">
+                                <div class="flex items-start justify-between gap-3">
+                                    <h3 class="text-base font-semibold leading-6 text-[var(--public-ink)]">{{ $item->name }}</h3>
+                                    <span class="shrink-0 text-[11px] font-semibold text-[var(--public-muted)]">{{ __('Stok') }} {{ $item->stock }}</span>
+                                </div>
+
+                                <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">{{ Str::limit($item->description, 92) }}</p>
+
+                                <div class="mt-auto pt-5">
+                                    <p class="text-xl font-bold tracking-tight text-[var(--public-ink)]">{{ \App\Support\Format::idr($item->price) }}</p>
+                                    <form action="{{ route('cart.add', $item->id) }}" method="POST" class="mt-4">
+                                        @csrf
+                                        <x-ui.button type="submit" size="sm" variant="primary" class="w-full {{ $item->stock <= 0 ? 'cursor-not-allowed opacity-60' : '' }}" :disabled="$item->stock <= 0">
+                                            {{ $item->stock <= 0 ? __('Stok habis') : __('Tambah ke keranjang') }}
+                                        </x-ui.button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    @empty
+                        <div class="ui-surface col-span-full rounded-[18px] border-dashed p-10 text-center">
+                            <p class="text-sm font-medium text-[var(--public-muted)]">{{ __('Belum ada produk yang cocok dengan filter ini.') }}</p>
+                            <a href="{{ route('shop.index') }}" class="mt-4 inline-flex text-sm font-semibold text-[var(--public-accent)] hover:text-[var(--public-accent-active)]">{{ __('Hapus filter') }}</a>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="mt-8">
+                    {{ $souvenirs->links() }}
+                </div>
+            </div>
         </div>
     </section>
 @endsection

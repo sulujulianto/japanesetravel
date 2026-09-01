@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import AdminAccountCard from '../Components/Admin/AdminAccountCard.vue';
 import AdminNavigation from '../Components/Admin/AdminNavigation.vue';
+import ThemeToggle from '../Components/ThemeToggle.vue';
 import { useTheme, type Theme } from '../composables/useTheme';
 import type { AdminShellCopy, AdminShellRoutes, NavigationItem, NavigationKey } from '../types/admin';
 import type { SharedPageProps } from '../types/inertia';
@@ -64,7 +65,7 @@ onBeforeUnmount(() => {
         <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-[var(--admin-border)] bg-[var(--admin-surface)] lg:flex lg:flex-col">
             <div class="border-b border-[var(--admin-border)] px-6 py-6">
                 <a :href="routes.dashboard" class="inline-flex items-center gap-3">
-                    <span aria-hidden="true" class="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] font-display text-sm text-[var(--admin-accent)]">JT</span>
+                    <span aria-hidden="true" class="brand-mark h-10 w-10">{{ page.props.app.mark }}</span>
                     <span>
                         <strong class="block text-sm">{{ page.props.app.name }}</strong>
                         <span class="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">Admin</span>
@@ -116,15 +117,20 @@ onBeforeUnmount(() => {
                             <a :aria-current="page.props.locale === 'id' ? 'page' : undefined" :class="page.props.locale === 'id' ? 'bg-[var(--admin-ink)] text-[var(--admin-surface)]' : 'text-[var(--admin-muted)]'" :href="routes.localeId" class="rounded-full px-2.5 py-1">ID</a>
                             <a :aria-current="page.props.locale === 'en' ? 'page' : undefined" :class="page.props.locale === 'en' ? 'bg-[var(--admin-ink)] text-[var(--admin-surface)]' : 'text-[var(--admin-muted)]'" :href="routes.localeEn" class="rounded-full px-2.5 py-1">EN</a>
                         </div>
-                        <button :aria-label="copy.themeToggle" :aria-pressed="theme === 'dark'" class="rounded-full border border-[var(--admin-border)] px-3 py-2 text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-accent)]" type="button" @click="toggleTheme">
-                            {{ copy.theme }}
-                        </button>
+                        <ThemeToggle
+                            :dark-label="copy.themeDark"
+                            :light-label="copy.themeLight"
+                            :theme="theme"
+                            :use-dark-label="copy.useDarkTheme"
+                            :use-light-label="copy.useLightTheme"
+                            @toggle="toggleTheme"
+                        />
                         <a :href="routes.home" class="hidden rounded-full border border-[var(--admin-border)] px-3 py-2 text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-accent)] sm:inline-flex">{{ copy.viewSite }}</a>
                     </div>
                 </div>
             </header>
 
-            <main class="mx-auto w-full max-w-[96rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <main class="ui-reveal mx-auto w-full max-w-[96rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <slot :theme="theme" />
             </main>
         </div>

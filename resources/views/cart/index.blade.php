@@ -1,13 +1,13 @@
 @extends('layouts.site')
 
-@section('title', __('Keranjang Belanja') . ' · Japan Travel')
+@section('title', __('Keranjang Belanja') . ' · ' . \App\Support\Brand::name())
 
 @section('content')
     @php
         $itemCount = collect($cartItems)->sum('qty');
     @endphp
 
-    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <section class="ui-reveal mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-3xl">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F5D50] dark:text-[#8AB7A4]">{{ __('Keranjang') }}</p>
@@ -48,9 +48,9 @@
                             <article class="grid gap-4 rounded-[20px] border border-[#E7E3DC] bg-[#FAF9F6] p-4 dark:border-[#2A333D] dark:bg-[#1F2630] sm:grid-cols-[88px,minmax(0,1fr)] lg:grid-cols-[96px,minmax(0,1fr)_220px] lg:items-center">
                                 <div class="h-24 w-24 overflow-hidden rounded-2xl bg-[#F1EEE8] dark:bg-[#0E1116] sm:h-22 sm:w-22 lg:h-24 lg:w-24">
                                     @if($item['product']->image_url)
-                                        <img src="{{ $item['product']->image_url }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover">
+                                        <img src="{{ $item['product']->image_url }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover" loading="lazy" decoding="async">
                                     @else
-                                        <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover">
+                                        <img src="{{ asset('demo/souvenir-placeholder.svg') }}" alt="{{ $item['product']->name }}" class="h-full w-full object-cover" loading="lazy" decoding="async">
                                     @endif
                                 </div>
 

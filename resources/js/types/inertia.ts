@@ -11,11 +11,17 @@ export interface AuthenticatedUser {
 
 export interface SharedPageProps extends PageProps {
     app: {
+        legalName: string;
+        mark: string;
         name: string;
+        region: string;
     };
     auth: {
         admin: AuthenticatedUser | null;
         user: AuthenticatedUser | null;
+    };
+    cart: {
+        count: number;
     };
     flash: {
         error: string | null;

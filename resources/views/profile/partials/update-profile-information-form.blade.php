@@ -2,7 +2,7 @@
     <header>
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F5D50] dark:text-[#8AB7A4]">{{ __('Informasi Profil') }}</p>
         <h2 class="mt-2 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Informasi akun') }}</h2>
-        <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Perbarui username dan alamat email yang digunakan untuk akun JapanTravel Anda.') }}</p>
+        <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">{{ __('Perbarui username dan alamat email yang digunakan untuk akun :brand Anda.', ['brand' => \App\Support\Brand::name()]) }}</p>
     </header>
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">

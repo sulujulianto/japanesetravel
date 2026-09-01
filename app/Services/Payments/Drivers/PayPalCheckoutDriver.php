@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\PaymentGatewayResult;
 use App\Services\Payments\PaymentWebhookData;
+use App\Support\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -48,7 +49,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             'purchase_units' => [
                 [
                     'reference_id' => (string) $order->id,
-                    'description' => 'Japan Travel Order #'.$order->id,
+                    'description' => Brand::name().' Order #'.$order->id,
                     'amount' => [
                         'currency_code' => $this->currency,
                         'value' => number_format($amount, 2, '.', ''),

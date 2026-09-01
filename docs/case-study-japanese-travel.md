@@ -78,7 +78,7 @@ Feature tests prove application contracts around stock, status transitions, auth
 
 ## Testing Approach
 
-The current suite has 132 tests and 633 assertions covering authentication, localization, catalog behavior, reviews, cart, checkout, payment retries, webhooks, admin access, media handling, order transitions, and formatting.
+The complete suite covers authentication, localization, catalog behavior, reviews, cart, checkout, payment retries, webhooks, admin access, media handling, order transitions, formatting, public shell contracts, and centralized brand configuration. Test and assertion totals are intentionally not copied here because they change with each phase; the output of `composer test` on the reviewed commit is the source of truth.
 
 Pint, PHPStan/Larastan, Composer Audit, npm Audit, and the Vite production build form additional quality gates. PHPStan currently uses a baseline, which is treated as technical debt rather than hidden.
 

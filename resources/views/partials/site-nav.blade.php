@@ -1,97 +1,125 @@
 @php
+    $currentUser = Auth::user();
     $cartCount = collect(session('cart', []))->sum();
-    $navLink = 'text-sm font-medium text-[#3F3F3F] transition hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]';
-    $control = 'inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:text-slate-300 dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]';
-    $mobileLink = 'block rounded-lg px-3 py-2 text-sm font-medium text-[#3F3F3F] transition hover:bg-white hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:bg-[#0E1116] dark:hover:text-[#D96B6B]';
+    $brand = \App\Support\Brand::props();
+    $copy = \App\Support\PublicShell::copy();
+    $navLink = 'rounded-lg px-3 py-2 text-sm font-semibold text-[var(--public-muted)] transition hover:bg-[var(--public-surface-muted)] hover:text-[var(--public-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--public-accent)]';
+    $navLinkActive = 'bg-[var(--public-surface-muted)] text-[var(--public-ink)]';
+    $control = 'inline-flex min-h-10 items-center rounded-full border border-[var(--public-border)] px-3 text-xs font-semibold text-[var(--public-ink)] transition hover:border-[var(--public-accent)] hover:text-[var(--public-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--public-accent)]';
+    $mobileLink = 'block rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--public-ink)] transition hover:bg-[var(--public-surface-muted)] hover:text-[var(--public-accent)]';
 @endphp
 
-<nav class="site-navbar sticky top-0 z-50 border-b border-[#E7E3DC] bg-[#FAF8F3] text-[#222222] shadow-[0_1px_0_rgba(34,34,34,0.02)] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-slate-100 dark:shadow-none">
+<nav data-public-navigation aria-label="{{ $copy['navigation'] }}" class="public-navigation site-navbar sticky top-0 z-50 border-b">
     <div class="hidden lg:block">
-        <div class="mx-auto grid min-h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6 lg:px-8">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-2.5 text-[#222222] transition hover:text-[#8F2E2E] dark:text-slate-100 dark:hover:text-[#D96B6B]">
-                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-white text-sm font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">
-                    JT
-                </span>
-                <span class="text-base font-semibold tracking-tight">
-                    Japan<span class="text-[#A6423A] dark:text-[#D96B6B]">Travel</span>
-                </span>
+        <div class="mx-auto grid min-h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-5 px-6 lg:px-8">
+            <a href="{{ route('home') }}" class="inline-flex w-fit items-center gap-2.5 text-[var(--public-ink)] transition hover:text-[var(--public-accent)]">
+                <span class="brand-mark" aria-hidden="true">{{ $brand['mark'] }}</span>
+                <span class="text-base font-semibold tracking-tight">{{ $brand['name'] }}</span>
             </a>
 
-            <div class="flex items-center gap-7">
-                <a href="{{ route('places.index') }}" class="{{ $navLink }}">{{ __('Wisata') }}</a>
-                <a href="{{ route('shop.index') }}" class="{{ $navLink }}">{{ __('Oleh-oleh') }}</a>
+            <div class="flex items-center gap-1">
+                <a href="{{ route('places.index') }}" @if(request()->routeIs('places.*', 'place.show')) aria-current="page" @endif class="{{ $navLink }} {{ request()->routeIs('places.*', 'place.show') ? $navLinkActive : '' }}">{{ $copy['destinations'] }}</a>
+                <a href="{{ route('shop.index') }}" @if(request()->routeIs('shop.*')) aria-current="page" @endif class="{{ $navLink }} {{ request()->routeIs('shop.*') ? $navLinkActive : '' }}">{{ $copy['souvenirs'] }}</a>
                 @auth
-                    <a href="{{ route('orders.index') }}" class="{{ $navLink }}">{{ __('Pesanan Saya') }}</a>
+                    <a href="{{ route('orders.index') }}" @if(request()->routeIs('orders.*')) aria-current="page" @endif class="{{ $navLink }} {{ request()->routeIs('orders.*') ? $navLinkActive : '' }}">{{ $copy['orders'] }}</a>
                 @endauth
             </div>
 
             <div class="flex items-center justify-end gap-2">
                 <a href="{{ route('cart.index') }}" class="{{ $control }}">
-                    <span>{{ __('Keranjang') }}</span>
+                    <span>{{ $copy['cart'] }}</span>
                     @if($cartCount > 0)
-                        <span class="ml-2 rounded-full bg-[#B33A3A] px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-[#D96B6B] dark:text-[#0E1116]">{{ $cartCount }}</span>
+                        <span class="ml-2 rounded-full bg-[var(--public-accent)] px-2 py-0.5 text-[10px] font-semibold text-white">{{ $cartCount }}</span>
                     @endif
                 </a>
 
-                <div class="inline-flex items-center rounded-full border border-[#E7E3DC] bg-white p-1 text-xs font-semibold dark:border-[#2A333D] dark:bg-[#0E1116]">
-                    <a href="{{ route('lang.switch', 'id') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]' }}">ID</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:text-[#D96B6B]' }}">EN</a>
+                <div class="inline-flex items-center rounded-full border border-[var(--public-border)] bg-[var(--public-surface)] p-1 text-xs font-semibold">
+                    <a href="{{ route('lang.switch', 'id') }}" aria-label="Bahasa Indonesia" @if(App::getLocale() === 'id') aria-current="page" @endif class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'id' ? 'bg-[var(--public-ink)] text-[var(--public-surface)]' : 'text-[var(--public-muted)] hover:text-[var(--public-accent)]' }}">ID</a>
+                    <a href="{{ route('lang.switch', 'en') }}" aria-label="English" @if(App::getLocale() === 'en') aria-current="page" @endif class="rounded-full px-2.5 py-1 {{ App::getLocale() === 'en' ? 'bg-[var(--public-ink)] text-[var(--public-surface)]' : 'text-[var(--public-muted)] hover:text-[var(--public-accent)]' }}">EN</a>
                 </div>
 
-                <button onclick="toggleTheme()" class="{{ $control }}" title="{{ __('Ganti tema') }}" type="button">{{ __('Tema') }}</button>
+                <x-theme-toggle />
 
                 @auth
-                    <a href="{{ route('dashboard') }}" class="inline-flex h-9 items-center rounded-full bg-[#B33A3A] px-4 text-xs font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">{{ __('Dashboard') }}</a>
+                    <details class="account-menu relative">
+                        <summary class="flex min-h-10 cursor-pointer items-center gap-2 rounded-full bg-[var(--public-accent)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--public-accent-active)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--public-accent)] focus-visible:ring-offset-2">
+                            <span class="max-w-28 truncate">{{ $currentUser?->username }}</span>
+                            <span aria-hidden="true">⌄</span>
+                        </summary>
+                        <div class="absolute right-0 top-full mt-2 w-56 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-2 shadow-xl">
+                            <div class="border-b border-[var(--public-border)] px-3 py-2">
+                                <p class="truncate text-sm font-semibold text-[var(--public-ink)]">{{ $currentUser?->username }}</p>
+                                <p class="mt-1 truncate text-xs text-[var(--public-muted)]">{{ $currentUser?->email }}</p>
+                            </div>
+                            <a href="{{ route('dashboard') }}" class="{{ $mobileLink }} mt-1">{{ $copy['dashboard'] }}</a>
+                            <a href="{{ route('profile.edit') }}" class="{{ $mobileLink }}">{{ __('Profil') }}</a>
+                            <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-[var(--public-border)] pt-1">
+                                @csrf
+                                <button type="submit" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#9F2A2A] hover:bg-red-50 dark:text-[#F0A0A0] dark:hover:bg-red-950/30">{{ __('Keluar') }}</button>
+                            </form>
+                        </div>
+                    </details>
                 @else
-                    <a href="{{ route('login') }}" class="{{ $navLink }}">{{ __('Masuk') }}</a>
-                    <a href="{{ route('register') }}" class="inline-flex h-9 items-center rounded-full bg-[#B33A3A] px-4 text-xs font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">{{ __('Daftar') }}</a>
+                    <a href="{{ route('login') }}" class="{{ $navLink }}">{{ $copy['login'] }}</a>
+                    <a href="{{ route('register') }}" class="inline-flex min-h-10 items-center rounded-xl bg-[var(--public-accent)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--public-accent-active)]">{{ $copy['register'] }}</a>
                 @endauth
             </div>
         </div>
     </div>
 
-    <details class="site-mobile-menu lg:hidden">
-        <summary class="block cursor-pointer select-none">
-            <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-                <span class="inline-flex items-center gap-2.5 text-[#222222] dark:text-slate-100">
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#DDD6CC] bg-white text-sm font-semibold tracking-tight text-[#A6423A] dark:border-[#2A333D] dark:bg-[#0E1116] dark:text-[#D96B6B]">
-                        JT
-                    </span>
-                    <span class="text-base font-semibold tracking-tight">
-                        Japan<span class="text-[#A6423A] dark:text-[#D96B6B]">Travel</span>
-                    </span>
-                </span>
-                <span class="flex shrink-0 items-center gap-2">
-                    <button onclick="event.stopPropagation(); toggleTheme();" class="inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] dark:border-[#2A333D] dark:text-slate-300" title="{{ __('Ganti tema') }}" type="button">{{ __('Tema') }}</button>
-                    <span class="inline-flex h-9 items-center rounded-full border border-[#E7E3DC] px-3 text-xs font-semibold text-[#3F3F3F] dark:border-[#2A333D] dark:text-slate-300">
-                        {{ __('Menu') }}
-                    </span>
-                </span>
-            </div>
-        </summary>
+    <div class="lg:hidden">
+        <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+            <a href="{{ route('home') }}" class="inline-flex min-w-0 items-center gap-2.5 text-[var(--public-ink)] transition hover:text-[var(--public-accent)]">
+                <span class="brand-mark" aria-hidden="true">{{ $brand['mark'] }}</span>
+                <span class="truncate text-base font-semibold tracking-tight">{{ $brand['name'] }}</span>
+            </a>
 
-        <div class="border-t border-[#E7E3DC] bg-[#FAF8F3] dark:border-[#2A333D] dark:bg-[#161B22]">
-            <div class="mx-auto max-w-7xl space-y-2 px-4 py-4 sm:px-6">
-                <a href="{{ route('places.index') }}" class="{{ $mobileLink }}">{{ __('Wisata') }}</a>
-                <a href="{{ route('shop.index') }}" class="{{ $mobileLink }}">{{ __('Oleh-oleh') }}</a>
-                <a href="{{ route('cart.index') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-[#3F3F3F] transition hover:bg-white hover:text-[#8F2E2E] dark:text-slate-300 dark:hover:bg-[#0E1116] dark:hover:text-[#D96B6B]">
-                    <span>{{ __('Keranjang') }}</span>
-                    @if($cartCount > 0)
-                        <span class="rounded-full bg-[#B33A3A] px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-[#D96B6B] dark:text-[#0E1116]">{{ $cartCount }}</span>
-                    @endif
-                </a>
-                @auth
-                    <a href="{{ route('orders.index') }}" class="{{ $mobileLink }}">{{ __('Pesanan Saya') }}</a>
-                    <a href="{{ route('dashboard') }}" class="{{ $mobileLink }}">{{ __('Dashboard') }}</a>
-                @else
-                    <a href="{{ route('login') }}" class="{{ $mobileLink }}">{{ __('Masuk') }}</a>
-                    <a href="{{ route('register') }}" class="{{ $mobileLink }}">{{ __('Daftar') }}</a>
-                @endauth
-                <div class="flex items-center gap-2 px-3 pt-2 text-xs font-semibold">
-                    <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1 {{ App::getLocale() === 'id' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] dark:border-[#2A333D] dark:text-slate-300' }}">ID</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-[#E7E3DC] px-3 py-1 {{ App::getLocale() === 'en' ? 'bg-[#222222] text-white dark:bg-slate-100 dark:text-[#0E1116]' : 'text-[#525252] dark:border-[#2A333D] dark:text-slate-300' }}">EN</a>
-                </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <x-theme-toggle />
+
+                <details class="site-mobile-menu relative">
+                    <summary aria-label="{{ $copy['menu'] }}" class="ui-action inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] text-[var(--public-ink)]">
+                        <span class="sr-only">{{ $copy['menu'] }}</span>
+                        <span aria-hidden="true" class="space-y-1">
+                            <span class="block h-0.5 w-4 rounded-full bg-current"></span>
+                            <span class="block h-0.5 w-4 rounded-full bg-current"></span>
+                            <span class="block h-0.5 w-4 rounded-full bg-current"></span>
+                        </span>
+                    </summary>
+
+                    <div class="fixed inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-[var(--public-border)] bg-[var(--public-surface)] shadow-xl">
+                        <div class="mx-auto max-w-7xl space-y-1 px-4 py-4 sm:px-6">
+                            <a href="{{ route('home') }}" class="{{ $mobileLink }}">{{ __('Beranda') }}</a>
+                            <a href="{{ route('places.index') }}" class="{{ $mobileLink }}">{{ $copy['destinations'] }}</a>
+                            <a href="{{ route('shop.index') }}" class="{{ $mobileLink }}">{{ $copy['souvenirs'] }}</a>
+                            <a href="{{ route('cart.index') }}" class="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--public-ink)] hover:bg-[var(--public-surface-muted)] hover:text-[var(--public-accent)]">
+                                <span>{{ $copy['cart'] }}</span>
+                                @if($cartCount > 0)
+                                    <span class="rounded-full bg-[var(--public-accent)] px-2 py-0.5 text-[10px] font-semibold text-white">{{ $cartCount }}</span>
+                                @endif
+                            </a>
+                            @auth
+                                <div class="my-3 border-t border-[var(--public-border)]"></div>
+                                <p class="truncate px-3 pb-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-muted)]">{{ $currentUser?->username }}</p>
+                                <a href="{{ route('dashboard') }}" class="{{ $mobileLink }}">{{ $copy['dashboard'] }}</a>
+                                <a href="{{ route('orders.index') }}" class="{{ $mobileLink }}">{{ $copy['orders'] }}</a>
+                                <a href="{{ route('profile.edit') }}" class="{{ $mobileLink }}">{{ __('Profil') }}</a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#9F2A2A] dark:text-[#F0A0A0]">{{ __('Keluar') }}</button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" class="{{ $mobileLink }}">{{ $copy['login'] }}</a>
+                                <a href="{{ route('register') }}" class="{{ $mobileLink }}">{{ $copy['register'] }}</a>
+                            @endauth
+                            <div class="flex items-center gap-2 border-t border-[var(--public-border)] px-3 pt-4 text-xs font-semibold">
+                                <a href="{{ route('lang.switch', 'id') }}" class="rounded-full border border-[var(--public-border)] px-3 py-1.5 {{ App::getLocale() === 'id' ? 'bg-[var(--public-ink)] text-[var(--public-surface)]' : 'text-[var(--public-muted)]' }}">ID</a>
+                                <a href="{{ route('lang.switch', 'en') }}" class="rounded-full border border-[var(--public-border)] px-3 py-1.5 {{ App::getLocale() === 'en' ? 'bg-[var(--public-ink)] text-[var(--public-surface)]' : 'text-[var(--public-muted)]' }}">EN</a>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
-    </details>
+    </div>
 </nav>

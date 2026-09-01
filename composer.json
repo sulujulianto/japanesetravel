@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "sulujulianto/japanesetravel",
     "type": "project",
-    "description": "Laravel-based Japanese travel discovery and souvenir commerce portfolio project.",
+    "description": "Laravel-based travel discovery and souvenir commerce reference application.",
     "keywords": ["laravel", "travel", "japan", "souvenir", "ecommerce", "portfolio"],
     "license": "MIT",
     "require": {

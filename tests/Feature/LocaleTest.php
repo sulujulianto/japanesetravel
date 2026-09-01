@@ -26,7 +26,7 @@ class LocaleTest extends TestCase
 
         $response
             ->assertSee('Temukan destinasi Jepang dan oleh-oleh pilihan.')
-            ->assertSee('Proyek portfolio berbasis Laravel.')
+            ->assertSee('Dibuat dengan Laravel, Vue, dan Inertia.')
             ->assertDontSee('❤️')
             ->assertDontSee('⛩️');
     }
