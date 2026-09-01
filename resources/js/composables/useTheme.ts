@@ -1,33 +1,26 @@
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 export type Theme = 'dark' | 'light';
 
-const readStoredTheme = (): Theme => {
-    if (typeof window === 'undefined') {
-        return 'light';
-    }
-
-    try {
-        return window.localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
-    } catch {
-        return 'light';
-    }
-};
-
 export const useTheme = () => {
-    const theme = ref<Theme>(readStoredTheme());
+    const theme = ref<Theme>('light');
+    const mounted = ref(false);
+
+    onMounted(() => {
+        theme.value = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        mounted.value = true;
+    });
 
     watch(
         theme,
         (value) => {
-            if (typeof document === 'undefined') {
+            if (! mounted.value || typeof document === 'undefined') {
                 return;
             }
 
             document.documentElement.classList.toggle('dark', value === 'dark');
             document.documentElement.style.colorScheme = value;
         },
-        { immediate: true },
     );
 
     const toggleTheme = (): void => {

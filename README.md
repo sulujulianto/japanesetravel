@@ -1,6 +1,6 @@
-# JapanTravel
+# Japan Travel
 
-JapanTravel is a Laravel 12 portfolio project for Japanese destination discovery and souvenir commerce. It combines bilingual travel content, verified-user reviews, optional travel inquiries through WhatsApp, and an internal souvenir checkout flow.
+Japan Travel is a Laravel 12 reference application for destination discovery and souvenir commerce. It combines bilingual travel content, verified-user reviews, optional travel inquiries through WhatsApp, and an internal souvenir checkout flow. The repository is suitable for portfolio review while keeping product copy and operational boundaries realistic.
 
 Travel services are inquiry-only: the application does not sell tickets or process travel bookings. Direct checkout and payment apply only to souvenir products.
 
@@ -8,7 +8,7 @@ Travel services are inquiry-only: the application does not sell tickets or proce
 
 - **Live demo:** pending public deployment
 - **Demo video:** pending recording
-- **Current quality baseline:** 132 tests, 633 assertions
+- **Current quality baseline:** verified through the automated commands in [Testing and Quality](#testing-and-quality)
 - **Positioning:** production-oriented portfolio project with documented deployment and integration limitations
 
 Public deployment, screenshots, payment sandbox validation, and video recording require owner-controlled external accounts. The repository includes checklists and evidence templates for those steps.
@@ -49,9 +49,11 @@ Public deployment, screenshots, payment sandbox validation, and video recording 
 - Payment webhook events use a unique provider/event identifier for idempotency.
 - `app/Support/Format.php` centralizes locale-aware presentation formatting.
 - `app/Support/Media.php` centralizes media storage, WebP conversion, and safe deletion.
+- `app/Support/Brand.php` and `config/brand.php` centralize brand identity for Blade, Inertia, admin, and payment descriptions.
 - Database-backed cache, session, and queue drivers are the documented deployment baseline.
 
 See [Backend Technical Documentation](docs/backend-technical-documentation.md) for the detailed data flow and state transitions.
+See [Design System and Rebranding Guide](docs/design-system-and-rebranding.md) for UI tokens, shell boundaries, and safe brand changes.
 
 ## Screenshots
 
@@ -181,7 +183,7 @@ The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Loca
 
 ## Testing and Quality
 
-Current verified baseline: **132 tests and 633 assertions**.
+Do not copy a test count into portfolio claims without rerunning the complete suite. The commands below are the source of truth for the current branch.
 
 ```bash
 composer validate

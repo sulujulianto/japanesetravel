@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,28 +11,50 @@
     }
 
     :root {
-        --auth-canvas: #FAF9F6;
-        --auth-surface: #FFFFFF;
-        --auth-muted-surface: #F6F4EF;
-        --auth-hairline: #E7E3DC;
-        --auth-ink: #222222;
-        --auth-muted: #3F3F3F;
-        --auth-helper: #525252;
-        --auth-label: #333333;
-        --auth-accent: #B53A3A;
-        --auth-accent-active: #8F2E2E;
+        --public-canvas: #F6F1E8;
+        --public-canvas-strong: #ECE3D4;
+        --public-surface: #FFFCF7;
+        --public-surface-elevated: #FFFFFF;
+        --public-surface-muted: #EFE8DC;
+        --public-hero: #F7E4DD;
+        --public-navigation: #FFFCF7;
+        --public-footer: #ECE3D4;
+        --public-border: #D7CDBD;
+        --public-ink: #18262D;
+        --public-muted: #5B696D;
+        --public-accent: #B44336;
+        --public-accent-active: #8E322A;
+        --public-accent-soft: #F5DED8;
+        --public-secondary: #2E6957;
+        --public-secondary-active: #235143;
+        --public-secondary-soft: #E1EEE7;
+        --public-success: #276451;
+        --public-warning: #95651B;
+        --public-danger: #A52B35;
+        --public-focus: rgba(180, 67, 54, 0.22);
+        --public-shadow: 0 18px 50px rgba(58, 45, 31, 0.09);
+        --auth-canvas: var(--public-canvas);
+        --auth-surface: var(--public-surface);
+        --auth-muted-surface: var(--public-surface-muted);
+        --auth-hairline: var(--public-border);
+        --auth-ink: var(--public-ink);
+        --auth-muted: var(--public-muted);
+        --auth-helper: var(--public-muted);
+        --auth-label: var(--public-ink);
+        --auth-accent: var(--public-accent);
+        --auth-accent-active: var(--public-accent-active);
         --auth-danger: #9F2A2A;
         --auth-success: #245B49;
-        --auth-focus: rgba(181, 58, 58, 0.24);
-        --admin-canvas: #F5F2ED;
-        --admin-surface: #FFFFFF;
-        --admin-muted-surface: #F0ECE5;
-        --admin-border: #DDD7CE;
-        --admin-ink: #172033;
-        --admin-muted: #667085;
-        --admin-accent: #A83A35;
-        --admin-accent-active: #842D29;
-        --admin-accent-soft: #F7E8E5;
+        --auth-focus: rgba(168, 58, 53, 0.22);
+        --admin-canvas: var(--public-canvas);
+        --admin-surface: var(--public-surface);
+        --admin-muted-surface: var(--public-surface-muted);
+        --admin-border: var(--public-border);
+        --admin-ink: var(--public-ink);
+        --admin-muted: var(--public-muted);
+        --admin-accent: var(--public-accent);
+        --admin-accent-active: var(--public-accent-active);
+        --admin-accent-soft: var(--public-accent-soft);
         --admin-success: #276451;
         --admin-success-soft: #DDF3E9;
         --admin-warning: #8A5A00;
@@ -46,28 +66,50 @@
     }
 
     .dark {
-        --auth-canvas: #0E1116;
-        --auth-surface: #161B22;
-        --auth-muted-surface: #1F2630;
-        --auth-hairline: #2A333D;
-        --auth-ink: #E5E7EB;
-        --auth-muted: #D1D5DB;
-        --auth-helper: #CBD5E1;
-        --auth-label: #E2E8F0;
-        --auth-accent: #D96B6B;
-        --auth-accent-active: #E18484;
+        --public-canvas: #10191B;
+        --public-canvas-strong: #0B1214;
+        --public-surface: #182326;
+        --public-surface-elevated: #1D2A2E;
+        --public-surface-muted: #243337;
+        --public-hero: #282224;
+        --public-navigation: #142023;
+        --public-footer: #142023;
+        --public-border: #36494D;
+        --public-ink: #F4EFE5;
+        --public-muted: #B7C2BE;
+        --public-accent: #EE8172;
+        --public-accent-active: #F49A8E;
+        --public-accent-soft: #3A2725;
+        --public-secondary: #84C3AA;
+        --public-secondary-active: #A1D3BE;
+        --public-secondary-soft: #1D352D;
+        --public-success: #8BD0B6;
+        --public-warning: #E6BB70;
+        --public-danger: #F0A0A8;
+        --public-focus: rgba(238, 129, 114, 0.28);
+        --public-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+        --auth-canvas: var(--public-canvas);
+        --auth-surface: var(--public-surface);
+        --auth-muted-surface: var(--public-surface-muted);
+        --auth-hairline: var(--public-border);
+        --auth-ink: var(--public-ink);
+        --auth-muted: var(--public-muted);
+        --auth-helper: var(--public-muted);
+        --auth-label: var(--public-ink);
+        --auth-accent: var(--public-accent);
+        --auth-accent-active: var(--public-accent-active);
         --auth-danger: #F0A0A0;
         --auth-success: #A7D8C5;
         --auth-focus: rgba(217, 107, 107, 0.28);
-        --admin-canvas: #0D1117;
-        --admin-surface: #161B22;
-        --admin-muted-surface: #1F2630;
-        --admin-border: #2B3440;
-        --admin-ink: #F0F3F7;
-        --admin-muted: #AEB8C7;
-        --admin-accent: #DC6F69;
-        --admin-accent-active: #EC8D88;
-        --admin-accent-soft: #342326;
+        --admin-canvas: var(--public-canvas);
+        --admin-surface: var(--public-surface);
+        --admin-muted-surface: var(--public-surface-muted);
+        --admin-border: var(--public-border);
+        --admin-ink: var(--public-ink);
+        --admin-muted: var(--public-muted);
+        --admin-accent: var(--public-accent);
+        --admin-accent-active: var(--public-accent-active);
+        --admin-accent-soft: var(--public-accent-soft);
         --admin-success: #8BD0B6;
         --admin-success-soft: #17372E;
         --admin-warning: #F4CD69;
@@ -81,11 +123,171 @@
     [x-cloak] {
         display: none !important;
     }
+
+    body {
+        background: var(--public-canvas);
+        color: var(--public-ink);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+    }
 }
 
 @layer components {
+    .public-shell {
+        background: var(--public-canvas);
+        color: var(--public-ink);
+    }
+
+    .public-navigation {
+        border-color: var(--public-border);
+        background: var(--public-navigation);
+        color: var(--public-ink);
+    }
+
+    .public-footer {
+        border-color: var(--public-border);
+        background: var(--public-footer);
+        color: var(--public-ink);
+    }
+
+    .brand-mark {
+        align-items: center;
+        background: var(--public-accent-soft);
+        border: 1px solid var(--public-border);
+        border-radius: 12px;
+        color: var(--public-accent);
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 0.75rem;
+        font-weight: 800;
+        height: 2.25rem;
+        justify-content: center;
+        letter-spacing: 0.04em;
+        width: 2.25rem;
+    }
+
+    .page-hero {
+        background: var(--public-hero);
+        border-bottom: 1px solid var(--public-border);
+    }
+
+    .ui-surface {
+        background: var(--public-surface-elevated);
+        border: 1px solid var(--public-border);
+        box-shadow: var(--public-shadow);
+        color: var(--public-ink);
+    }
+
+    .ui-surface-muted {
+        background: var(--public-surface-muted);
+        border: 1px solid var(--public-border);
+        color: var(--public-ink);
+    }
+
+    .ui-eyebrow {
+        color: var(--public-accent);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .ui-heading {
+        color: var(--public-ink);
+        font-weight: 750;
+        letter-spacing: -0.025em;
+    }
+
+    .ui-copy {
+        color: var(--public-muted);
+        line-height: 1.75;
+    }
+
+    .ui-button-primary,
+    .ui-button-secondary,
+    .ui-button-quiet {
+        align-items: center;
+        border-radius: 12px;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+        min-height: 2.75rem;
+        transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .ui-button-primary {
+        background: var(--public-accent);
+        color: #FFFFFF;
+    }
+
+    .ui-button-primary:hover {
+        background: var(--public-accent-active);
+    }
+
+    .ui-button-secondary {
+        background: var(--public-secondary);
+        color: #FFFFFF;
+    }
+
+    .ui-button-secondary:hover {
+        background: var(--public-secondary-active);
+    }
+
+    .ui-button-quiet {
+        background: var(--public-surface);
+        border: 1px solid var(--public-border);
+        color: var(--public-ink);
+    }
+
+    .ui-button-quiet:hover {
+        border-color: var(--public-accent);
+        color: var(--public-accent);
+    }
+
+    .ui-button-primary:focus-visible,
+    .ui-button-secondary:focus-visible,
+    .ui-button-quiet:focus-visible {
+        outline: 3px solid var(--public-focus);
+        outline-offset: 3px;
+    }
+
+    .shop-filter > summary {
+        list-style: none;
+    }
+
+    .shop-filter > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    @media (min-width: 1024px) {
+        .shop-filter > .shop-filter-panel {
+            display: block !important;
+        }
+    }
+
+    .ui-card {
+        transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .ui-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .ui-action {
+        transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .ui-action:active {
+        transform: translateY(1px);
+    }
+
+    .ui-reveal {
+        animation: ui-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
     .site-navbar {
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     .site-mobile-menu summary {
@@ -97,24 +299,16 @@
     }
 
     .auth-page {
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 18rem),
-            var(--auth-canvas);
+        background: var(--public-canvas);
         color: var(--auth-ink);
-    }
-
-    .dark .auth-page {
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 18rem),
-            var(--auth-canvas);
     }
 
     .auth-card {
         border: 1px solid var(--auth-hairline);
-        border-radius: 14px;
+        border-radius: 18px;
         background: var(--auth-surface);
         color: var(--auth-ink);
-        box-shadow: 0 10px 30px rgba(34, 34, 34, 0.06);
+        box-shadow: var(--public-shadow);
     }
 
     .dark .auth-card {
@@ -195,6 +389,17 @@
 }
 
 @layer utilities {
+    @keyframes ui-reveal {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     @keyframes rise {
         0% {
             opacity: 0;
@@ -208,6 +413,22 @@
 
     .animate-rise {
         animation: rise 0.7s ease-out both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+
+        .ui-card:hover,
+        .ui-action:active {
+            transform: none;
+        }
     }
 }
 

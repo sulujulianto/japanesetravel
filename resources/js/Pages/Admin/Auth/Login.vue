@@ -15,7 +15,11 @@ interface LoginCopy {
     remember: string;
     submit: string;
     theme: string;
+    themeDark: string;
+    themeLight: string;
     themeToggle: string;
+    useDarkTheme: string;
+    useLightTheme: string;
     title: string;
 }
 
@@ -53,15 +57,16 @@ const submit = (): void => {
 
     <AdminGuestLayout
         :active-locale="page.props.locale"
+        :app-mark="page.props.app.mark"
         :app-name="page.props.app.name"
         :copy="copy"
         :routes="routes"
     >
         <div class="mb-8">
-            <h1 class="font-display text-3xl font-semibold text-slate-900 dark:text-white">
+            <h1 class="font-display text-3xl font-semibold text-[var(--auth-ink)]">
                 {{ copy.title }}
             </h1>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">
+            <p class="mt-2 text-sm text-[var(--auth-helper)]">
                 {{ copy.description }}
             </p>
         </div>
@@ -120,11 +125,11 @@ const submit = (): void => {
                     <input
                         id="remember"
                         v-model="form.remember"
-                        class="rounded border-slate-300 text-rose-500 focus:ring-rose-400"
+                        class="rounded border-[var(--auth-hairline)] text-[var(--auth-accent)] focus:ring-[var(--auth-focus)]"
                         name="remember"
                         type="checkbox"
                     >
-                    <span class="ms-2 text-sm text-slate-600 dark:text-slate-300">{{ copy.remember }}</span>
+                    <span class="ms-2 text-sm text-[var(--auth-helper)]">{{ copy.remember }}</span>
                 </label>
             </div>
 

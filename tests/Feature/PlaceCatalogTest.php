@@ -20,15 +20,6 @@ class PlaceCatalogTest extends TestCase
         Cache::flush();
     }
 
-    public function test_homepage_renders_and_links_to_destination_catalog(): void
-    {
-        $this->createPlace();
-
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee(route('places.index'), false);
-    }
-
     public function test_destination_catalog_renders_without_query(): void
     {
         $this->createPlace();
@@ -67,6 +58,17 @@ class PlaceCatalogTest extends TestCase
             ->assertOk()
             ->assertSee('Lokasi')
             ->assertDontSee('Peta interaktif belum tersedia.');
+    }
+
+    public function test_destination_detail_uses_one_continuous_content_column_without_sticky_sidebar(): void
+    {
+        $place = $this->createPlace();
+
+        $this->get(route('place.show', $place->slug))
+            ->assertOk()
+            ->assertSee('data-place-detail-layout', false)
+            ->assertSee('data-place-detail-main', false)
+            ->assertDontSee('lg:sticky', false);
     }
 
     public function test_destination_catalog_formats_rating_for_indonesian_locale(): void

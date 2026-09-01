@@ -23,6 +23,8 @@ class AdminInertiaLoginTest extends TestCase
             ->component('Admin/Auth/Login')
             ->where('locale', 'id')
             ->where('copy.title', 'Portal Admin')
+            ->where('copy.themeDark', 'Tema gelap')
+            ->where('copy.themeLight', 'Tema terang')
             ->where('routes.submit', '/admin/login')
         );
     }

@@ -4,31 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Japan Travel') }}</title>
+    <title>{{ \App\Support\Brand::name() }}</title>
     @includeIf('partials.theme-script')
     @includeIf('partials.vite')
 </head>
 <body class="auth-page font-sans antialiased">
-    <div class="flex min-h-screen flex-col">
-        <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-3 text-sm font-semibold tracking-tight text-[var(--auth-ink)]">
-                <span class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--auth-hairline)] bg-[var(--auth-surface)] font-display text-sm">JT</span>
-                <span>{{ __('Japan Travel') }}</span>
-            </a>
+    <div data-public-shell class="flex min-h-dvh flex-col">
+        @include('partials.site-nav')
 
-            <div class="flex items-center gap-2 text-xs font-semibold">
-                <a href="{{ route('lang.switch', 'id') }}" class="auth-control px-3 py-1.5 {{ App::getLocale() == 'id' ? 'auth-control-active' : '' }}">ID</a>
-                <a href="{{ route('lang.switch', 'en') }}" class="auth-control px-3 py-1.5 {{ App::getLocale() == 'en' ? 'auth-control-active' : '' }}">EN</a>
-                <button onclick="toggleTheme()" class="auth-control px-3 py-1.5" title="{{ __('Ganti tema') }}" type="button">
-                    {{ __('Tema') }}
-                </button>
-            </div>
-        </header>
+        <main class="flex flex-1 items-center px-5 py-10 sm:px-8 sm:py-14">
+            <div class="ui-reveal mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-center lg:gap-20">
+                <aside class="hidden max-w-xl lg:block">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--public-accent)]">{{ __('Rencanakan perjalanan Anda') }}</p>
+                    <h1 class="mt-4 font-display text-5xl font-semibold leading-tight text-[var(--public-ink)]">{{ __('Satu akun untuk perjalanan dan oleh-oleh Jepang.') }}</h1>
+                    <p class="mt-5 max-w-lg text-base leading-7 text-[var(--public-muted)]">{{ __('Jelajahi destinasi, bagikan pengalaman, dan pantau pesanan Anda tanpa kehilangan konteks perjalanan.') }}</p>
+                    <ul class="mt-8 grid gap-4 text-sm font-semibold text-[var(--public-ink)]">
+                        <li class="flex items-center gap-3"><span class="h-2 w-2 rounded-full bg-[var(--public-accent)]" aria-hidden="true"></span>{{ __('Katalog destinasi dwibahasa') }}</li>
+                        <li class="flex items-center gap-3"><span class="h-2 w-2 rounded-full bg-[var(--public-accent)]" aria-hidden="true"></span>{{ __('Ulasan dari pengguna terverifikasi') }}</li>
+                        <li class="flex items-center gap-3"><span class="h-2 w-2 rounded-full bg-[var(--public-accent)]" aria-hidden="true"></span>{{ __('Riwayat pesanan dalam satu tempat') }}</li>
+                    </ul>
+                </aside>
 
-        <main class="flex flex-1 items-center justify-center px-5 pb-12 pt-4 sm:px-8">
-            <div class="w-full max-w-[440px]">
+                <div class="mx-auto w-full max-w-[440px]">
                 <div class="mb-5 text-center">
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-helper)]">{{ __('Destinasi dan oleh-oleh Jepang') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--auth-helper)]">{{ __('Destinasi dan oleh-oleh :region', ['region' => \App\Support\Brand::region()]) }}</p>
                 </div>
 
                 <section class="auth-card px-6 py-7 sm:px-8 sm:py-8">
@@ -36,10 +35,13 @@
                 </section>
 
                 <p class="mx-auto mt-5 max-w-sm text-center text-xs font-medium leading-5 text-[var(--auth-helper)]">
-                    {{ __('Temukan destinasi Jepang, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.') }}
+                    {{ __('Temukan destinasi :region, tulis ulasan, dan kelola pesanan oleh-oleh Anda dalam satu akun.', ['region' => \App\Support\Brand::region()]) }}
                 </p>
+                </div>
             </div>
         </main>
+
+        @include('partials.site-footer')
     </div>
 </body>
 </html>

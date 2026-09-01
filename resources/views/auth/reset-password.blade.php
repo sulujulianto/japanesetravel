@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
         <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Buat password baru') }}</h1>
-        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Gunakan password baru untuk melanjutkan akses akun Japan Travel Anda.') }}</p>
+        <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Gunakan password baru untuk melanjutkan akses akun :brand Anda.', ['brand' => \App\Support\Brand::name()]) }}</p>
     </div>
 
     <form method="POST" action="{{ route('password.store') }}">

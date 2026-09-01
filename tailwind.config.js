@@ -14,8 +14,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Manrope', ...defaultTheme.fontFamily.sans],
-                display: ['Fraunces', ...defaultTheme.fontFamily.serif],
+                sans: ['system-ui', ...defaultTheme.fontFamily.sans],
+                display: ['system-ui', ...defaultTheme.fontFamily.sans],
             },
         },
     },

@@ -2,17 +2,17 @@
 
 ## Current Baseline
 
-- Automated tests: **132**
-- Assertions: **633**
+- Automated tests: run `composer test` on the exact commit under review
+- Assertions: use the total reported by that run
 - Test framework: PHPUnit through Laravel's test runner
 - Static analysis: Larastan/PHPStan level 6 with a committed baseline
 - Formatting: Laravel Pint
 - Frontend build: Vite
 - Dependency checks: Composer Audit and npm Audit
 
-This count is a point-in-time baseline, not a coverage percentage.
-It was re-verified locally and in GitHub Actions on 2026-08-23. The CI suite
-runs the same tests against SQLite and MariaDB 10.11/11.8.
+Counts in `docs/qa/test-execution-evidence.md` are historical evidence tied to
+specific commits, not the current working tree. The CI suite runs the same core
+tests against SQLite and MariaDB 10.11/11.8.
 
 ## Covered Areas
 
@@ -29,7 +29,7 @@ runs the same tests against SQLite and MariaDB 10.11/11.8.
 | Orders | Snapshot image compatibility and localized user/admin order display |
 | Admin | Access, media conversion/replacement/deletion, status transitions |
 | Localization | ID/EN copy, formatting, pluralization, locale-isolated chart cache |
-| Unit | Number/date/currency/rating/relative-time formatter |
+| Unit | Number/date/currency/rating/relative-time formatter and centralized brand configuration |
 
 ## Run the Suite
 

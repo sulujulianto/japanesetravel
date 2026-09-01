@@ -73,24 +73,6 @@ parameters:
 			path: app/Http/Controllers/CheckoutController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\HomeController\:\:index\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/HomeController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\HomeController\:\:show\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/HomeController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\HomeController\:\:show\(\) has parameter \$slug with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: app/Http/Controllers/HomeController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$order\.$#'
 			identifier: property.notFound
 			count: 2
@@ -107,12 +89,6 @@ parameters:
 			identifier: missingType.parameter
 			count: 1
 			path: app/Http/Controllers/ReviewController.php
-
-		-
-			message: '#^Method App\\Http\\Controllers\\ShopController\:\:index\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Http/Controllers/ShopController.php
 
 		-
 			message: '#^Method App\\Http\\Requests\\Admin\\UpdateOrderStatusRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'

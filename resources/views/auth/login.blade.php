@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-8">
-        <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Masuk ke Japan Travel') }}</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-[var(--auth-ink)]">{{ __('Masuk ke :brand', ['brand' => \App\Support\Brand::name()]) }}</h1>
         <p class="mt-2 text-sm font-medium leading-6 text-[var(--auth-helper)]">{{ __('Lanjutkan eksplorasi destinasi dan pesanan oleh-oleh Anda.') }}</p>
     </div>
 

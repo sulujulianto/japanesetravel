@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Souvenir;
 use App\Support\CacheKeys;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 
 class ShopController extends Controller
 {
+    private const ITEMS_PER_PAGE = 9;
+
     // Halaman Katalog Toko
-    public function index()
+    public function index(): View
     {
         $search = request()->string('search')->toString();
         $minPrice = request()->input('min_price');
@@ -29,6 +32,7 @@ class ShopController extends Controller
             'availability' => $availability,
             'sort' => $sort,
             'page' => request()->integer('page', 1),
+            'per_page' => self::ITEMS_PER_PAGE,
         ]));
 
         $souvenirs = Cache::remember($souvenirsKey, now()->addMinutes(5), function () use ($search, $minPrice, $maxPrice, $availability, $sort) {
@@ -63,7 +67,7 @@ class ShopController extends Controller
                 $query->latest();
             }
 
-            return $query->paginate(12);
+            return $query->paginate(self::ITEMS_PER_PAGE);
         });
 
         $souvenirs->withQueryString();

@@ -29,6 +29,8 @@ class AdminInertiaDashboardTest extends TestCase
             ->component('Admin/Dashboard/Index')
             ->where('auth.admin.username', $admin->username)
             ->where('copy.title', 'Dashboard Admin')
+            ->where('copy.themeDark', 'Tema gelap')
+            ->where('copy.themeLight', 'Tema terang')
             ->where('routes.dashboard', '/admin')
             ->where('routes.orders', '/admin/orders')
             ->has('metrics', 4)

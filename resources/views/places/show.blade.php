@@ -1,6 +1,6 @@
 @extends('layouts.site')
 
-@section('title', $place->name . ' · ' . __('Japan Travel'))
+@section('title', $place->name . ' · ' . \App\Support\Brand::name())
 
 @section('content')
     @php
@@ -11,162 +11,108 @@
         $placeImage = $place->image_url ?: asset('demo/place-placeholder.svg');
     @endphp
 
-    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <a href="{{ route('places.index') }}" class="inline-flex items-center justify-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#B33A3A] hover:text-[#8F2E2E] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8] dark:hover:border-[#D96B6B] dark:hover:text-[#D96B6B]">
-            {{ __('Katalog destinasi') }}
+    <section data-place-detail-layout class="ui-reveal mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <a href="{{ route('places.index') }}" class="ui-button-quiet px-4 py-2 text-sm">
+            <span aria-hidden="true" class="mr-2">←</span>{{ __('Katalog destinasi') }}
         </a>
 
-        <div class="mt-6 overflow-hidden rounded-[28px] border border-[#E7E3DC] bg-[#F1EEE8] shadow-sm dark:border-[#2A333D] dark:bg-[#1F2630]">
-            <img src="{{ $placeImage }}" alt="{{ $place->name }}" class="aspect-[16/11] w-full object-cover sm:aspect-[16/8] lg:aspect-[16/7]">
+        <div class="ui-surface mt-6 overflow-hidden rounded-[24px]">
+            <img src="{{ $placeImage }}" alt="{{ $place->name }}" class="aspect-[16/11] w-full object-cover sm:aspect-[16/8] lg:aspect-[16/7]" decoding="async" fetchpriority="high">
         </div>
 
         <header class="mt-8 max-w-4xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Destinasi') }}</p>
-            <h1 class="mt-3 text-4xl font-semibold leading-tight text-[#1F2937] dark:text-[#F4F1ED] sm:text-5xl">{{ $place->name }}</h1>
-            <p class="mt-4 max-w-2xl text-base leading-7 text-[#374151] dark:text-[#D8DEE8]">{{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
+            <p class="ui-eyebrow">{{ __('Destinasi') }}</p>
+            <h1 class="ui-heading mt-3 text-4xl leading-tight sm:text-5xl">{{ $place->name }}</h1>
+            <p class="ui-copy mt-4 max-w-2xl text-base">{{ $place->address ?? __('Lokasi belum ditambahkan') }}</p>
 
             <div class="mt-6 flex flex-wrap gap-3">
-                <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#1F2937] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#F4F1ED]">
+                <span class="inline-flex items-center rounded-lg border border-[var(--public-border)] bg-[var(--public-accent-soft)] px-4 py-2 text-sm font-semibold text-[var(--public-ink)]">
                     {{ __('Rating') }} {{ $ratingValue }}
                 </span>
-                <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
+                <span class="inline-flex items-center rounded-lg border border-[var(--public-border)] bg-[var(--public-secondary-soft)] px-4 py-2 text-sm font-semibold text-[var(--public-muted)]">
                     {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}
                 </span>
                 @if($place->open_days || $place->open_hours)
-                    <span class="inline-flex items-center rounded-full border border-[#DDD6CC] bg-white px-4 py-2 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#D8DEE8]">
+                    <span class="inline-flex items-center rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] px-4 py-2 text-sm font-semibold text-[var(--public-muted)]">
                         {{ $place->open_days ?? __('Jadwal fleksibel') }} · {{ $place->open_hours ?? __('Jam belum tersedia') }}
                     </span>
                 @endif
             </div>
         </header>
 
-        <div class="mt-6 grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
-            <div class="space-y-6 lg:col-span-8">
-                <article class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Tentang Destinasi') }}</p>
-                    <h2 class="mt-3 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $place->name }}</h2>
-                    <p class="mt-5 whitespace-pre-line text-base leading-8 text-[#374151] dark:text-[#D8DEE8]">{{ $place->description }}</p>
+        <div class="mt-8 grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
+            <div data-place-detail-main class="space-y-6 lg:col-span-8">
+                <article class="ui-surface rounded-[20px] p-6 sm:p-8">
+                    <p class="ui-eyebrow">{{ __('Tentang Destinasi') }}</p>
+                    <h2 class="ui-heading mt-3 text-2xl">{{ $place->name }}</h2>
+                    <p class="ui-copy mt-5 whitespace-pre-line text-base leading-8">{{ $place->description }}</p>
                 </article>
 
-                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                <section class="ui-surface rounded-[20px] p-6 sm:p-8">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Informasi Kunjungan') }}</p>
-                            <h2 class="mt-3 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Sebelum berangkat') }}</h2>
+                            <p class="ui-eyebrow text-[var(--public-secondary)]">{{ __('Informasi Kunjungan') }}</p>
+                            <h2 class="ui-heading mt-3 text-2xl">{{ __('Sebelum berangkat') }}</h2>
                         </div>
                         @if($place->open_days || $place->open_hours)
-                            <p class="text-sm font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</p>
+                            <p class="text-sm font-semibold text-[var(--public-muted)]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</p>
                         @endif
                     </div>
 
                     <div class="mt-6 space-y-5">
                         <div>
-                            <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Fasilitas') }}</h3>
+                            <h3 class="text-sm font-semibold text-[var(--public-ink)]">{{ __('Fasilitas') }}</h3>
                             @if($place->facilities)
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @foreach(explode(',', $place->facilities) as $facility)
-                                        <span class="rounded-full border border-[#DDD6CC] bg-[#FAF9F6] px-3 py-1.5 text-xs font-semibold text-[#2F5D50] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#8AB7A4]">{{ trim($facility) }}</span>
+                                        <span class="rounded-lg border border-[var(--public-border)] bg-[var(--public-secondary-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--public-secondary)]">{{ trim($facility) }}</span>
                                     @endforeach
                                 </div>
                             @else
-                                <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ __('Belum ada data fasilitas.') }}</p>
+                                <p class="mt-3 text-sm leading-6 text-[var(--public-muted)]">{{ __('Belum ada data fasilitas.') }}</p>
                             @endif
                         </div>
 
-                        <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] p-5 dark:border-[#2A333D] dark:bg-[#1F2630]">
-                            <h3 class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Lokasi') }}</h3>
-                            <p class="mt-3 text-sm leading-6 text-[#526071] dark:text-[#D8DEE8]">{{ $place->address ?? __('Alamat belum tersedia.') }}</p>
+                        <div class="ui-surface-muted rounded-2xl p-5">
+                            <h3 class="text-sm font-semibold text-[var(--public-ink)]">{{ __('Lokasi') }}</h3>
+                            <p class="mt-3 text-sm leading-6 text-[var(--public-muted)]">{{ $place->address ?? __('Alamat belum tersedia.') }}</p>
                         </div>
                     </div>
                 </section>
-            </div>
-
-            <aside class="space-y-5 lg:col-span-4 lg:sticky lg:top-24">
-                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-5 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
-                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Travel inquiry') }}</p>
-                    <h2 class="mt-3 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Butuh bantuan menyusun perjalanan?') }}</h2>
-                    <p class="mt-3 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">
-                        {{ __('Hubungi kami untuk bertanya tentang rute, waktu kunjungan, atau kebutuhan travel.') }}
-                    </p>
-
-                    <div class="mt-5 space-y-3">
-                        @if($travelWhatsappUrl)
-                            <a href="{{ $travelWhatsappUrl }}" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-center rounded-full bg-[#B33A3A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">
-                                {{ __('Konsultasi via WhatsApp') }}
-                            </a>
-                        @else
-                            <div aria-disabled="true" class="flex w-full items-center justify-center rounded-full border border-[#DDD6CC] bg-[#F1EEE8] px-5 py-3 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
-                                {{ __('WhatsApp belum tersedia') }}
-                            </div>
-                        @endif
-
-                        <a href="{{ route('shop.index') }}" class="flex w-full items-center justify-center rounded-full border border-[#B33A3A] bg-white px-5 py-3 text-sm font-semibold text-[#8F2E2E] transition hover:bg-[#FFF5F3] dark:border-[#D96B6B] dark:bg-[#161B22] dark:text-[#D96B6B] dark:hover:bg-[#241F20]">
-                            {{ __('Lihat katalog oleh-oleh') }}
-                        </a>
-                    </div>
-                </section>
-
-                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-5 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-6">
-                    <h3 class="text-base font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Ringkasan destinasi') }}</h3>
-                    <dl class="mt-4 divide-y divide-[#E7E3DC] border-y border-[#E7E3DC] text-sm dark:divide-[#2A333D] dark:border-[#2A333D]">
-                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
-                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Rating') }}</dt>
-                            <dd class="text-[#1F2937] dark:text-[#F4F1ED]">{{ $ratingValue }} · {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}</dd>
-                        </div>
-                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
-                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Lokasi') }}</dt>
-                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->address ?? __('Belum tersedia') }}</dd>
-                        </div>
-                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
-                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Jam') }}</dt>
-                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</dd>
-                        </div>
-                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
-                            <dt class="font-semibold text-[#526071] dark:text-[#AEB8C7]">{{ __('Kurator') }}</dt>
-                            <dd class="text-[#374151] dark:text-[#D8DEE8]">{{ $place->author->username ?? __('Admin') }}</dd>
-                        </div>
-                    </dl>
-                    <p class="mt-4 rounded-2xl border border-[#DDD6CC] bg-[#FAF9F6] p-4 text-sm leading-6 text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
-                        {{ __('Tidak ada transaksi jasa travel langsung di halaman ini.') }}
-                    </p>
-                </section>
-            </aside>
-
-            <div class="space-y-6 lg:col-span-8">
-                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
+                <section class="ui-surface rounded-[20px] p-6 sm:p-8">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#526071] dark:text-[#AEB8C7]">{{ __('Ulasan Pengunjung') }}</p>
-                            <h2 class="mt-2 text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Pengalaman dari pengunjung') }}</h2>
+                            <p class="ui-eyebrow">{{ __('Ulasan Pengunjung') }}</p>
+                            <h2 class="ui-heading mt-2 text-2xl">{{ __('Pengalaman dari pengunjung') }}</h2>
                         </div>
-                        <span class="inline-flex w-fit rounded-full border border-[#DDD6CC] bg-[#FAF9F6] px-3 py-1.5 text-sm font-semibold text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#AEB8C7]">
+                        <span class="inline-flex w-fit rounded-lg border border-[var(--public-border)] bg-[var(--public-surface-muted)] px-3 py-1.5 text-sm font-semibold text-[var(--public-muted)]">
                             {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}
                         </span>
                     </div>
 
                     <div class="mt-6 space-y-4">
                         @forelse($reviews as $review)
-                            <article class="rounded-[20px] border border-[#E7E3DC] bg-[#FAF9F6] p-4 dark:border-[#2A333D] dark:bg-[#1F2630] sm:p-5">
+                            <article class="ui-surface-muted rounded-[16px] p-4 sm:p-5">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F1EEE8] text-sm font-semibold text-[#B33A3A] dark:bg-[#0E1116] dark:text-[#D96B6B]">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--public-accent-soft)] text-sm font-semibold text-[var(--public-accent)]">
                                             {{ strtoupper(substr($review->user->username, 0, 1)) }}
                                         </div>
                                         <div>
-                                            <p class="text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $review->user->username }}</p>
-                                            <p class="text-xs font-medium text-[#667085] dark:text-[#AEB8C7]">{{ \App\Support\Format::relative($review->created_at) }}</p>
+                                            <p class="text-sm font-semibold text-[var(--public-ink)]">{{ $review->user->username }}</p>
+                                            <p class="mt-1 text-xs font-medium text-[var(--public-muted)]">{{ \App\Support\Format::relative($review->created_at) }}</p>
                                         </div>
                                     </div>
-                                    <div class="shrink-0 text-sm tracking-wide text-[#8A6A2F] dark:text-[#D2B16F]">
+                                    <div class="shrink-0 text-sm tracking-wide text-[var(--public-warning)]">
                                         @for($i = 0; $i < 5; $i++)
-                                            <span class="{{ $i < $review->rating ? '' : 'text-[#C7CED8] dark:text-[#46515D]' }}">★</span>
+                                            <span class="{{ $i < $review->rating ? '' : 'opacity-30' }}">★</span>
                                         @endfor
                                     </div>
                                 </div>
-                                <p class="mt-4 text-sm leading-6 text-[#374151] dark:text-[#D8DEE8]">{{ $review->comment }}</p>
+                                <p class="mt-4 text-sm leading-6 text-[var(--public-muted)]">{{ $review->comment }}</p>
                             </article>
                         @empty
-                            <div class="rounded-[20px] border border-dashed border-[#DDD6CC] bg-[#FAF9F6] p-6 text-center text-sm leading-6 text-[#526071] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
+                            <div class="ui-surface-muted rounded-[16px] border-dashed p-6 text-center text-sm leading-6 text-[var(--public-muted)]">
                                 {{ __('Belum ada ulasan. Jadilah yang pertama!') }}
                             </div>
                         @endforelse
@@ -177,8 +123,8 @@
                     </div>
                 </section>
 
-                <section class="rounded-[24px] border border-[#E7E3DC] bg-white p-6 shadow-sm dark:border-[#2A333D] dark:bg-[#161B22] sm:p-8">
-                    <h2 class="text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Tulis Ulasan') }}</h2>
+                <section class="ui-surface rounded-[20px] p-6 sm:p-8">
+                    <h2 class="ui-heading text-xl">{{ __('Tulis Ulasan') }}</h2>
                     @auth
                         <form action="{{ route('review.store', $place->id) }}" method="POST" class="mt-5 space-y-4">
                             @csrf
@@ -199,13 +145,65 @@
                             <x-ui.button type="submit" class="w-full sm:w-auto">{{ __('Kirim Ulasan') }}</x-ui.button>
                         </form>
                     @else
-                        <div class="mt-5 rounded-2xl border border-[#D2B16F] bg-[#FFF8E6] p-4 text-sm leading-6 text-[#6D541F] dark:border-[#8A6A2F] dark:bg-[#241F14] dark:text-[#D2B16F]">
-                            <a href="{{ route('login') }}" class="font-semibold underline">{{ __('Masuk') }}</a>
+                        <div class="mt-5 rounded-xl border border-[var(--public-warning)] bg-[var(--public-surface-muted)] p-4 text-sm leading-6 text-[var(--public-muted)]">
+                            <a href="{{ route('login') }}" class="font-semibold text-[var(--public-accent)] underline">{{ __('Masuk') }}</a>
                             {{ __('untuk menulis ulasan.') }}
                         </div>
                     @endauth
                 </section>
             </div>
+
+            <aside class="space-y-5 lg:col-span-4 lg:self-start">
+                <section class="rounded-[20px] border border-[var(--public-border)] bg-[var(--public-secondary-soft)] p-5 sm:p-6">
+                    <p class="ui-eyebrow text-[var(--public-secondary)]">{{ __('Travel inquiry') }}</p>
+                    <h2 class="ui-heading mt-3 text-xl">{{ __('Butuh bantuan menyusun perjalanan?') }}</h2>
+                    <p class="ui-copy mt-3 text-sm">
+                        {{ __('Hubungi kami untuk bertanya tentang rute, waktu kunjungan, atau kebutuhan travel.') }}
+                    </p>
+
+                    <div class="mt-5 space-y-3">
+                        @if($travelWhatsappUrl)
+                            <a href="{{ $travelWhatsappUrl }}" target="_blank" rel="noopener noreferrer" class="ui-button-secondary w-full px-5 py-3 text-sm">
+                                {{ __('Konsultasi via WhatsApp') }}
+                            </a>
+                        @else
+                            <div aria-disabled="true" class="ui-button-quiet w-full cursor-not-allowed px-5 py-3 text-sm opacity-70">
+                                {{ __('WhatsApp belum tersedia') }}
+                            </div>
+                        @endif
+
+                        <a href="{{ route('shop.index') }}" class="ui-button-quiet w-full px-5 py-3 text-sm">
+                            {{ __('Lihat katalog oleh-oleh') }}
+                        </a>
+                    </div>
+                </section>
+
+                <section class="ui-surface rounded-[20px] p-5 sm:p-6">
+                    <h3 class="text-base font-semibold text-[var(--public-ink)]">{{ __('Ringkasan destinasi') }}</h3>
+                    <dl class="mt-4 divide-y divide-[var(--public-border)] border-y border-[var(--public-border)] text-sm">
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[var(--public-muted)]">{{ __('Rating') }}</dt>
+                            <dd class="text-[var(--public-ink)]">{{ $ratingValue }} · {{ trans_choice('Jumlah ulasan', $reviewCount, ['count' => $reviewCount]) }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[var(--public-muted)]">{{ __('Lokasi') }}</dt>
+                            <dd class="text-[var(--public-ink)]">{{ $place->address ?? __('Belum tersedia') }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[var(--public-muted)]">{{ __('Jam') }}</dt>
+                            <dd class="text-[var(--public-ink)]">{{ $place->open_days ?? '-' }} · {{ $place->open_hours ?? '-' }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[96px,1fr] gap-4 py-3">
+                            <dt class="font-semibold text-[var(--public-muted)]">{{ __('Kurator') }}</dt>
+                            <dd class="text-[var(--public-ink)]">{{ $place->author->username ?? __('Admin') }}</dd>
+                        </div>
+                    </dl>
+                    <p class="ui-surface-muted mt-4 rounded-xl p-4 text-sm leading-6 text-[var(--public-muted)]">
+                        {{ __('Tidak ada transaksi jasa travel langsung di halaman ini.') }}
+                    </p>
+                </section>
+            </aside>
+
         </div>
     </section>
 @endsection

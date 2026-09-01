@@ -9,7 +9,11 @@ export interface AdminShellCopy {
     places: string;
     souvenirs: string;
     theme: string;
+    themeDark: string;
+    themeLight: string;
     themeToggle: string;
+    useDarkTheme: string;
+    useLightTheme: string;
     viewSite: string;
     workspace: string;
     workspaceDescription: string;
