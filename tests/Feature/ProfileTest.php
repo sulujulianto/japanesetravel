@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,6 +21,55 @@ class ProfileTest extends TestCase
             ->get('/profile');
 
         $response->assertOk();
+    }
+
+    public function test_profile_page_uses_csp_safe_interactions(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('data-modal-open="confirm-user-deletion"', false)
+            ->assertSee('data-modal-name="confirm-user-deletion"', false)
+            ->assertDontSee('x-data', false)
+            ->assertDontSee('x-on:', false)
+            ->assertDontSee('x-show', false);
+
+        $this->assertStringNotContainsString(
+            "'unsafe-eval'",
+            (string) $response->headers->get('Content-Security-Policy'),
+        );
+    }
+
+    public function test_profile_page_displays_only_the_authenticated_users_personal_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        UserProfile::factory()->for($user)->create([
+            'full_name' => 'Edo Wardana',
+            'phone' => '+6281234567890',
+            'preferred_locale' => 'id',
+        ]);
+        UserAddress::factory()->for($user)->asDefault()->create([
+            'label' => 'My Home',
+            'address_line_1' => 'Jalan Milik Edo',
+        ]);
+        UserAddress::factory()->for($otherUser)->asDefault()->create([
+            'label' => 'Other Home',
+            'address_line_1' => 'Jalan Milik Pengguna Lain',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Edo Wardana')
+            ->assertSee('+6281234567890')
+            ->assertSee('My Home')
+            ->assertSee('Jalan Milik Edo')
+            ->assertSee('action="'.route('profile.addresses.store').'"', false)
+            ->assertDontSee('Other Home')
+            ->assertDontSee('Jalan Milik Pengguna Lain');
     }
 
     public function test_profile_information_can_be_updated(): void
@@ -42,6 +92,25 @@ class ProfileTest extends TestCase
         $this->assertSame('testuser', $user->username);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_profile_page_escapes_personal_data(): void
+    {
+        $user = User::factory()->create();
+        UserProfile::factory()->for($user)->create([
+            'full_name' => '<script>alert("profile")</script>',
+        ]);
+        UserAddress::factory()->for($user)->asDefault()->create([
+            'label' => '<img src=x onerror=alert(1)>',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertDontSee('<script>alert("profile")</script>', false)
+            ->assertDontSee('<img src=x onerror=alert(1)>', false)
+            ->assertSee('&lt;script&gt;alert(&quot;profile&quot;)&lt;/script&gt;', false)
+            ->assertSee('&lt;img src=x onerror=alert(1)&gt;', false);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
@@ -72,7 +141,7 @@ class ProfileTest extends TestCase
             'full_name' => 'Edo Wardana',
             'phone' => '+62 812-3456-7890',
             'preferred_locale' => 'id',
-        ])->assertSessionHasNoErrors()->assertRedirect('/profile');
+        ])->assertSessionHasNoErrors()->assertRedirect('/profile')->assertCookie('locale', 'id');
 
         $profile = $user->profile()->firstOrFail();
 
@@ -86,7 +155,7 @@ class ProfileTest extends TestCase
             'full_name' => 'Edo Updated',
             'phone' => null,
             'preferred_locale' => 'en',
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()->assertCookie('locale', 'en');
 
         $this->assertSame(1, UserProfile::query()->whereBelongsTo($user)->count());
         $this->assertSame('Edo Updated', $profile->refresh()->full_name);
@@ -143,5 +212,9 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());
+
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('data-modal-initially-open', false);
     }
 }

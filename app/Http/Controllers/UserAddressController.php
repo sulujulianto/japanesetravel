@@ -17,28 +17,28 @@ class UserAddressController extends Controller
     {
         $this->addresses->create($this->user($request), $request->validated());
 
-        return Redirect::route('profile.edit')->with('status', 'address-created');
+        return $this->redirectToAddresses('address-created');
     }
 
     public function update(UserAddressRequest $request, int $address): RedirectResponse
     {
         $this->addresses->update($this->user($request), $address, $request->validated());
 
-        return Redirect::route('profile.edit')->with('status', 'address-updated');
+        return $this->redirectToAddresses('address-updated');
     }
 
     public function destroy(Request $request, int $address): RedirectResponse
     {
         $this->addresses->delete($this->user($request), $address);
 
-        return Redirect::route('profile.edit')->with('status', 'address-deleted');
+        return $this->redirectToAddresses('address-deleted');
     }
 
     public function makeDefault(Request $request, int $address): RedirectResponse
     {
         $this->addresses->makeDefault($this->user($request), $address);
 
-        return Redirect::route('profile.edit')->with('status', 'address-defaulted');
+        return $this->redirectToAddresses('address-defaulted');
     }
 
     private function user(Request $request): User
@@ -47,5 +47,12 @@ class UserAddressController extends Controller
         $user = $request->user('web');
 
         return $user;
+    }
+
+    private function redirectToAddresses(string $status): RedirectResponse
+    {
+        return Redirect::route('profile.edit')
+            ->withFragment('addresses')
+            ->with('status', $status);
     }
 }

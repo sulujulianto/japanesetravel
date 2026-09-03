@@ -5,7 +5,7 @@
         <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Setelah akun dihapus, seluruh data terkait akun tidak dapat dipulihkan. Pastikan Anda benar-benar ingin melanjutkan.') }}</p>
     </header>
 
-    <x-danger-button x-data="" x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')">{{ __('Hapus Akun') }}</x-danger-button>
+    <x-danger-button type="button" data-modal-open="confirm-user-deletion">{{ __('Hapus Akun') }}</x-danger-button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
         <form method="post" action="{{ route('profile.destroy') }}" class="bg-white p-6 dark:bg-[#161B22]">
@@ -22,7 +22,7 @@
             </div>
 
             <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <x-secondary-button x-on:click="$dispatch('close')">{{ __('Cancel') }}</x-secondary-button>
+                <x-secondary-button data-modal-close>{{ __('Cancel') }}</x-secondary-button>
                 <x-danger-button>{{ __('Delete Account') }}</x-danger-button>
             </div>
         </form>
