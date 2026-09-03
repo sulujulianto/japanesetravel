@@ -30,6 +30,20 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_admin_account_cannot_authenticate_using_the_user_login_screen(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->post('/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest('web');
+        $this->assertGuest('admin');
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

@@ -30,11 +30,15 @@ class AdminSessionIsolationTest extends TestCase
         $this->get(route('admin.dashboard'))->assertOk();
 
         $this->post(route('logout'))->assertRedirect('/');
+        $this->assertGuest('web');
+        $this->assertAuthenticatedAs($admin, 'admin');
         $this->get(route('admin.dashboard'))->assertOk();
 
         $this->actingAs($user, 'web');
 
         $this->post(route('admin.logout'))->assertRedirect(route('admin.login'));
+        $this->assertGuest('admin');
+        $this->assertAuthenticatedAs($user, 'web');
         $this->get(route('dashboard'))->assertOk();
     }
 }

@@ -28,6 +28,7 @@ class AdminInertiaDashboardTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Dashboard/Index')
             ->where('auth.admin.username', $admin->username)
+            ->where('auth.user', null)
             ->where('copy.title', 'Dashboard Admin')
             ->where('copy.themeDark', 'Tema gelap')
             ->where('copy.themeLight', 'Tema terang')
@@ -38,6 +39,33 @@ class AdminInertiaDashboardTest extends TestCase
             ->where('metrics.0.value', 'Rp0')
             ->has('recentOrders', 0)
             ->has('lowStockItems', 0)
+        );
+    }
+
+    public function test_admin_dashboard_keeps_web_and_admin_authentication_contexts_separate(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'username' => 'authenticated-customer',
+        ]);
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'username' => 'authenticated-admin',
+        ]);
+
+        $response = $this
+            ->actingAs($user, 'web')
+            ->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.id', $user->id)
+            ->where('auth.user.username', 'authenticated-customer')
+            ->where('auth.user.role', 'user')
+            ->where('auth.admin.id', $admin->id)
+            ->where('auth.admin.username', 'authenticated-admin')
+            ->where('auth.admin.role', 'admin')
         );
     }
 
