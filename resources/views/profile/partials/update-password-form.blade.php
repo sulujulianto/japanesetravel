@@ -31,7 +31,7 @@
             <x-primary-button>{{ __('Update password') }}</x-primary-button>
 
             @if (session('status') === 'password-updated')
-                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm font-medium text-emerald-700 dark:text-emerald-300">{{ __('Tersimpan.') }}</p>
+                <p data-auto-dismiss="2000" class="text-sm font-medium text-emerald-700 transition-opacity duration-200 dark:text-emerald-300">{{ __('Tersimpan.') }}</p>
             @endif
         </div>
     </form>

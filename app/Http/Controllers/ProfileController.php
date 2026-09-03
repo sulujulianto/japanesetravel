@@ -19,8 +19,16 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        /** @var User $user */
+        $user = $request->user('web');
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'addresses' => $user->addresses()
+                ->orderByDesc('is_default')
+                ->orderBy('id')
+                ->get(),
+            'profile' => $user->profile()->first(),
+            'user' => $user,
         ]);
     }
 
@@ -49,7 +57,14 @@ class ProfileController extends Controller
             }
         });
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $response = Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $preferredLocale = $profileAttributes['preferred_locale'] ?? null;
+
+        if (is_string($preferredLocale)) {
+            $response->withCookie(cookie('locale', $preferredLocale, 60 * 24 * 365));
+        }
+
+        return $response;
     }
 
     /**

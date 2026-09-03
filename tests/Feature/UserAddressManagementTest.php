@@ -22,7 +22,7 @@ class UserAddressManagementTest extends TestCase
                 'user_id' => $otherUser->id,
             ])
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('profile.edit').'#addresses');
 
         $address = $user->addresses()->firstOrFail();
 
@@ -103,14 +103,14 @@ class UserAddressManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patch(route('profile.addresses.default', $second))
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('profile.edit').'#addresses');
 
         $this->assertFalse($first->refresh()->is_default);
         $this->assertTrue($second->refresh()->is_default);
 
         $this->actingAs($user)
             ->delete(route('profile.addresses.destroy', $second))
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('profile.edit').'#addresses');
 
         $this->assertModelMissing($second);
         $this->assertTrue($first->refresh()->is_default);

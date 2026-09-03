@@ -2,7 +2,7 @@
     <header>
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F5D50] dark:text-[#8AB7A4]">{{ __('Informasi Profil') }}</p>
         <h2 class="mt-2 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Informasi akun') }}</h2>
-        <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">{{ __('Perbarui username dan alamat email yang digunakan untuk akun :brand Anda.', ['brand' => \App\Support\Brand::name()]) }}</p>
+        <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">{{ __('Perbarui identitas akun dan data pribadi yang digunakan untuk pesanan Anda.') }}</p>
     </header>
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
@@ -38,11 +38,37 @@
             @endif
         </div>
 
+        <div class="border-t border-[var(--public-border)] pt-5">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F5D50] dark:text-[#8AB7A4]">{{ __('Data pribadi') }}</p>
+            <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">{{ __('Nama dan nomor telepon disimpan terenkripsi dan hanya digunakan untuk kebutuhan akun serta pengiriman.') }}</p>
+        </div>
+
+        <div>
+            <x-input-label for="full_name" :value="__('Nama lengkap')" />
+            <x-text-input id="full_name" name="full_name" type="text" class="mt-2 block w-full" :value="old('full_name', $profile?->full_name)" autocomplete="name" />
+            <x-input-error class="mt-2" :messages="$errors->get('full_name')" />
+        </div>
+
+        <div>
+            <x-input-label for="phone" :value="__('Nomor telepon')" />
+            <x-text-input id="phone" name="phone" type="tel" class="mt-2 block w-full" :value="old('phone', $profile?->phone)" autocomplete="tel" placeholder="+62 812-3456-7890" />
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+
+        <div>
+            <x-input-label for="preferred_locale" :value="__('Bahasa pilihan')" />
+            <select id="preferred_locale" name="preferred_locale" class="auth-input mt-2 block w-full px-4 py-2.5 text-sm">
+                <option value="id" @selected(old('preferred_locale', $profile?->preferred_locale ?? app()->getLocale()) === 'id')>{{ __('Bahasa Indonesia') }}</option>
+                <option value="en" @selected(old('preferred_locale', $profile?->preferred_locale ?? app()->getLocale()) === 'en')>{{ __('Bahasa Inggris') }}</option>
+            </select>
+            <x-input-error class="mt-2" :messages="$errors->get('preferred_locale')" />
+        </div>
+
         <div class="flex flex-wrap items-center gap-4 pt-1">
             <x-primary-button>{{ __('Simpan perubahan') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')
-                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm font-medium text-emerald-700 dark:text-emerald-300">{{ __('Tersimpan.') }}</p>
+                <p data-auto-dismiss="2000" class="text-sm font-medium text-emerald-700 transition-opacity duration-200 dark:text-emerald-300">{{ __('Tersimpan.') }}</p>
             @endif
         </div>
     </form>

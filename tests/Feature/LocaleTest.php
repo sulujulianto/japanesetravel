@@ -145,6 +145,8 @@ class LocaleTest extends TestCase
             ->assertOk()
             ->assertSee('Profile settings')
             ->assertSee('Profile Information')
+            ->assertSee('Shipping addresses')
+            ->assertSee('Add a new address')
             ->assertDontSee('Pengaturan profil');
     }
 
