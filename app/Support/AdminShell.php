@@ -21,6 +21,7 @@ final class AdminShell
             'themeDark' => __('Tema gelap'),
             'themeLight' => __('Tema terang'),
             'themeToggle' => __('Ganti tema'),
+            'users' => __('Pengguna'),
             'useDarkTheme' => __('Gunakan tema gelap'),
             'useLightTheme' => __('Gunakan tema terang'),
             'viewSite' => __('Lihat Situs'),
@@ -42,6 +43,7 @@ final class AdminShell
             'orders' => route('admin.orders.index', absolute: false),
             'places' => route('admin.places.index', absolute: false),
             'souvenirs' => route('admin.souvenirs.index', absolute: false),
+            'users' => route('admin.users.index', absolute: false),
         ];
     }
 }

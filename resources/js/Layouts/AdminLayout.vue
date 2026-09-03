@@ -28,6 +28,7 @@ const { theme, toggleTheme } = useTheme();
 
 const navigationItems = computed<NavigationItem[]>(() => [
     { href: props.routes.dashboard, key: 'dashboard', label: props.copy.dashboard },
+    { href: props.routes.users, key: 'users', label: props.copy.users },
     { href: props.routes.orders, key: 'orders', label: props.copy.orders },
     { href: props.routes.places, key: 'places', label: props.copy.places },
     { href: props.routes.souvenirs, key: 'souvenirs', label: props.copy.souvenirs },

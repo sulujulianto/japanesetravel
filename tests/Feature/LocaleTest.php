@@ -262,6 +262,34 @@ class LocaleTest extends TestCase
             );
     }
 
+    public function test_admin_user_pages_use_english_copy(): void
+    {
+        $admin = $this->createAdmin();
+        $user = User::factory()->create();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.users.index'), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Index')
+                ->where('copy.title', 'Users')
+                ->where('copy.filtersTitle', 'Search users')
+            );
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.users.show', $user), [
+                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
+            ])
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Show')
+                ->where('copy.title', 'User details')
+                ->where('copy.profileTitle', 'Personal details')
+            );
+    }
+
     public function test_admin_dashboard_formats_revenue_for_indonesian_locale(): void
     {
         $this->createOrderForFormatting();
