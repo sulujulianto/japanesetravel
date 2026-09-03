@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\UserAddressController;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 // Model Data
@@ -78,6 +79,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/addresses', [UserAddressController::class, 'store'])->name('profile.addresses.store');
+    Route::patch('/profile/addresses/{address}', [UserAddressController::class, 'update'])
+        ->whereNumber('address')
+        ->name('profile.addresses.update');
+    Route::delete('/profile/addresses/{address}', [UserAddressController::class, 'destroy'])
+        ->whereNumber('address')
+        ->name('profile.addresses.destroy');
+    Route::patch('/profile/addresses/{address}/default', [UserAddressController::class, 'makeDefault'])
+        ->whereNumber('address')
+        ->name('profile.addresses.default');
     Route::post('/place/{id}/review', [ReviewController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('review.store');
