@@ -15,19 +15,7 @@ class AdminSessionCookie
             return $next($request);
         }
 
-        $adminCookie = config('session.admin_cookie');
-        if (! $adminCookie) {
-            $adminCookie = Str::slug((string) config('app.name', 'laravel')).'-admin-session';
-        }
-
-        $webCookie = config('session.web_cookie');
-        if (! $webCookie) {
-            $webCookie = Str::slug((string) config('app.name', 'laravel')).'-session';
-        }
-
-        $cookie = ($request->is('admin') || $request->is('admin/*'))
-            ? $adminCookie
-            : $webCookie;
+        $cookie = $this->resolveCookieName($request);
 
         config(['session.cookie' => $cookie]);
 
@@ -40,5 +28,20 @@ class AdminSessionCookie
         $session->setName($cookie);
 
         return $next($request);
+    }
+
+    public function resolveCookieName(Request $request): string
+    {
+        $isAdminRequest = $request->is('admin') || $request->is('admin/*');
+        $configKey = $isAdminRequest ? 'session.admin_cookie' : 'session.web_cookie';
+        $configuredCookie = config($configKey);
+
+        if (is_string($configuredCookie) && $configuredCookie !== '') {
+            return $configuredCookie;
+        }
+
+        $suffix = $isAdminRequest ? '-admin-session' : '-session';
+
+        return Str::slug((string) config('app.name', 'laravel')).$suffix;
     }
 }

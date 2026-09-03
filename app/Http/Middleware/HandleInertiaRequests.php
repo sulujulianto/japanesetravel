@@ -32,7 +32,7 @@ class HandleInertiaRequests extends Middleware
             'app' => Brand::props(),
             'auth' => [
                 'admin' => fn (): ?array => $this->serializeUser(Auth::guard('admin')->user()),
-                'user' => fn (): ?array => $this->serializeUser($request->user()),
+                'user' => fn (): ?array => $this->serializeUser(Auth::guard('web')->user()),
             ],
             'cart' => [
                 'count' => fn (): int => $this->cartCount($request),

@@ -75,6 +75,23 @@ class AdminInertiaLoginTest extends TestCase
         $this->assertAuthenticatedAs($admin, 'admin');
     }
 
+    public function test_user_account_cannot_authenticate_through_the_admin_login_endpoint(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'password' => Hash::make('password'),
+        ]);
+
+        $response = $this->post(route('admin.login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest('admin');
+        $this->assertGuest('web');
+    }
+
     public function test_inertia_login_redirects_to_the_inertia_dashboard(): void
     {
         $admin = User::factory()->create([
