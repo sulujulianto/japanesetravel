@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\SouvenirController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
@@ -115,6 +116,7 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/charts', [DashboardController::class, 'charts'])->name('dashboard.charts');
     Route::resource('orders', OrderController::class)->only(['index', 'show', 'update']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'show']);
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
     Route::post('inventory/{souvenir}/deduct', [InventoryController::class, 'deduct'])->name('inventory.deduct');
     Route::post('inventory/{souvenir}/restock', [InventoryController::class, 'restock'])->name('inventory.restock');

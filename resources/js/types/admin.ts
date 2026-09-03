@@ -12,6 +12,7 @@ export interface AdminShellCopy {
     themeDark: string;
     themeLight: string;
     themeToggle: string;
+    users: string;
     useDarkTheme: string;
     useLightTheme: string;
     viewSite: string;
@@ -67,6 +68,7 @@ export interface AdminShellRoutes {
     orders: string;
     places: string;
     souvenirs: string;
+    users: string;
 }
 
 export interface AdminRoutes extends AdminShellRoutes {
@@ -107,7 +109,7 @@ export interface DashboardCharts {
     topSouvenirs: Array<{ name: string; total: number }>;
 }
 
-export type NavigationKey = 'dashboard' | 'low-stock' | 'orders' | 'places' | 'souvenirs';
+export type NavigationKey = 'dashboard' | 'low-stock' | 'orders' | 'places' | 'souvenirs' | 'users';
 
 export interface NavigationItem {
     href: string;
