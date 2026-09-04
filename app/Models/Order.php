@@ -24,6 +24,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'checkout_idempotency_key',
         'shipping_address_id',
         'shipping_address_snapshot',
         'stock_restored_at',

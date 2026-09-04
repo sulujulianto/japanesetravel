@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Support\CheckoutIdempotency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
 {
+    public function __construct(private readonly CheckoutIdempotency $checkoutIdempotency) {}
+
     // 1. LIHAT KERANJANG
     public function index()
     {
@@ -19,6 +22,7 @@ class CartController extends Controller
         [$cart, $changed] = $this->sanitizeCart($cart);
         if ($changed) {
             Session::put('cart', $cart);
+            $this->checkoutIdempotency->forget();
         }
 
         // Ambil detail barang dari database berdasarkan ID yang ada di session
@@ -55,7 +59,15 @@ class CartController extends Controller
                 ->get();
         }
 
-        return view('cart.index', compact('addresses', 'cartItems', 'total'));
+        $checkoutToken = $user instanceof User && ! empty($cartItems)
+            ? $this->checkoutIdempotency->issue()
+            : null;
+
+        if ($checkoutToken === null) {
+            $this->checkoutIdempotency->forget();
+        }
+
+        return view('cart.index', compact('addresses', 'cartItems', 'checkoutToken', 'total'));
     }
 
     // 2. TAMBAH KE KERANJANG
@@ -87,6 +99,7 @@ class CartController extends Controller
         $cart[$souvenir->id] = $finalQty;
 
         Session::put('cart', $cart);
+        $this->checkoutIdempotency->forget();
 
         if ($finalQty < $targetQty) {
             return redirect()->back()->with('error', __('Jumlah di keranjang disesuaikan dengan stok tersedia.'));
@@ -131,6 +144,7 @@ class CartController extends Controller
         }
 
         Session::put('cart', $cart);
+        $this->checkoutIdempotency->forget();
 
         if ($changedBySanitizer || ! empty($warnings)) {
             return redirect()->route('cart.index')->with('error', __('Keranjang diperbarui dengan penyesuaian stok.'));
@@ -147,6 +161,7 @@ class CartController extends Controller
         if (isset($cart[$id])) {
             unset($cart[$id]);
             Session::put('cart', $cart);
+            $this->checkoutIdempotency->forget();
         }
 
         return redirect()->route('cart.index')->with('success', __('Produk dihapus dari keranjang.'));

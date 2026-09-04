@@ -832,5 +832,8 @@
     "Alamat ini merupakan snapshot yang tercatat ketika checkout.": "This address is the snapshot recorded at checkout.",
     "Pesanan lama ini belum memiliki snapshot alamat pengiriman.": "This legacy order does not have a shipping address snapshot.",
     "Snapshot alamat yang tercatat ketika pengguna melakukan checkout.": "The address snapshot recorded when the user checked out.",
-    "Alamat Pengiriman": "Shipping Address"
+    "Alamat Pengiriman": "Shipping Address",
+    "Sesi checkout sudah tidak berlaku. Muat ulang keranjang dan coba lagi.": "The checkout session has expired. Reload your cart and try again.",
+    "Token checkout tidak valid.": "The checkout token is invalid.",
+    "Permintaan checkout ini sudah diproses dan tidak akan dibuat ulang.": "This checkout request has already been processed and will not be created again."
 }
