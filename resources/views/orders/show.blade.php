@@ -24,6 +24,7 @@
             'refunded' => 'info',
         ];
         $canRetryPayment = $order->payment && in_array($order->payment->status, ['pending', 'expired', 'failed'], true) && $order->status === 'pending';
+        $shippingAddress = is_array($order->shipping_address_snapshot) ? $order->shipping_address_snapshot : null;
     @endphp
 
     <div class="py-10">
@@ -83,6 +84,34 @@
                                 <div class="mt-2 text-lg font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ \App\Support\Format::idr($order->total_price) }}</div>
                             </div>
                         </div>
+                    </x-ui.card>
+
+                    <x-ui.card>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#B33A3A] dark:text-[#D96B6B]">{{ __('Pengiriman') }}</p>
+                        <h3 class="mt-2 text-xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Alamat pengiriman pesanan') }}</h3>
+                        <p class="mt-2 text-sm leading-6 text-[#526071] dark:text-[#AEB8C7]">{{ __('Alamat ini merupakan snapshot yang tercatat ketika checkout.') }}</p>
+
+                        @if($shippingAddress)
+                            <div class="mt-5 rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
+                                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                                    <div>
+                                        <p class="font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $shippingAddress['recipient_name'] ?? '—' }}</p>
+                                        <p class="mt-1 text-sm text-[#526071] dark:text-[#AEB8C7]">{{ $shippingAddress['recipient_phone'] ?? '—' }}</p>
+                                    </div>
+                                    <span class="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[#526071] dark:bg-slate-800 dark:text-[#AEB8C7]">{{ $shippingAddress['label'] ?? __('Alamat') }}</span>
+                                </div>
+                                <address class="mt-4 text-sm not-italic leading-6 text-[#374151] dark:text-[#D8DEE8]">
+                                    {{ $shippingAddress['address_line_1'] ?? '—' }}
+                                    @if(!empty($shippingAddress['address_line_2']))
+                                        <br>{{ $shippingAddress['address_line_2'] }}
+                                    @endif
+                                    <br>{{ $shippingAddress['city'] ?? '—' }}, {{ $shippingAddress['province'] ?? '—' }} {{ $shippingAddress['postal_code'] ?? '' }}
+                                    <br>{{ ($shippingAddress['country_code'] ?? 'ID') === 'ID' ? __('Indonesia') : $shippingAddress['country_code'] }}
+                                </address>
+                            </div>
+                        @else
+                            <p class="mt-5 rounded-2xl border border-dashed border-slate-300 p-5 text-sm text-[#526071] dark:border-slate-700 dark:text-[#AEB8C7]">{{ __('Pesanan lama ini belum memiliki snapshot alamat pengiriman.') }}</p>
+                        @endif
                     </x-ui.card>
 
                     <x-ui.card>

@@ -818,5 +818,19 @@
     "Penerima": "Recipient",
     "Total belanja": "Total spent",
     "Diverifikasi pada": "Verified at",
-    "Lihat pesanan pengguna": "View user's orders"
+    "Lihat pesanan pengguna": "View user's orders",
+    "Alamat ini disalin ke pesanan agar riwayat pengiriman tetap akurat.": "This address is copied to the order so the delivery history remains accurate.",
+    "Utama": "Default",
+    "Kelola alamat pengiriman": "Manage shipping addresses",
+    "Alamat pengiriman diperlukan sebelum checkout.": "A shipping address is required before checkout.",
+    "Tambahkan alamat pengiriman": "Add a shipping address",
+    "Masuk untuk memilih alamat dan melanjutkan checkout.": "Sign in to select an address and continue to checkout.",
+    "Masuk untuk checkout": "Sign in to checkout",
+    "Alamat pengiriman tidak valid. Pilih kembali alamat Anda.": "The shipping address is invalid. Select your address again.",
+    "Pengiriman": "Shipping",
+    "Alamat pengiriman pesanan": "Order shipping address",
+    "Alamat ini merupakan snapshot yang tercatat ketika checkout.": "This address is the snapshot recorded at checkout.",
+    "Pesanan lama ini belum memiliki snapshot alamat pengiriman.": "This legacy order does not have a shipping address snapshot.",
+    "Snapshot alamat yang tercatat ketika pengguna melakukan checkout.": "The address snapshot recorded when the user checked out.",
+    "Alamat Pengiriman": "Shipping Address"
 }

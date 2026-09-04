@@ -5,6 +5,8 @@
 @section('content')
     @php
         $itemCount = collect($cartItems)->sum('qty');
+        $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
+        $selectedAddressId = (string) old('shipping_address_id', $defaultAddress?->getKey());
     @endphp
 
     <section class="ui-reveal mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -62,8 +64,8 @@
 
                                 <div class="flex flex-col gap-3 sm:col-span-2 lg:col-span-1">
                                     <div>
-                                        <x-ui.label value="{{ __('Jumlah') }}" />
-                                        <x-ui.input type="number" name="qty[{{ $item['product']->id }}]" value="{{ $item['qty'] }}" min="1" class="w-full" />
+                                        <x-ui.label for="cart-qty-{{ $item['product']->id }}" value="{{ __('Jumlah') }}" />
+                                        <x-ui.input id="cart-qty-{{ $item['product']->id }}" type="number" name="qty[{{ $item['product']->id }}]" value="{{ $item['qty'] }}" min="1" class="w-full" />
                                     </div>
                                     <button type="submit" form="remove-item-{{ $item['product']->id }}" class="inline-flex w-fit items-center justify-center rounded-full border border-[#E7E3DC] bg-white px-4 py-2 text-xs font-semibold text-[#9F2A2A] transition hover:border-[#9F2A2A] hover:text-[#7A1F1F] dark:border-[#2A333D] dark:bg-[#161B22] dark:text-[#F0A0A0] dark:hover:border-[#F0A0A0]" onclick="return confirm({{ Illuminate\Support\Js::from(__('Hapus barang ini?')) }});">
                                         {{ __('Hapus item') }}
@@ -104,8 +106,47 @@
 
                     <form action="{{ route('checkout.process') }}" method="POST" class="mt-6 space-y-5">
                         @csrf
-                        <div>
-                            <x-ui.label value="{{ __('Metode Pembayaran') }}" />
+                        @auth('web')
+                            @if($addresses->isNotEmpty())
+                                <fieldset>
+                                    <legend class="text-xs font-semibold uppercase tracking-[0.14em] text-[#374151] dark:text-[#D8DEE8]">{{ __('Alamat pengiriman') }}</legend>
+                                    <p class="mt-2 text-xs leading-5 text-[#526071] dark:text-[#AEB8C7]">{{ __('Alamat ini disalin ke pesanan agar riwayat pengiriman tetap akurat.') }}</p>
+                                    <div class="mt-3 space-y-3">
+                                        @foreach($addresses as $address)
+                                            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] px-4 py-3 text-sm text-[#374151] transition hover:border-[#B33A3A]/50 dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8] dark:hover:border-[#D96B6B]/50">
+                                                <input type="radio" name="shipping_address_id" value="{{ $address->getKey() }}" class="mt-1 text-[#B33A3A] focus:ring-[#B33A3A] dark:text-[#D96B6B] dark:focus:ring-[#D96B6B]" @checked($selectedAddressId === (string) $address->getKey()) required>
+                                                <span class="min-w-0">
+                                                    <span class="flex flex-wrap items-center gap-2 font-semibold text-[#1F2937] dark:text-[#F4F1ED]">
+                                                        {{ $address->label }}
+                                                        @if($address->is_default)
+                                                            <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">{{ __('Utama') }}</span>
+                                                        @endif
+                                                    </span>
+                                                    <span class="mt-1 block">{{ $address->recipient_name }} · {{ $address->recipient_phone }}</span>
+                                                    <span class="mt-1 block text-xs leading-5 text-[#526071] dark:text-[#AEB8C7]">
+                                                        {{ $address->address_line_1 }}@if($address->address_line_2), {{ $address->address_line_2 }}@endif,
+                                                        {{ $address->city }}, {{ $address->province }} {{ $address->postal_code }}
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <x-input-error class="mt-2" :messages="$errors->get('shipping_address_id')" />
+                                    <a href="{{ route('profile.edit') }}#addresses" class="mt-3 inline-flex text-xs font-semibold text-[#B33A3A] hover:text-[#8F2E2E] dark:text-[#D96B6B] dark:hover:text-[#E18484]">{{ __('Kelola alamat pengiriman') }}</a>
+                                </fieldset>
+                            @else
+                                <div class="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200" role="alert">
+                                    <p class="font-semibold">{{ __('Alamat pengiriman diperlukan sebelum checkout.') }}</p>
+                                    <a href="{{ route('profile.edit') }}#addresses" class="mt-2 inline-flex font-semibold underline underline-offset-4">{{ __('Tambahkan alamat pengiriman') }}</a>
+                                </div>
+                            @endif
+                        @else
+                            <div class="rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] px-4 py-4 text-sm text-[#374151] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
+                                <p class="font-semibold">{{ __('Masuk untuk memilih alamat dan melanjutkan checkout.') }}</p>
+                            </div>
+                        @endauth
+                        <fieldset>
+                            <legend class="text-xs font-semibold uppercase tracking-[0.14em] text-[#374151] dark:text-[#D8DEE8]">{{ __('Metode Pembayaran') }}</legend>
                             <div class="mt-3 space-y-3">
                                 <label class="flex items-center gap-3 rounded-2xl border border-[#E7E3DC] bg-[#FAF9F6] px-4 py-3 text-sm font-medium text-[#374151] dark:border-[#2A333D] dark:bg-[#1F2630] dark:text-[#D8DEE8]">
                                     <input type="radio" name="payment_provider" value="midtrans" class="text-[#B33A3A] focus:ring-[#B33A3A]" checked>
@@ -116,8 +157,12 @@
                                     <span>{{ __('PayPal (International)') }}</span>
                                 </label>
                             </div>
-                        </div>
-                        <x-ui.button type="submit" class="w-full">{{ __('Checkout sekarang') }}</x-ui.button>
+                        </fieldset>
+                        @auth('web')
+                            <x-ui.button type="submit" class="w-full" :disabled="$addresses->isEmpty()">{{ __('Checkout sekarang') }}</x-ui.button>
+                        @else
+                            <a href="{{ route('login') }}" class="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#B33A3A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8F2E2E] dark:bg-[#D96B6B] dark:text-[#0E1116] dark:hover:bg-[#E18484]">{{ __('Masuk untuk checkout') }}</a>
+                        @endauth
                     </form>
                 </aside>
             </div>

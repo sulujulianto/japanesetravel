@@ -68,6 +68,16 @@ class AdminInertiaOrderDetailTest extends TestCase
             ->where('order.customer.email', 'detail-customer@example.test')
             ->where('order.note', 'Customer delivery note')
             ->where('order.adminNote', 'Initial admin note')
+            ->where('order.shippingAddress.label', 'Home')
+            ->where('order.shippingAddress.recipientName', 'Edo Wardana')
+            ->where('order.shippingAddress.recipientPhone', '+6281234567890')
+            ->where('order.shippingAddress.addressLine1', 'Jalan Sakura Nomor 10')
+            ->where('order.shippingAddress.addressLine2', 'Lantai 2')
+            ->where('order.shippingAddress.city', 'Jakarta Timur')
+            ->where('order.shippingAddress.province', 'DKI Jakarta')
+            ->where('order.shippingAddress.postalCode', '13450')
+            ->where('order.shippingAddress.countryCode', 'ID')
+            ->where('order.shippingAddress.country', 'Indonesia')
             ->where('order.status.value', 'processing')
             ->where('order.latestPayment.status', 'paid')
             ->has('order.items', 1)
@@ -91,6 +101,8 @@ class AdminInertiaOrderDetailTest extends TestCase
             ->where('flash.success', null)
             ->where('flash.error', null)
             ->missing('order.user_id')
+            ->missing('order.shipping_address_id')
+            ->missing('order.shipping_address_snapshot')
             ->missing('order.created_at')
             ->missing('order.items.0.souvenir_id')
             ->missing('order.payments.0.payload_json')
@@ -136,6 +148,17 @@ class AdminInertiaOrderDetailTest extends TestCase
     {
         $order = Order::create([
             'user_id' => $customer->id,
+            'shipping_address_snapshot' => [
+                'label' => 'Home',
+                'recipient_name' => 'Edo Wardana',
+                'recipient_phone' => '+6281234567890',
+                'address_line_1' => 'Jalan Sakura Nomor 10',
+                'address_line_2' => 'Lantai 2',
+                'city' => 'Jakarta Timur',
+                'province' => 'DKI Jakarta',
+                'postal_code' => '13450',
+                'country_code' => 'ID',
+            ],
             'total_price' => 250000,
             'status' => $status,
             'note' => 'Customer delivery note',

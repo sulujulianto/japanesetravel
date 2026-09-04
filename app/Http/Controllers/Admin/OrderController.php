@@ -258,11 +258,36 @@ class OrderController extends Controller
             'note' => $this->nullableString($order->getAttribute('note')),
             'payments' => $payments->map(fn (Payment $item): array => $this->serializePayment($item))->values()->all(),
             'reference' => '#ORDER-'.$order->getKey(),
+            'shippingAddress' => $this->serializeShippingAddress($order),
             'status' => [
                 'label' => __(strtoupper($status)),
                 'value' => $status,
             ],
             'total' => Format::idr(is_numeric($totalPrice) ? $totalPrice : 0),
+        ];
+    }
+
+    /** @return array<string, string|null>|null */
+    private function serializeShippingAddress(Order $order): ?array
+    {
+        $snapshot = $order->getAttribute('shipping_address_snapshot');
+        if (! is_array($snapshot)) {
+            return null;
+        }
+
+        $countryCode = strtoupper((string) ($snapshot['country_code'] ?? ''));
+
+        return [
+            'addressLine1' => (string) ($snapshot['address_line_1'] ?? ''),
+            'addressLine2' => $this->nullableString($snapshot['address_line_2'] ?? null),
+            'city' => (string) ($snapshot['city'] ?? ''),
+            'country' => $countryCode === 'ID' ? __('Indonesia') : $countryCode,
+            'countryCode' => $countryCode,
+            'label' => (string) ($snapshot['label'] ?? ''),
+            'postalCode' => (string) ($snapshot['postal_code'] ?? ''),
+            'province' => (string) ($snapshot['province'] ?? ''),
+            'recipientName' => (string) ($snapshot['recipient_name'] ?? ''),
+            'recipientPhone' => (string) ($snapshot['recipient_phone'] ?? ''),
         ];
     }
 
@@ -392,6 +417,9 @@ class OrderController extends Controller
             'referenceUnavailable' => __('Referensi belum tersedia'),
             'save' => __('Simpan Perubahan'),
             'saving' => __('Menyimpan'),
+            'shippingDescription' => __('Snapshot alamat yang tercatat ketika pengguna melakukan checkout.'),
+            'shippingMissing' => __('Pesanan lama ini belum memiliki snapshot alamat pengiriman.'),
+            'shippingTitle' => __('Alamat Pengiriman'),
             'status' => __('Status Pesanan'),
             'subtotal' => __('Subtotal'),
             'summaryDescription' => __('Status operasional dan pembayaran terkini untuk pesanan ini.'),

@@ -22,7 +22,25 @@ class Order extends Model
         'cancelled' => [],
     ];
 
-    protected $fillable = ['user_id', 'total_price', 'status', 'note', 'admin_note'];
+    protected $fillable = [
+        'user_id',
+        'shipping_address_id',
+        'shipping_address_snapshot',
+        'total_price',
+        'status',
+        'note',
+        'admin_note',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'shipping_address_snapshot' => 'encrypted:array',
+        ];
+    }
 
     /** @return HasMany<OrderItem, $this> */
     public function items(): HasMany
@@ -34,6 +52,12 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return BelongsTo<UserAddress, $this> */
+    public function shippingAddress(): BelongsTo
+    {
+        return $this->belongsTo(UserAddress::class, 'shipping_address_id');
     }
 
     /** @return HasOne<Payment, $this> */

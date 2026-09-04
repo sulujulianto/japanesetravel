@@ -69,6 +69,7 @@ return [
         'amount' => 'amount',
         'threshold' => 'stock threshold',
         'payment_provider' => 'payment provider',
+        'shipping_address_id' => 'shipping address',
         'full_name' => 'full name',
         'phone' => 'phone number',
         'preferred_locale' => 'preferred language',
