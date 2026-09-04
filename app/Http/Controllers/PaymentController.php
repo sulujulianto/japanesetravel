@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
+use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\Drivers\PayPalCheckoutDriver;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
+use App\Support\CacheKeys;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PaymentController extends Controller
 {
+    public function __construct(private readonly OrderInventoryService $orderInventory) {}
+
     public function midtransWebhook(Request $request, PaymentService $paymentService): Response
     {
         return $this->handleWebhook($request, $paymentService, 'midtrans');
@@ -53,15 +58,24 @@ class PaymentController extends Controller
                 'exception' => $exception->getMessage(),
             ]);
 
-            if ($payment->status === 'pending') {
-                $payload = $payment->payload_json ?? [];
+            DB::transaction(function () use ($payment, $exception): void {
+                $lockedPayment = Payment::query()
+                    ->whereKey($payment->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $lockedPayment || ! $lockedPayment->canTransitionTo('failed')) {
+                    return;
+                }
+
+                $payload = $lockedPayment->payload_json ?? [];
                 $payload['capture_error'] = $exception->getMessage();
 
-                $payment->update([
+                $lockedPayment->update([
                     'status' => 'failed',
                     'payload_json' => $payload,
                 ]);
-            }
+            });
 
             return $this->redirectToOrderError(
                 $payment,
@@ -73,18 +87,33 @@ class PaymentController extends Controller
 
         $message = __('Pembayaran berhasil diproses.');
 
-        if ($status === 'COMPLETED' && $payment->status !== 'paid') {
-            DB::transaction(function () use ($payment, $response) {
-                $payload = $payment->payload_json ?? [];
+        if ($status === 'COMPLETED') {
+            DB::transaction(function () use ($payment, $response): void {
+                $order = Order::query()
+                    ->whereKey($payment->order_id)
+                    ->lockForUpdate()
+                    ->first();
+                $lockedPayment = Payment::query()
+                    ->whereKey($payment->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $lockedPayment || ! $lockedPayment->canTransitionTo('paid')) {
+                    return;
+                }
+
+                $payload = $lockedPayment->payload_json ?? [];
                 $payload['capture'] = $response;
 
-                $payment->update([
+                $lockedPayment->update([
                     'status' => 'paid',
                     'paid_at' => now(),
                     'payload_json' => $payload,
                 ]);
 
-                $this->applyOrderStatusGuardFromWebhook($payment, 'paid');
+                if ($order?->status === 'pending') {
+                    $order->update(['status' => 'processing']);
+                }
             });
         } elseif ($status !== 'COMPLETED') {
             $message = __('Pembayaran sedang diproses.');
@@ -95,17 +124,6 @@ class PaymentController extends Controller
 
     public function paypalCancel(Request $request): RedirectResponse
     {
-        $providerRef = (string) $request->query('token', '');
-
-        if ($providerRef !== '') {
-            $payment = Payment::where('provider', 'paypal')->where('provider_ref', $providerRef)->first();
-            if ($payment && $payment->status === 'pending') {
-                $payment->update([
-                    'status' => 'failed',
-                ]);
-            }
-        }
-
         return redirect()->route('orders.index')->with('error', __('Pembayaran dibatalkan.'));
     }
 
@@ -138,66 +156,75 @@ class PaymentController extends Controller
 
     protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, string $provider): void
     {
-        DB::transaction(function () use ($payment, $data, $provider) {
-            $payment->refresh()->loadMissing('order');
+        $stockRestored = DB::transaction(function () use ($payment, $data, $provider): bool {
+            $order = Order::query()
+                ->whereKey($payment->order_id)
+                ->lockForUpdate()
+                ->first();
+            $lockedPayment = Payment::query()
+                ->whereKey($payment->id)
+                ->lockForUpdate()
+                ->first();
 
             if ($data->eventId !== '') {
-                $event = PaymentWebhookEvent::firstOrCreate(
-                    [
-                        'provider' => $provider,
-                        'event_id' => $data->eventId,
-                    ],
+                $inserted = PaymentWebhookEvent::query()->insertOrIgnore([
                     [
                         'payment_id' => $payment->id,
+                        'provider' => $provider,
+                        'event_id' => $data->eventId,
                         'status' => $data->status,
-                        'payload_json' => $data->payload,
-                    ]
-                );
+                        'payload_json' => json_encode($data->payload, JSON_THROW_ON_ERROR),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ],
+                ]);
 
-                if (! $event->wasRecentlyCreated) {
-                    return;
+                if ($inserted === 0) {
+                    return false;
                 }
             }
 
-            if ($payment->status === $data->status) {
-                return;
+            if (! $lockedPayment || $data->status === 'ignored' || ! $lockedPayment->canTransitionTo($data->status)) {
+                return false;
             }
 
-            $payload = $payment->payload_json ?? [];
+            $payload = $lockedPayment->payload_json ?? [];
             $payload['webhook'] = $data->payload;
 
-            $payment->status = $data->status;
-            $payment->amount = $data->amount ?: $payment->amount;
-            $payment->currency = $data->currency ?: $payment->currency;
-            $payment->payload_json = $payload;
+            $lockedPayment->status = $data->status;
+            $lockedPayment->amount = $data->amount ?: $lockedPayment->amount;
+            $lockedPayment->currency = $data->currency ?: $lockedPayment->currency;
+            $lockedPayment->payload_json = $payload;
 
             if ($data->status === 'paid') {
-                $payment->paid_at = now();
+                $lockedPayment->paid_at = now();
             }
 
-            $this->applyOrderStatusGuardFromWebhook($payment, $data->status);
+            $lockedPayment->save();
 
-            $payment->save();
+            if ($data->status === 'paid') {
+                if ($order?->status === 'pending') {
+                    $order->update(['status' => 'processing']);
+                }
+
+                return false;
+            }
+
+            if (
+                $order?->status === 'pending'
+                && in_array($data->status, ['failed', 'expired', 'refunded'], true)
+            ) {
+                $restored = $this->orderInventory->restore($order->id);
+                $order->update(['status' => 'cancelled']);
+
+                return $restored;
+            }
+
+            return false;
         });
-    }
 
-    protected function applyOrderStatusGuardFromWebhook(Payment $payment, string $paymentStatus): void
-    {
-        $order = $payment->order()->first();
-        if (! $order) {
-            return;
-        }
-
-        if ($paymentStatus === 'paid') {
-            if ($order->status === 'pending') {
-                $order->update(['status' => 'processing']);
-            }
-
-            return;
-        }
-
-        if (in_array($paymentStatus, ['failed', 'expired', 'cancelled', 'refunded'], true) && $order->status === 'pending') {
-            $order->update(['status' => 'cancelled']);
+        if ($stockRestored) {
+            CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
         }
     }
 

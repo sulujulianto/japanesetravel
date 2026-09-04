@@ -26,6 +26,7 @@ class Order extends Model
         'user_id',
         'shipping_address_id',
         'shipping_address_snapshot',
+        'stock_restored_at',
         'total_price',
         'status',
         'note',
@@ -39,6 +40,7 @@ class Order extends Model
     {
         return [
             'shipping_address_snapshot' => 'encrypted:array',
+            'stock_restored_at' => 'datetime',
         ];
     }
 

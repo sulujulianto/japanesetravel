@@ -177,6 +177,7 @@ class CheckoutTest extends TestCase
         $this->assertNotNull($payment);
 
         $this->assertSame('cancelled', $order->status);
+        $this->assertNotNull($order->stock_restored_at);
         $this->assertSame('failed', $payment->status);
         $this->assertStringContainsString('Gateway timeout', (string) ($payment->payload_json['error'] ?? ''));
         $this->assertSame(5, $souvenir->fresh()->stock);

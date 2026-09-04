@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Souvenir;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -666,5 +668,195 @@ class PaymentWebhookTest extends TestCase
             'id' => $order->id,
             'status' => 'cancelled',
         ]);
+    }
+
+    public function test_expired_webhook_cancels_order_and_restores_stock_exactly_once(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create(['stock' => 3]);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 200000,
+            'status' => 'pending',
+            'note' => 'Expired payment inventory test',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'souvenir_id' => $souvenir->id,
+            'quantity' => 2,
+            'price' => 100000,
+            'product_name' => 'Test souvenir',
+            'product_price' => 100000,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-EXPIRED-STOCK',
+            'status' => 'pending',
+            'amount' => 200000,
+            'currency' => 'IDR',
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'expire',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-EXPIRED-STOCK-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $this->assertSame('expired', $payment->fresh()->status);
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertNotNull($order->fresh()->stock_restored_at);
+        $this->assertSame(5, $souvenir->fresh()->stock);
+        $this->assertDatabaseCount('payment_webhook_events', 1);
+    }
+
+    public function test_late_pending_webhook_does_not_downgrade_paid_payment(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 150000,
+            'status' => 'processing',
+            'note' => 'Late pending test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-LATE-PENDING',
+            'status' => 'paid',
+            'amount' => 150000,
+            'currency' => 'IDR',
+            'paid_at' => now(),
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'pending',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-LATE-PENDING-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertSame('processing', $order->fresh()->status);
+    }
+
+    public function test_unknown_webhook_event_is_recorded_without_mutating_payment(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 125000,
+            'status' => 'pending',
+            'note' => 'Unknown event test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-UNKNOWN-EVENT',
+            'status' => 'pending',
+            'amount' => 125000,
+            'currency' => 'IDR',
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'future-provider-status',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-UNKNOWN-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'provider' => 'midtrans',
+            'event_id' => 'TRX-UNKNOWN-001:ignored',
+            'status' => 'ignored',
+        ]);
+    }
+
+    public function test_refunded_payment_cannot_be_downgraded_by_late_paid_webhook(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 175000,
+            'status' => 'completed',
+            'note' => 'Late paid after refund test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-REFUNDED-LATE-PAID',
+            'status' => 'refunded',
+            'amount' => 175000,
+            'currency' => 'IDR',
+            'paid_at' => now(),
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = number_format($payment->amount, 2, '.', '');
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'settlement',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-REFUNDED-LATE-PAID-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $this->assertSame('refunded', $payment->fresh()->status);
+        $this->assertSame('completed', $order->fresh()->status);
+    }
+
+    public function test_paypal_cancel_callback_does_not_mutate_financial_state(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 100000,
+            'status' => 'pending',
+            'note' => 'PayPal cancel callback test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-CANCEL-001',
+            'status' => 'pending',
+            'amount' => 10,
+            'currency' => 'USD',
+        ]);
+
+        $this->get(route('payments.paypal.cancel', ['token' => $payment->provider_ref]))
+            ->assertRedirect(route('orders.index'))
+            ->assertSessionHas('error');
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
     }
 }

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Souvenir;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -172,6 +174,40 @@ class AdminOrderStatusTransitionTest extends TestCase
 
         $order->refresh();
         $this->assertSame('pending', $order->status);
+    }
+
+    public function test_admin_cancellation_restores_reserved_stock_exactly_once(): void
+    {
+        $admin = $this->createAdmin();
+        $order = $this->createOrderWithStatus('processing');
+        $souvenir = Souvenir::factory()->create(['stock' => 3]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'souvenir_id' => $souvenir->id,
+            'quantity' => 2,
+            'price' => 100000,
+            'product_name' => 'Test souvenir',
+            'product_price' => 100000,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.orders.update', $order), [
+                'status' => 'cancelled',
+                'admin_note' => 'Cancellation with inventory restoration.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame(5, $souvenir->fresh()->stock);
+        $this->assertNotNull($order->fresh()->stock_restored_at);
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.orders.update', $order), [
+                'status' => 'cancelled',
+                'admin_note' => 'Repeated cancellation.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame(5, $souvenir->fresh()->stock);
     }
 
     private function createAdmin(): User
