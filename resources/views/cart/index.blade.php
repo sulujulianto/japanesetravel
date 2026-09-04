@@ -106,6 +106,7 @@
 
                     <form action="{{ route('checkout.process') }}" method="POST" class="mt-6 space-y-5">
                         @csrf
+                        <input type="hidden" name="checkout_token" value="{{ $checkoutToken }}">
                         @auth('web')
                             @if($addresses->isNotEmpty())
                                 <fieldset>

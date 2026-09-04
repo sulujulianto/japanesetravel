@@ -10,12 +10,16 @@ use App\Models\UserAddress;
 use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\PaymentService;
 use App\Support\CacheKeys;
+use App\Support\CheckoutIdempotency;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
@@ -23,24 +27,48 @@ class CheckoutController extends Controller
     public function process(
         Request $request,
         PaymentService $paymentService,
-        OrderInventoryService $orderInventory
+        OrderInventoryService $orderInventory,
+        CheckoutIdempotency $checkoutIdempotency
     ) {
+        $userId = (int) Auth::id();
+        $intent = $request->validate([
+            'checkout_token' => ['required', 'uuid'],
+            'payment_provider' => ['required', Rule::in(['midtrans', 'paypal'])],
+        ]);
+        $checkoutToken = (string) $intent['checkout_token'];
+        $idempotencyKey = $checkoutIdempotency->hash($checkoutToken);
+        $provider = (string) $intent['payment_provider'];
+
+        $existingOrder = $this->findIdempotentOrder($idempotencyKey);
+        if ($existingOrder) {
+            $this->assertIdempotentOrderOwner($existingOrder, $userId);
+
+            return $this->redirectForExistingCheckout($existingOrder);
+        }
+
+        if (! $checkoutIdempotency->matches($checkoutToken)) {
+            throw ValidationException::withMessages([
+                'checkout_token' => __('Sesi checkout sudah tidak berlaku. Muat ulang keranjang dan coba lagi.'),
+            ]);
+        }
+
         $cart = Session::get('cart', []);
         [$cart, $sanitized] = $this->sanitizeCheckoutCart($cart);
         if ($sanitized) {
             Session::put('cart', $cart);
+            $checkoutIdempotency->forget();
 
             return redirect()->route('cart.index')
                 ->with('error', __('Keranjang diperbarui karena ada perubahan ketersediaan stok. Periksa kembali sebelum checkout.'));
         }
 
         if (empty($cart)) {
+            $checkoutIdempotency->forget();
+
             return redirect()->route('shop.index')->with('error', __('Keranjang belanja kosong.'));
         }
 
-        $userId = (int) Auth::id();
         $validated = $request->validate([
-            'payment_provider' => 'required|in:midtrans,paypal',
             'shipping_address_id' => [
                 'required',
                 'integer',
@@ -49,12 +77,11 @@ class CheckoutController extends Controller
             ],
         ]);
 
-        $provider = $validated['payment_provider'];
         $shippingAddressId = (int) $validated['shipping_address_id'];
 
         try {
             // Mulai Simpan ke Database (Pakai Transaction Biar Aman)
-            [$order, $payment] = DB::transaction(function () use ($cart, $provider, $shippingAddressId, $userId) {
+            [$order, $payment, $created] = DB::transaction(function () use ($cart, $idempotencyKey, $provider, $shippingAddressId, $userId) {
                 $shippingAddress = UserAddress::query()
                     ->where('user_id', $userId)
                     ->whereKey($shippingAddressId)
@@ -67,8 +94,20 @@ class CheckoutController extends Controller
 
                 // Ambil detail barang dari database dengan lock untuk mencegah oversell
                 $souvenirs = Souvenir::whereIn('id', array_keys($cart))
+                    ->orderBy('id')
                     ->lockForUpdate()
                     ->get();
+
+                $existingOrder = $this->findIdempotentOrder($idempotencyKey);
+                if ($existingOrder) {
+                    $this->assertIdempotentOrderOwner($existingOrder, $userId);
+                    $existingPayment = $existingOrder->payment;
+                    if (! $existingPayment) {
+                        throw new \RuntimeException(__('Pembayaran tidak ditemukan.'));
+                    }
+
+                    return [$existingOrder, $existingPayment, false];
+                }
 
                 if ($souvenirs->count() !== count($cart)) {
                     throw new \RuntimeException(__('Sebagian barang sudah tidak tersedia.'));
@@ -105,6 +144,7 @@ class CheckoutController extends Controller
                 // 1. Buat Nota Utama
                 $order = Order::create([
                     'user_id' => $userId,
+                    'checkout_idempotency_key' => $idempotencyKey,
                     'shipping_address_id' => $shippingAddress->id,
                     'shipping_address_snapshot' => $this->shippingAddressSnapshot($shippingAddress),
                     'total_price' => $total,
@@ -140,10 +180,23 @@ class CheckoutController extends Controller
                     'currency' => 'IDR',
                 ]);
 
-                return [$order->loadMissing('items', 'user'), $payment];
+                return [$order->loadMissing('items', 'user'), $payment, true];
             });
+        } catch (QueryException $exception) {
+            $existingOrder = $this->findIdempotentOrder($idempotencyKey);
+            if (! $existingOrder) {
+                throw $exception;
+            }
+
+            $this->assertIdempotentOrderOwner($existingOrder, $userId);
+
+            return $this->redirectForExistingCheckout($existingOrder);
         } catch (\RuntimeException $exception) {
             return redirect()->route('cart.index')->with('error', $exception->getMessage());
+        }
+
+        if (! $created) {
+            return $this->redirectForExistingCheckout($order);
         }
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
@@ -176,14 +229,60 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            $checkoutIdempotency->forget();
+
             return redirect()->route('cart.index')
                 ->with('error', __('Gagal membuat pembayaran. Silakan coba lagi.'));
         }
 
         // Kosongkan Keranjang
         Session::forget('cart');
+        $checkoutIdempotency->forget();
 
         return redirect()->away($result->redirectUrl);
+    }
+
+    private function findIdempotentOrder(string $idempotencyKey): ?Order
+    {
+        return Order::query()
+            ->with('payment')
+            ->where('checkout_idempotency_key', $idempotencyKey)
+            ->first();
+    }
+
+    private function assertIdempotentOrderOwner(Order $order, int $userId): void
+    {
+        if ((int) $order->user_id === $userId) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'checkout_token' => __('Token checkout tidak valid.'),
+        ]);
+    }
+
+    private function redirectForExistingCheckout(Order $order): RedirectResponse
+    {
+        $payment = $order->payment;
+        if ($payment) {
+            $redirectUrl = $this->extractRedirectUrlFromPayment($payment);
+            if ($payment->status === 'pending' && $redirectUrl !== null) {
+                return redirect()->away($redirectUrl);
+            }
+
+            if ($payment->status === 'paid') {
+                return redirect()->route('orders.show', $order)
+                    ->with('success', __('Pembayaran pesanan ini sudah diterima.'));
+            }
+
+            if ($payment->status === 'pending') {
+                return redirect()->route('orders.show', $order)
+                    ->with('error', __('Pembayaran sebelumnya sedang diproses. Silakan cek kembali status pesanan.'));
+            }
+        }
+
+        return redirect()->route('orders.show', $order)
+            ->with('error', __('Permintaan checkout ini sudah diproses dan tidak akan dibuat ulang.'));
     }
 
     protected function compensateFailedCheckout(

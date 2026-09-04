@@ -11,9 +11,11 @@ use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\PaymentGatewayResult;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
+use App\Support\CheckoutIdempotency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -30,6 +32,7 @@ class CheckoutTest extends TestCase
             'price' => 100000,
         ]);
         $address = $this->createAddress($user);
+        $checkoutToken = (string) Str::uuid();
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -69,8 +72,9 @@ class CheckoutTest extends TestCase
         });
 
         $response = $this->actingAs($user)
-            ->withSession(['cart' => [$souvenir->id => 2]])
+            ->withSession($this->checkoutSession([$souvenir->id => 2], $checkoutToken))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
                 'shipping_address_id' => $address->id,
             ]);
@@ -127,6 +131,7 @@ class CheckoutTest extends TestCase
             'price' => 100000,
         ]);
         $address = $this->createAddress($user);
+        $checkoutToken = (string) Str::uuid();
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -161,8 +166,9 @@ class CheckoutTest extends TestCase
         $response = $this->actingAs($user)
             ->withHeader('Accept-Language', 'en-US,en;q=0.9')
             ->from(route('cart.index'))
-            ->withSession(['cart' => [$souvenir->id => 2]])
+            ->withSession($this->checkoutSession([$souvenir->id => 2], $checkoutToken))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
                 'shipping_address_id' => $address->id,
             ]);
@@ -197,6 +203,7 @@ class CheckoutTest extends TestCase
             'price' => 70000,
         ]);
         $address = $this->createAddress($user);
+        $checkoutToken = (string) Str::uuid();
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -230,13 +237,15 @@ class CheckoutTest extends TestCase
 
         $response = $this->actingAs($user)
             ->from(route('cart.index'))
-            ->withSession([
-                'cart' => [
+            ->withSession($this->checkoutSession(
+                [
                     $souvenirA->id => 3,
                     $souvenirB->id => 2,
                 ],
-            ])
+                $checkoutToken
+            ))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
                 'shipping_address_id' => $address->id,
             ]);
@@ -262,16 +271,19 @@ class CheckoutTest extends TestCase
         ]);
 
         $staleId = 999999;
+        $checkoutToken = (string) Str::uuid();
 
         $response = $this->actingAs($user)
             ->from(route('cart.index'))
-            ->withSession([
-                'cart' => [
+            ->withSession($this->checkoutSession(
+                [
                     $validSouvenir->id => 2,
                     $staleId => 1,
                 ],
-            ])
+                $checkoutToken
+            ))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
             ]);
 
@@ -315,11 +327,13 @@ class CheckoutTest extends TestCase
             'stock' => 5,
             'price' => 100000,
         ]);
+        $checkoutToken = (string) Str::uuid();
 
         $this->actingAs($user)
             ->from(route('cart.index'))
-            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->withSession($this->checkoutSession([$souvenir->id => 1], $checkoutToken))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
             ])
             ->assertRedirect(route('cart.index'))
@@ -338,11 +352,13 @@ class CheckoutTest extends TestCase
             'price' => 100000,
         ]);
         $otherAddress = $this->createAddress($otherUser);
+        $checkoutToken = (string) Str::uuid();
 
         $this->actingAs($user)
             ->from(route('cart.index'))
-            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->withSession($this->checkoutSession([$souvenir->id => 1], $checkoutToken))
             ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
                 'payment_provider' => 'midtrans',
                 'shipping_address_id' => $otherAddress->id,
             ])
@@ -351,6 +367,164 @@ class CheckoutTest extends TestCase
 
         $this->assertDatabaseCount('orders', 0);
         $this->assertSame(5, $souvenir->fresh()->stock);
+    }
+
+    public function test_repeated_checkout_token_creates_one_order_payment_and_stock_reservation(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create([
+            'stock' => 5,
+            'price' => 100000,
+        ]);
+        $address = $this->createAddress($user);
+        $checkoutToken = (string) Str::uuid();
+
+        $counter = new \ArrayObject(['calls' => 0]);
+        $paymentService = new class($counter) extends PaymentService
+        {
+            public function __construct(private readonly \ArrayObject $counter) {}
+
+            public function driver(string $provider): PaymentGatewayInterface
+            {
+                return new class($this->counter) implements PaymentGatewayInterface
+                {
+                    public function __construct(private readonly \ArrayObject $counter) {}
+
+                    public function createPayment(Order $order, Payment $payment): PaymentGatewayResult
+                    {
+                        $this->counter['calls'] = (int) $this->counter['calls'] + 1;
+
+                        return new PaymentGatewayResult(
+                            providerRef: $payment->provider_ref ?? 'IDEMPOTENT-REF',
+                            redirectUrl: 'https://pay.test/idempotent-checkout',
+                            token: null,
+                            payload: ['redirect_url' => 'https://pay.test/idempotent-checkout'],
+                            currency: 'IDR',
+                            amount: (float) $order->total_price,
+                        );
+                    }
+
+                    public function verifyWebhook(Request $request): bool
+                    {
+                        return true;
+                    }
+
+                    public function parseWebhook(Request $request): PaymentWebhookData
+                    {
+                        return new PaymentWebhookData(
+                            providerRef: 'IDEMPOTENT-REF',
+                            status: 'pending',
+                            amount: 0,
+                            currency: 'IDR',
+                            payload: [],
+                        );
+                    }
+                };
+            }
+        };
+        $this->app->instance(PaymentService::class, $paymentService);
+
+        $payload = [
+            'checkout_token' => $checkoutToken,
+            'payment_provider' => 'midtrans',
+            'shipping_address_id' => $address->id,
+        ];
+
+        $this->actingAs($user)
+            ->withSession($this->checkoutSession([$souvenir->id => 2], $checkoutToken))
+            ->post(route('checkout.process'), $payload)
+            ->assertRedirect('https://pay.test/idempotent-checkout');
+
+        $this->post(route('checkout.process'), $payload)
+            ->assertRedirect('https://pay.test/idempotent-checkout');
+
+        $this->assertSame(1, $counter['calls']);
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('payments', 1);
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $user->id,
+            'checkout_idempotency_key' => hash('sha256', $checkoutToken),
+        ]);
+        $this->assertSame(3, $souvenir->fresh()->stock);
+    }
+
+    public function test_checkout_rejects_a_token_that_does_not_match_the_active_session(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create(['stock' => 5]);
+        $address = $this->createAddress($user);
+        $sessionToken = (string) Str::uuid();
+        $submittedToken = (string) Str::uuid();
+
+        $this->actingAs($user)
+            ->from(route('cart.index'))
+            ->withSession($this->checkoutSession([$souvenir->id => 1], $sessionToken))
+            ->post(route('checkout.process'), [
+                'checkout_token' => $submittedToken,
+                'payment_provider' => 'midtrans',
+                'shipping_address_id' => $address->id,
+            ])
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHasErrors('checkout_token');
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(5, $souvenir->fresh()->stock);
+    }
+
+    public function test_checkout_token_cannot_replay_another_users_order(): void
+    {
+        $owner = User::factory()->create(['role' => 'user']);
+        $attacker = User::factory()->create(['role' => 'user']);
+        $checkoutToken = (string) Str::uuid();
+        $order = Order::create([
+            'user_id' => $owner->id,
+            'checkout_idempotency_key' => hash('sha256', $checkoutToken),
+            'total_price' => 100000,
+            'status' => 'pending',
+            'note' => 'Ownership-bound idempotency test',
+        ]);
+
+        $this->actingAs($attacker)
+            ->from(route('cart.index'))
+            ->withSession([CheckoutIdempotency::SESSION_KEY => $checkoutToken])
+            ->post(route('checkout.process'), [
+                'checkout_token' => $checkoutToken,
+                'payment_provider' => 'midtrans',
+            ])
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHasErrors('checkout_token');
+
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertSame($owner->id, $order->fresh()->user_id);
+    }
+
+    public function test_cart_reuses_checkout_token_until_the_cart_changes(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create(['stock' => 5]);
+
+        $firstResponse = $this->actingAs($user)
+            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->get(route('cart.index'))
+            ->assertOk();
+
+        $firstToken = (string) session(CheckoutIdempotency::SESSION_KEY);
+        $this->assertTrue(Str::isUuid($firstToken));
+        $firstResponse->assertSee('name="checkout_token"', false)
+            ->assertSee('value="'.$firstToken.'"', false);
+
+        $this->get(route('cart.index'))->assertOk();
+        $this->assertSame($firstToken, session(CheckoutIdempotency::SESSION_KEY));
+
+        $this->post(route('cart.update'), [
+            'qty' => [$souvenir->id => 2],
+        ])->assertSessionMissing(CheckoutIdempotency::SESSION_KEY);
+
+        $this->get(route('cart.index'))->assertOk();
+        $secondToken = (string) session(CheckoutIdempotency::SESSION_KEY);
+
+        $this->assertTrue(Str::isUuid($secondToken));
+        $this->assertNotSame($firstToken, $secondToken);
     }
 
     public function test_retry_payment_reuses_existing_pending_payment_redirect_url_without_creating_new_payment(): void
@@ -568,6 +742,18 @@ class CheckoutTest extends TestCase
 
         $response->assertForbidden();
         $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
+
+    /**
+     * @param  array<int, int>  $cart
+     * @return array<string, mixed>
+     */
+    private function checkoutSession(array $cart, string $token): array
+    {
+        return [
+            'cart' => $cart,
+            CheckoutIdempotency::SESSION_KEY => $token,
+        ];
     }
 
     /** @param array<string, mixed> $attributes */
