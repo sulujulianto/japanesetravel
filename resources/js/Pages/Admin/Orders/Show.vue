@@ -115,6 +115,28 @@ const submit = (): void => {
                     </div>
                 </section>
 
+                <section class="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 sm:p-6" aria-labelledby="shipping-address-heading">
+                    <h2 id="shipping-address-heading" class="text-lg font-semibold">{{ copy.shippingTitle }}</h2>
+                    <p class="mt-1 text-sm text-[var(--admin-muted)]">{{ copy.shippingDescription }}</p>
+
+                    <div v-if="order.shippingAddress" class="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] p-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p class="font-semibold">{{ order.shippingAddress.recipientName }}</p>
+                                <p class="mt-1 text-sm text-[var(--admin-muted)]">{{ order.shippingAddress.recipientPhone }}</p>
+                            </div>
+                            <span class="w-fit rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]">{{ order.shippingAddress.label }}</span>
+                        </div>
+                        <address class="mt-4 text-sm not-italic leading-6">
+                            {{ order.shippingAddress.addressLine1 }}<br>
+                            <template v-if="order.shippingAddress.addressLine2">{{ order.shippingAddress.addressLine2 }}<br></template>
+                            {{ order.shippingAddress.city }}, {{ order.shippingAddress.province }} {{ order.shippingAddress.postalCode }}<br>
+                            {{ order.shippingAddress.country }}
+                        </address>
+                    </div>
+                    <p v-else class="mt-5 rounded-xl border border-dashed border-[var(--admin-border)] p-6 text-center text-sm text-[var(--admin-muted)]">{{ copy.shippingMissing }}</p>
+                </section>
+
                 <section class="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 sm:p-6" aria-labelledby="order-items-heading">
                     <h2 id="order-items-heading" class="text-lg font-semibold">{{ copy.itemsTitle }}</h2>
                     <p class="mt-1 text-sm text-[var(--admin-muted)]">{{ copy.itemsDescription }}</p>

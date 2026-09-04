@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Souvenir;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
@@ -41,7 +44,18 @@ class CartController extends Controller
             ];
         }
 
-        return view('cart.index', compact('cartItems', 'total'));
+        /** @var Collection<int, \App\Models\UserAddress> $addresses */
+        $addresses = collect();
+        $user = Auth::guard('web')->user();
+
+        if ($user instanceof User) {
+            $addresses = $user->addresses()
+                ->orderByDesc('is_default')
+                ->orderBy('id')
+                ->get();
+        }
+
+        return view('cart.index', compact('addresses', 'cartItems', 'total'));
     }
 
     // 2. TAMBAH KE KERANJANG

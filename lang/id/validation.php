@@ -69,6 +69,7 @@ return [
         'amount' => 'jumlah penambahan stok',
         'threshold' => 'batas stok',
         'payment_provider' => 'penyedia pembayaran',
+        'shipping_address_id' => 'alamat pengiriman',
         'full_name' => 'nama lengkap',
         'phone' => 'nomor telepon',
         'preferred_locale' => 'bahasa pilihan',

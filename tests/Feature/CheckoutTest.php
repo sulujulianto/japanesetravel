@@ -6,12 +6,14 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\PaymentGatewayResult;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -27,6 +29,7 @@ class CheckoutTest extends TestCase
             'stock' => 5,
             'price' => 100000,
         ]);
+        $address = $this->createAddress($user);
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -69,14 +72,37 @@ class CheckoutTest extends TestCase
             ->withSession(['cart' => [$souvenir->id => 2]])
             ->post(route('checkout.process'), [
                 'payment_provider' => 'midtrans',
+                'shipping_address_id' => $address->id,
             ]);
 
         $response->assertRedirect('https://pay.test/redirect');
 
         $this->assertDatabaseHas('orders', [
             'user_id' => $user->id,
+            'shipping_address_id' => $address->id,
             'status' => 'pending',
         ]);
+
+        $order = Order::firstOrFail();
+        $this->assertSame('Edo Wardana', $order->shipping_address_snapshot['recipient_name']);
+        $this->assertSame('Jalan Sakura Nomor 10', $order->shipping_address_snapshot['address_line_1']);
+
+        $rawSnapshot = (string) DB::table('orders')->where('id', $order->id)->value('shipping_address_snapshot');
+        $this->assertStringNotContainsString('Edo Wardana', $rawSnapshot);
+        $this->assertStringNotContainsString('Jalan Sakura Nomor 10', $rawSnapshot);
+
+        $address->update(['recipient_name' => 'Nama Baru']);
+        $address->delete();
+        $order->refresh();
+
+        $this->assertNull($order->shipping_address_id);
+        $this->assertSame('Edo Wardana', $order->shipping_address_snapshot['recipient_name']);
+
+        $this->actingAs($user)
+            ->get(route('orders.show', $order))
+            ->assertOk()
+            ->assertSee('Edo Wardana')
+            ->assertSee('Jalan Sakura Nomor 10');
 
         $this->assertDatabaseHas('payments', [
             'provider' => 'midtrans',
@@ -100,6 +126,7 @@ class CheckoutTest extends TestCase
             'stock' => 5,
             'price' => 100000,
         ]);
+        $address = $this->createAddress($user);
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -137,6 +164,7 @@ class CheckoutTest extends TestCase
             ->withSession(['cart' => [$souvenir->id => 2]])
             ->post(route('checkout.process'), [
                 'payment_provider' => 'midtrans',
+                'shipping_address_id' => $address->id,
             ]);
 
         $response->assertRedirect(route('cart.index'));
@@ -167,6 +195,7 @@ class CheckoutTest extends TestCase
             'stock' => 8,
             'price' => 70000,
         ]);
+        $address = $this->createAddress($user);
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
@@ -208,6 +237,7 @@ class CheckoutTest extends TestCase
             ])
             ->post(route('checkout.process'), [
                 'payment_provider' => 'midtrans',
+                'shipping_address_id' => $address->id,
             ]);
 
         $response->assertRedirect(route('cart.index'));
@@ -252,6 +282,74 @@ class CheckoutTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('payments', 0);
         $this->assertSame(5, $validSouvenir->fresh()->stock);
+    }
+
+    public function test_cart_displays_the_authenticated_users_saved_shipping_addresses(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $otherUser = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create(['stock' => 5]);
+        $address = $this->createAddress($user);
+        $this->createAddress($otherUser, [
+            'recipient_name' => 'Pengguna Lain',
+            'address_line_1' => 'Jalan Milik Pengguna Lain',
+        ]);
+
+        $this->actingAs($user)
+            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->get(route('cart.index'))
+            ->assertOk()
+            ->assertSee('name="shipping_address_id"', false)
+            ->assertSee('value="'.$address->id.'"', false)
+            ->assertSee('Edo Wardana')
+            ->assertSee('Jalan Sakura Nomor 10')
+            ->assertDontSee('Pengguna Lain')
+            ->assertDontSee('Jalan Milik Pengguna Lain');
+    }
+
+    public function test_checkout_requires_a_saved_shipping_address(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create([
+            'stock' => 5,
+            'price' => 100000,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('cart.index'))
+            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->post(route('checkout.process'), [
+                'payment_provider' => 'midtrans',
+            ])
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHasErrors('shipping_address_id');
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(5, $souvenir->fresh()->stock);
+    }
+
+    public function test_checkout_rejects_another_users_shipping_address(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $otherUser = User::factory()->create(['role' => 'user']);
+        $souvenir = Souvenir::factory()->create([
+            'stock' => 5,
+            'price' => 100000,
+        ]);
+        $otherAddress = $this->createAddress($otherUser);
+
+        $this->actingAs($user)
+            ->from(route('cart.index'))
+            ->withSession(['cart' => [$souvenir->id => 1]])
+            ->post(route('checkout.process'), [
+                'payment_provider' => 'midtrans',
+                'shipping_address_id' => $otherAddress->id,
+            ])
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHasErrors('shipping_address_id');
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(5, $souvenir->fresh()->stock);
     }
 
     public function test_retry_payment_reuses_existing_pending_payment_redirect_url_without_creating_new_payment(): void
@@ -469,5 +567,22 @@ class CheckoutTest extends TestCase
 
         $response->assertForbidden();
         $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function createAddress(User $user, array $attributes = []): UserAddress
+    {
+        return UserAddress::factory()->for($user)->asDefault()->create([
+            'label' => 'Home',
+            'recipient_name' => 'Edo Wardana',
+            'recipient_phone' => '+6281234567890',
+            'address_line_1' => 'Jalan Sakura Nomor 10',
+            'address_line_2' => 'Lantai 2',
+            'city' => 'Jakarta Timur',
+            'province' => 'DKI Jakarta',
+            'postal_code' => '13450',
+            'country_code' => 'ID',
+            ...$attributes,
+        ]);
     }
 }

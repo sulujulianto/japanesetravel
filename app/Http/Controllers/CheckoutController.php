@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
+use App\Models\UserAddress;
 use App\Services\Payments\PaymentService;
 use App\Support\CacheKeys;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -32,15 +34,33 @@ class CheckoutController extends Controller
             return redirect()->route('shop.index')->with('error', __('Keranjang belanja kosong.'));
         }
 
+        $userId = (int) Auth::id();
         $validated = $request->validate([
             'payment_provider' => 'required|in:midtrans,paypal',
+            'shipping_address_id' => [
+                'required',
+                'integer',
+                Rule::exists('user_addresses', 'id')
+                    ->where(fn ($query) => $query->where('user_id', $userId)),
+            ],
         ]);
 
         $provider = $validated['payment_provider'];
+        $shippingAddressId = (int) $validated['shipping_address_id'];
 
         try {
             // Mulai Simpan ke Database (Pakai Transaction Biar Aman)
-            [$order, $payment] = DB::transaction(function () use ($cart, $provider) {
+            [$order, $payment] = DB::transaction(function () use ($cart, $provider, $shippingAddressId, $userId) {
+                $shippingAddress = UserAddress::query()
+                    ->where('user_id', $userId)
+                    ->whereKey($shippingAddressId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $shippingAddress) {
+                    throw new \RuntimeException(__('Alamat pengiriman tidak valid. Pilih kembali alamat Anda.'));
+                }
+
                 // Ambil detail barang dari database dengan lock untuk mencegah oversell
                 $souvenirs = Souvenir::whereIn('id', array_keys($cart))
                     ->lockForUpdate()
@@ -80,7 +100,9 @@ class CheckoutController extends Controller
 
                 // 1. Buat Nota Utama
                 $order = Order::create([
-                    'user_id' => Auth::id(),
+                    'user_id' => $userId,
+                    'shipping_address_id' => $shippingAddress->id,
+                    'shipping_address_snapshot' => $this->shippingAddressSnapshot($shippingAddress),
                     'total_price' => $total,
                     'status' => 'pending',
                     'note' => 'Pesanan Baru',
@@ -456,5 +478,33 @@ class CheckoutController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * @return array{
+     *     label: string,
+     *     recipient_name: string,
+     *     recipient_phone: string,
+     *     address_line_1: string,
+     *     address_line_2: string|null,
+     *     city: string,
+     *     province: string,
+     *     postal_code: string,
+     *     country_code: string
+     * }
+     */
+    private function shippingAddressSnapshot(UserAddress $address): array
+    {
+        return [
+            'label' => (string) $address->label,
+            'recipient_name' => (string) $address->recipient_name,
+            'recipient_phone' => (string) $address->recipient_phone,
+            'address_line_1' => (string) $address->address_line_1,
+            'address_line_2' => $address->address_line_2 === null ? null : (string) $address->address_line_2,
+            'city' => (string) $address->city,
+            'province' => (string) $address->province,
+            'postal_code' => (string) $address->postal_code,
+            'country_code' => (string) $address->country_code,
+        ];
     }
 }

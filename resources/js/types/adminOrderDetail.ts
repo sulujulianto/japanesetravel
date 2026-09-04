@@ -22,6 +22,9 @@ export interface AdminOrderDetailCopy extends AdminShellCopy {
     referenceUnavailable: string;
     save: string;
     saving: string;
+    shippingDescription: string;
+    shippingMissing: string;
+    shippingTitle: string;
     status: string;
     subtotal: string;
     summaryDescription: string;
@@ -59,6 +62,19 @@ export interface AdminOrderDetailPayment {
     status: AdminOrderStatusOption;
 }
 
+export interface AdminOrderShippingAddress {
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    country: string;
+    countryCode: string;
+    label: string;
+    postalCode: string;
+    province: string;
+    recipientName: string;
+    recipientPhone: string;
+}
+
 export interface AdminOrderDetail {
     adminNote: string | null;
     createdAt: string;
@@ -72,6 +88,7 @@ export interface AdminOrderDetail {
     note: string | null;
     payments: AdminOrderDetailPayment[];
     reference: string;
+    shippingAddress: AdminOrderShippingAddress | null;
     status: AdminOrderStatusOption;
     total: string;
 }
