@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\UserAddress;
+use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\PaymentService;
 use App\Support\CacheKeys;
 use Illuminate\Http\Request;
@@ -19,8 +20,11 @@ use Illuminate\Validation\Rule;
 class CheckoutController extends Controller
 {
     // FUNGSI 1: Memproses Keranjang Menjadi Order
-    public function process(Request $request, PaymentService $paymentService)
-    {
+    public function process(
+        Request $request,
+        PaymentService $paymentService,
+        OrderInventoryService $orderInventory
+    ) {
         $cart = Session::get('cart', []);
         [$cart, $sanitized] = $this->sanitizeCheckoutCart($cart);
         if ($sanitized) {
@@ -161,7 +165,7 @@ class CheckoutController extends Controller
             ]);
         } catch (\Throwable $exception) {
             if (! $gatewayCreated) {
-                $this->compensateFailedCheckout($order, $payment, $exception);
+                $this->compensateFailedCheckout($order, $payment, $exception, $orderInventory);
                 CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
             } else {
                 $payment->update([
@@ -182,9 +186,13 @@ class CheckoutController extends Controller
         return redirect()->away($result->redirectUrl);
     }
 
-    protected function compensateFailedCheckout(Order $order, Payment $payment, \Throwable $exception): void
-    {
-        DB::transaction(function () use ($order, $payment, $exception) {
+    protected function compensateFailedCheckout(
+        Order $order,
+        Payment $payment,
+        \Throwable $exception,
+        OrderInventoryService $orderInventory
+    ): void {
+        DB::transaction(function () use ($order, $payment, $exception, $orderInventory) {
             $lockedOrder = Order::whereKey($order->id)
                 ->lockForUpdate()
                 ->first();
@@ -197,30 +205,7 @@ class CheckoutController extends Controller
             }
 
             if ($lockedOrder->status === 'pending') {
-                $itemQuantities = OrderItem::query()
-                    ->where('order_id', $lockedOrder->id)
-                    ->whereNotNull('souvenir_id')
-                    ->selectRaw('souvenir_id, SUM(quantity) as total_qty')
-                    ->groupBy('souvenir_id')
-                    ->pluck('total_qty', 'souvenir_id')
-                    ->map(fn ($qty) => (int) $qty);
-
-                if ($itemQuantities->isNotEmpty()) {
-                    $souvenirs = Souvenir::whereIn('id', $itemQuantities->keys()->all())
-                        ->lockForUpdate()
-                        ->get()
-                        ->keyBy('id');
-
-                    foreach ($itemQuantities as $souvenirId => $qty) {
-                        $souvenir = $souvenirs->get((int) $souvenirId);
-                        if (! $souvenir) {
-                            continue;
-                        }
-
-                        $souvenir->increment('stock', $qty);
-                    }
-                }
-
+                $orderInventory->restore($lockedOrder->id);
                 $lockedOrder->update([
                     'status' => 'cancelled',
                 ]);

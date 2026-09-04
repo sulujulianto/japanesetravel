@@ -9,14 +9,17 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\User;
+use App\Services\Orders\OrderInventoryService;
 use App\Support\AdminPagination;
 use App\Support\AdminShell;
+use App\Support\CacheKeys;
 use App\Support\Format;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -117,18 +120,43 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(UpdateOrderStatusRequest $request, Order $order): RedirectResponse
-    {
+    public function update(
+        UpdateOrderStatusRequest $request,
+        Order $order,
+        OrderInventoryService $orderInventory
+    ): RedirectResponse {
         $nextStatus = (string) $request->input('status');
-        if (! $order->canTransitionTo($nextStatus)) {
+        [$updated, $stockRestored] = DB::transaction(function () use ($request, $order, $nextStatus, $orderInventory): array {
+            $lockedOrder = Order::query()
+                ->whereKey($order->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedOrder || ! $lockedOrder->canTransitionTo($nextStatus)) {
+                return [false, false];
+            }
+
+            $stockRestored = false;
+            if ($nextStatus === 'cancelled' && $lockedOrder->status !== 'cancelled') {
+                $stockRestored = $orderInventory->restore($lockedOrder->id);
+            }
+
+            $lockedOrder->update([
+                'status' => $nextStatus,
+                'admin_note' => $request->input('admin_note'),
+            ]);
+
+            return [true, $stockRestored];
+        });
+
+        if (! $updated) {
             return redirect()->route('admin.orders.show', $order)
                 ->with('error', __('Transisi status pesanan tidak valid.'));
         }
 
-        $order->update([
-            'status' => $nextStatus,
-            'admin_note' => $request->input('admin_note'),
-        ]);
+        if ($stockRestored) {
+            CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
+        }
 
         return redirect()->route('admin.orders.show', $order)
             ->with('success', __('Status pesanan berhasil diperbarui.'));

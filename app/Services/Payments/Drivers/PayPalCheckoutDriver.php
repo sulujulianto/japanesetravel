@@ -136,7 +136,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
             'PAYMENT.CAPTURE.REFUNDED' => 'refunded',
             'CHECKOUT.ORDER.APPROVED' => 'pending',
             'CHECKOUT.ORDER.CANCELLED' => 'failed',
-            default => 'pending',
+            default => 'ignored',
         };
 
         $amountValue = Arr::get($resource, 'amount.value')

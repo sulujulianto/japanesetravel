@@ -93,7 +93,7 @@ class MidtransSnapDriver implements PaymentGatewayInterface
             'expire' => 'expired',
             'cancel' => 'failed',
             'refund', 'partial_refund' => 'refunded',
-            default => 'pending',
+            default => 'ignored',
         };
 
         $transactionId = (string) ($payload['transaction_id'] ?? '');

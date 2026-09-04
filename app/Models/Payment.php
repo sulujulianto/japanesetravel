@@ -9,6 +9,15 @@ class Payment extends Model
 {
     use HasFactory;
 
+    /** @var array<string, list<string>> */
+    private const ALLOWED_STATUS_TRANSITIONS = [
+        'pending' => ['paid', 'failed', 'expired', 'refunded'],
+        'failed' => ['paid'],
+        'expired' => ['paid'],
+        'paid' => ['refunded'],
+        'refunded' => [],
+    ];
+
     protected $fillable = [
         'order_id',
         'provider',
@@ -34,5 +43,14 @@ class Payment extends Model
     public function webhookEvents()
     {
         return $this->hasMany(PaymentWebhookEvent::class);
+    }
+
+    public function canTransitionTo(string $nextStatus): bool
+    {
+        if ($nextStatus === $this->status) {
+            return false;
+        }
+
+        return in_array($nextStatus, self::ALLOWED_STATUS_TRANSITIONS[(string) $this->status] ?? [], true);
     }
 }
