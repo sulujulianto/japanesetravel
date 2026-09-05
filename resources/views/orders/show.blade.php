@@ -11,19 +11,23 @@
 
     @php
         $statusVariants = [
-            'pending' => 'warning',
-            'processing' => 'info',
-            'completed' => 'success',
-            'cancelled' => 'danger',
+            \App\Enums\OrderStatus::Pending->value => 'warning',
+            \App\Enums\OrderStatus::Processing->value => 'info',
+            \App\Enums\OrderStatus::Completed->value => 'success',
+            \App\Enums\OrderStatus::Cancelled->value => 'danger',
         ];
         $paymentVariants = [
-            'pending' => 'warning',
-            'paid' => 'success',
-            'failed' => 'danger',
-            'expired' => 'danger',
-            'refunded' => 'info',
+            \App\Enums\PaymentStatus::Pending->value => 'warning',
+            \App\Enums\PaymentStatus::Paid->value => 'success',
+            \App\Enums\PaymentStatus::Failed->value => 'danger',
+            \App\Enums\PaymentStatus::Expired->value => 'danger',
+            \App\Enums\PaymentStatus::Refunded->value => 'info',
         ];
-        $canRetryPayment = $order->payment && in_array($order->payment->status, ['pending', 'expired', 'failed'], true) && $order->status === 'pending';
+        $orderStatus = $order->status->value;
+        $paymentStatus = $order->payment?->status->value;
+        $canRetryPayment = $order->payment
+            && in_array($order->payment->status, [\App\Enums\PaymentStatus::Pending, \App\Enums\PaymentStatus::Expired, \App\Enums\PaymentStatus::Failed], true)
+            && $order->status === \App\Enums\OrderStatus::Pending;
         $shippingAddress = is_array($order->shipping_address_snapshot) ? $order->shipping_address_snapshot : null;
     @endphp
 
@@ -52,12 +56,12 @@
                                     <p class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Dibuat pada') }} {{ \App\Support\Format::date($order->created_at) }}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
-                                    <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
-                                        {{ __('Order') }} · {{ __(strtoupper($order->status)) }}
+                                    <x-ui.badge variant="{{ $statusVariants[$orderStatus] ?? 'default' }}">
+                                        {{ __('Order') }} · {{ __(strtoupper($orderStatus)) }}
                                     </x-ui.badge>
                                     @if($order->payment)
-                                        <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
-                                            {{ __('Payment') }} · {{ __(strtoupper($order->payment->status)) }}
+                                        <x-ui.badge variant="{{ $paymentVariants[$paymentStatus] ?? 'default' }}">
+                                            {{ __('Payment') }} · {{ __(strtoupper($paymentStatus)) }}
                                         </x-ui.badge>
                                     @else
                                         <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
@@ -73,11 +77,11 @@
                             </div>
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Status Order') }}</span>
-                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __(strtoupper($order->status)) }}</div>
+                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __(strtoupper($orderStatus)) }}</div>
                             </div>
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Status Payment') }}</span>
-                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $order->payment ? __(strtoupper($order->payment->status)) : __('Belum ada') }}</div>
+                                <div class="mt-2 text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ $paymentStatus ? __(strtoupper($paymentStatus)) : __('Belum ada') }}</div>
                             </div>
                             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085] dark:text-[#AEB8C7]">{{ __('Total') }}</span>
@@ -160,12 +164,12 @@
                             <div class="mt-5 space-y-4">
                                 <div class="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3 dark:border-slate-800">
                                     <span class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Provider') }}</span>
-                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ strtoupper($order->payment->provider) }}</span>
+                                    <span class="text-right text-sm font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ strtoupper($order->payment->provider->value) }}</span>
                                 </div>
                                 <div class="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3 dark:border-slate-800">
                                     <span class="text-sm text-[#526071] dark:text-[#AEB8C7]">{{ __('Status') }}</span>
-                                    <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
-                                        {{ __(strtoupper($order->payment->status)) }}
+                                    <x-ui.badge variant="{{ $paymentVariants[$paymentStatus] ?? 'default' }}">
+                                        {{ __(strtoupper($paymentStatus)) }}
                                     </x-ui.badge>
                                 </div>
                                 <div class="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3 dark:border-slate-800">
@@ -203,14 +207,14 @@
                                 <div>
                                     <x-ui.label value="{{ __('Metode Pembayaran') }}" />
                                     <label class="mt-3 flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-sm text-[#374151] dark:border-slate-800 dark:bg-slate-900 dark:text-[#CBD5E1]">
-                                        <input type="radio" name="payment_provider" value="midtrans" class="mt-1 text-[#B33A3A] focus:ring-[#B33A3A] dark:text-[#D96B6B] dark:focus:ring-[#D96B6B]" checked>
+                                        <input type="radio" name="payment_provider" value="{{ \App\Enums\PaymentProvider::Midtrans->value }}" class="mt-1 text-[#B33A3A] focus:ring-[#B33A3A] dark:text-[#D96B6B] dark:focus:ring-[#D96B6B]" checked>
                                         <span>
                                             <span class="block font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('Midtrans') }}</span>
                                             <span class="mt-1 block text-xs text-[#526071] dark:text-[#AEB8C7]">{{ __('Pembayaran IDR melalui provider Midtrans.') }}</span>
                                         </span>
                                     </label>
                                     <label class="mt-3 flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-sm text-[#374151] dark:border-slate-800 dark:bg-slate-900 dark:text-[#CBD5E1]">
-                                        <input type="radio" name="payment_provider" value="paypal" class="mt-1 text-[#B33A3A] focus:ring-[#B33A3A] dark:text-[#D96B6B] dark:focus:ring-[#D96B6B]">
+                                        <input type="radio" name="payment_provider" value="{{ \App\Enums\PaymentProvider::PayPal->value }}" class="mt-1 text-[#B33A3A] focus:ring-[#B33A3A] dark:text-[#D96B6B] dark:focus:ring-[#D96B6B]">
                                         <span>
                                             <span class="block font-semibold text-[#1F2937] dark:text-[#F4F1ED]">{{ __('PayPal') }}</span>
                                             <span class="mt-1 block text-xs text-[#526071] dark:text-[#AEB8C7]">{{ __('Pembayaran internasional melalui PayPal.') }}</span>

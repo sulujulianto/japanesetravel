@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,7 @@ class AdminMiddleware
 
         // CEK 2: Apakah role pengguna adalah 'admin'?
         // Kita ambil data role dari database user yang sedang login
-        if (Auth::guard('admin')->user()->role !== 'admin') {
+        if (Auth::guard('admin')->user()->role !== UserRole::Admin) {
             // Jika bukan admin, lempar keluar (Forbidden 403)
             abort(403, __('AKSES DITOLAK: Anda bukan Administrator!'));
         }

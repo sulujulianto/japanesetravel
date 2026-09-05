@@ -2,21 +2,18 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property PaymentProvider $provider
+ * @property PaymentStatus $status
+ */
 class Payment extends Model
 {
     use HasFactory;
-
-    /** @var array<string, list<string>> */
-    private const ALLOWED_STATUS_TRANSITIONS = [
-        'pending' => ['paid', 'failed', 'expired', 'refunded'],
-        'failed' => ['paid'],
-        'expired' => ['paid'],
-        'paid' => ['refunded'],
-        'refunded' => [],
-    ];
 
     protected $fillable = [
         'order_id',
@@ -33,6 +30,8 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'payload_json' => 'array',
         'paid_at' => 'datetime',
+        'provider' => PaymentProvider::class,
+        'status' => PaymentStatus::class,
     ];
 
     public function order()
@@ -45,12 +44,13 @@ class Payment extends Model
         return $this->hasMany(PaymentWebhookEvent::class);
     }
 
-    public function canTransitionTo(string $nextStatus): bool
+    public function canTransitionTo(PaymentStatus|string $nextStatus): bool
     {
-        if ($nextStatus === $this->status) {
+        $nextStatus = is_string($nextStatus) ? PaymentStatus::tryFrom($nextStatus) : $nextStatus;
+        if ($nextStatus === null || $nextStatus === $this->status) {
             return false;
         }
 
-        return in_array($nextStatus, self::ALLOWED_STATUS_TRANSITIONS[(string) $this->status] ?? [], true);
+        return in_array($nextStatus, $this->status->allowedTransitions(), true);
     }
 }

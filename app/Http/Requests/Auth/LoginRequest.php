@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\UserRole;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +43,7 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $credentials = $this->only('email', 'password');
-        $credentials['role'] = 'user';
+        $credentials['role'] = UserRole::User->value;
 
         if (! Auth::guard('web')->attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

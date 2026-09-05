@@ -2,25 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/** @property OrderStatus $status */
 class Order extends Model
 {
     use HasFactory;
-
-    /**
-     * @var array<string, array<int, string>>
-     */
-    private const ALLOWED_STATUS_TRANSITIONS = [
-        'pending' => ['processing', 'cancelled'],
-        'processing' => ['completed', 'cancelled'],
-        'completed' => [],
-        'cancelled' => [],
-    ];
 
     protected $fillable = [
         'user_id',
@@ -43,6 +35,7 @@ class Order extends Model
         return [
             'customer_snapshot' => 'encrypted:array',
             'shipping_address_snapshot' => 'encrypted:array',
+            'status' => OrderStatus::class,
             'stock_restored_at' => 'datetime',
         ];
     }
@@ -83,19 +76,19 @@ class Order extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
-    public function canTransitionTo(string $nextStatus): bool
+    public function canTransitionTo(OrderStatus|string $nextStatus): bool
     {
-        return in_array($nextStatus, $this->allowedStatusUpdates(), true);
+        $nextStatus = is_string($nextStatus) ? OrderStatus::tryFrom($nextStatus) : $nextStatus;
+
+        return $nextStatus !== null && in_array($nextStatus, $this->status->allowedUpdates(), true);
     }
 
     /** @return list<string> */
     public function allowedStatusUpdates(): array
     {
-        $currentStatus = (string) $this->status;
-
-        return array_values(array_unique([
-            $currentStatus,
-            ...(self::ALLOWED_STATUS_TRANSITIONS[$currentStatus] ?? []),
-        ]));
+        return array_map(
+            static fn (OrderStatus $status): string => $status->value,
+            $this->status->allowedUpdates(),
+        );
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Models\Order;
@@ -26,11 +28,7 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
-    /** @var list<string> */
-    private const ORDER_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
-
-    /** @var list<string> */
-    private const PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'failed', 'expired', 'refunded'];
+    private const UNPAID_FILTER = 'unpaid';
 
     public function index(Request $request): Response
     {
@@ -41,7 +39,7 @@ class OrderController extends Controller
             $query->where('status', $filters['status']);
         }
 
-        if ($filters['paymentStatus'] === 'unpaid') {
+        if ($filters['paymentStatus'] === self::UNPAID_FILTER) {
             $query->whereDoesntHave('payment');
         } elseif ($filters['paymentStatus'] !== '') {
             $query->whereHas('payment', function ($paymentQuery) use ($filters) {
@@ -126,7 +124,7 @@ class OrderController extends Controller
         Order $order,
         OrderInventoryService $orderInventory
     ): RedirectResponse {
-        $nextStatus = (string) $request->input('status');
+        $nextStatus = OrderStatus::from((string) $request->input('status'));
         [$updated, $stockRestored] = DB::transaction(function () use ($request, $order, $nextStatus, $orderInventory): array {
             $lockedOrder = Order::query()
                 ->whereKey($order->id)
@@ -138,7 +136,7 @@ class OrderController extends Controller
             }
 
             $stockRestored = false;
-            if ($nextStatus === 'cancelled' && $lockedOrder->status !== 'cancelled') {
+            if ($nextStatus === OrderStatus::Cancelled && $lockedOrder->status !== OrderStatus::Cancelled) {
                 $stockRestored = $orderInventory->restore(
                     $lockedOrder->id,
                     (int) Auth::guard('admin')->id()
@@ -182,8 +180,10 @@ class OrderController extends Controller
 
         return [
             'search' => mb_substr($request->string('q')->trim()->toString(), 0, 255),
-            'status' => in_array($status, self::ORDER_STATUSES, true) ? $status : '',
-            'paymentStatus' => in_array($paymentStatus, self::PAYMENT_STATUSES, true) ? $paymentStatus : '',
+            'status' => in_array($status, OrderStatus::values(), true) ? $status : '',
+            'paymentStatus' => $paymentStatus === self::UNPAID_FILTER
+                ? self::UNPAID_FILTER
+                : (in_array($paymentStatus, PaymentStatus::values(), true) ? $paymentStatus : ''),
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
         ];
@@ -206,12 +206,11 @@ class OrderController extends Controller
         return [
             'orderStatuses' => $this->orderStatusOptions(),
             'paymentStatuses' => [
-                ['value' => 'unpaid', 'label' => __('Belum ada pembayaran')],
-                ['value' => 'pending', 'label' => __('Pending')],
-                ['value' => 'paid', 'label' => __('Paid')],
-                ['value' => 'failed', 'label' => __('Failed')],
-                ['value' => 'expired', 'label' => __('Expired')],
-                ['value' => 'refunded', 'label' => __('Refunded')],
+                ['value' => self::UNPAID_FILTER, 'label' => __('Belum ada pembayaran')],
+                ...array_map(fn (PaymentStatus $status): array => [
+                    'value' => $status->value,
+                    'label' => __(strtoupper($status->value)),
+                ], PaymentStatus::cases()),
             ],
         ];
     }
@@ -220,16 +219,18 @@ class OrderController extends Controller
      * @param  list<string>  $statuses
      * @return list<array{value: string, label: string}>
      */
-    private function orderStatusOptions(array $statuses = self::ORDER_STATUSES): array
+    private function orderStatusOptions(?array $statuses = null): array
     {
+        $statuses ??= OrderStatus::values();
+
         return array_map(fn (string $status): array => [
             'value' => $status,
-            'label' => match ($status) {
-                'pending' => __('Menunggu'),
-                'processing' => __('Diproses'),
-                'completed' => __('Selesai'),
-                'cancelled' => __('Dibatalkan'),
-                default => __(strtoupper($status)),
+            'label' => match (OrderStatus::tryFrom($status)) {
+                OrderStatus::Pending => __('Menunggu'),
+                OrderStatus::Processing => __('Diproses'),
+                OrderStatus::Completed => __('Selesai'),
+                OrderStatus::Cancelled => __('Dibatalkan'),
+                null => __(strtoupper($status)),
             },
         ], $statuses);
     }
@@ -241,7 +242,7 @@ class OrderController extends Controller
         $customer = $this->serializeCustomer($order);
         $createdAt = $order->getAttribute('created_at');
         $totalPrice = $order->getAttribute('total_price');
-        $status = (string) $order->getAttribute('status');
+        $status = $order->status->value;
 
         return [
             'id' => (int) $order->getKey(),
@@ -250,8 +251,8 @@ class OrderController extends Controller
             'date' => Format::date($createdAt instanceof DateTimeInterface || is_string($createdAt) ? $createdAt : null),
             'total' => Format::idr(is_numeric($totalPrice) ? $totalPrice : 0),
             'payment' => ! $payment instanceof Payment ? null : [
-                'label' => strtoupper((string) $payment->provider).' · '.__(strtoupper((string) $payment->status)),
-                'status' => (string) $payment->status,
+                'label' => strtoupper($payment->provider->value).' · '.__(strtoupper($payment->status->value)),
+                'status' => $payment->status->value,
             ],
             'status' => [
                 'label' => __(strtoupper($status)),
@@ -271,7 +272,7 @@ class OrderController extends Controller
         $payments = $order->getRelation('payments');
         $createdAt = $order->getAttribute('created_at');
         $totalPrice = $order->getAttribute('total_price');
-        $status = (string) $order->getAttribute('status');
+        $status = $order->status->value;
 
         return [
             'adminNote' => $this->nullableString($order->getAttribute('admin_note')),
@@ -370,8 +371,8 @@ class OrderController extends Controller
     /** @return array{label: string, status: string} */
     private function serializePaymentStatus(Payment $payment): array
     {
-        $provider = strtoupper((string) $payment->getAttribute('provider'));
-        $status = (string) $payment->getAttribute('status');
+        $provider = strtoupper($payment->provider->value);
+        $status = $payment->status->value;
 
         return [
             'label' => $provider.' · '.__(strtoupper($status)),
@@ -389,11 +390,11 @@ class OrderController extends Controller
             'amount' => Format::idr(is_numeric($amount) ? $amount : 0),
             'id' => (int) $payment->getKey(),
             'paidAt' => $paidAt instanceof DateTimeInterface || is_string($paidAt) ? Format::dateTime($paidAt) : null,
-            'provider' => strtoupper((string) $payment->getAttribute('provider')),
+            'provider' => strtoupper($payment->provider->value),
             'reference' => $this->nullableString($payment->getAttribute('provider_ref')),
             'status' => [
-                'label' => __(strtoupper((string) $payment->getAttribute('status'))),
-                'value' => (string) $payment->getAttribute('status'),
+                'label' => __(strtoupper($payment->status->value)),
+                'value' => $payment->status->value,
             ],
         ];
     }

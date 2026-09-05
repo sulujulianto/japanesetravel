@@ -2,6 +2,7 @@
 
 namespace App\Services\Payments\Drivers;
 
+use App\Enums\PaymentWebhookStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayInterface;
@@ -86,21 +87,21 @@ class MidtransSnapDriver implements PaymentGatewayInterface
         $fraudStatus = $payload['fraud_status'] ?? '';
 
         $status = match ($transactionStatus) {
-            'capture' => $fraudStatus === 'challenge' ? 'pending' : 'paid',
-            'settlement' => 'paid',
-            'pending' => 'pending',
-            'deny' => 'failed',
-            'expire' => 'expired',
-            'cancel' => 'failed',
-            'refund', 'partial_refund' => 'refunded',
-            default => 'ignored',
+            'capture' => $fraudStatus === 'challenge' ? PaymentWebhookStatus::Pending : PaymentWebhookStatus::Paid,
+            'settlement' => PaymentWebhookStatus::Paid,
+            'pending' => PaymentWebhookStatus::Pending,
+            'deny' => PaymentWebhookStatus::Failed,
+            'expire' => PaymentWebhookStatus::Expired,
+            'cancel' => PaymentWebhookStatus::Failed,
+            'refund', 'partial_refund' => PaymentWebhookStatus::Refunded,
+            default => PaymentWebhookStatus::Ignored,
         };
 
         $transactionId = (string) ($payload['transaction_id'] ?? '');
         $orderId = (string) ($payload['order_id'] ?? '');
         $eventId = $transactionId !== ''
-            ? $transactionId.':'.$status
-            : ($orderId !== '' ? $orderId.':'.$status : '');
+            ? $transactionId.':'.$status->value
+            : ($orderId !== '' ? $orderId.':'.$status->value : '');
 
         return new PaymentWebhookData(
             providerRef: (string) ($payload['order_id'] ?? ''),

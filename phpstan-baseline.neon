@@ -306,15 +306,3 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: database/seeders/DemoData.php
-
-		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
-			count: 1
-			path: database/seeders/DemoSeeder.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between ''completed''\|''processing'' and ''pending'' will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: database/seeders/DemoSeeder.php

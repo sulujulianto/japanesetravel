@@ -2,6 +2,7 @@
 
 namespace App\Services\Payments\Drivers;
 
+use App\Enums\PaymentWebhookStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayInterface;
@@ -131,12 +132,12 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $status = match ($eventType) {
             'PAYMENT.CAPTURE.COMPLETED',
-            'CHECKOUT.ORDER.COMPLETED' => 'paid',
-            'PAYMENT.CAPTURE.DENIED' => 'failed',
-            'PAYMENT.CAPTURE.REFUNDED' => 'refunded',
-            'CHECKOUT.ORDER.APPROVED' => 'pending',
-            'CHECKOUT.ORDER.CANCELLED' => 'failed',
-            default => 'ignored',
+            'CHECKOUT.ORDER.COMPLETED' => PaymentWebhookStatus::Paid,
+            'PAYMENT.CAPTURE.DENIED' => PaymentWebhookStatus::Failed,
+            'PAYMENT.CAPTURE.REFUNDED' => PaymentWebhookStatus::Refunded,
+            'CHECKOUT.ORDER.APPROVED' => PaymentWebhookStatus::Pending,
+            'CHECKOUT.ORDER.CANCELLED' => PaymentWebhookStatus::Failed,
+            default => PaymentWebhookStatus::Ignored,
         };
 
         $amountValue = Arr::get($resource, 'amount.value')
@@ -184,7 +185,7 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         return new PaymentWebhookData(
             providerRef: (string) ($response['id'] ?? ''),
-            status: $completed ? 'paid' : 'ignored',
+            status: $completed ? PaymentWebhookStatus::Paid : PaymentWebhookStatus::Ignored,
             amount: (string) Arr::get($capture, 'amount.value', ''),
             currency: (string) Arr::get($capture, 'amount.currency_code', ''),
             payload: $response,

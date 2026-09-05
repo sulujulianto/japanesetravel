@@ -42,7 +42,7 @@ class AdminInertiaLoginTest extends TestCase
             ->where('auth.user.id', $user->id)
             ->where('auth.user.username', $user->username)
             ->where('auth.user.email', $user->email)
-            ->where('auth.user.role', $user->role)
+            ->where('auth.user.role', $user->role->value)
             ->where('auth.admin', null)
         );
     }

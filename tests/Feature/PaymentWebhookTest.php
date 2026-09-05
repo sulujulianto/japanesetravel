@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -756,8 +758,8 @@ class PaymentWebhookTest extends TestCase
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
 
-        $this->assertSame('expired', $payment->fresh()->status);
-        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Expired, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Cancelled, $order->fresh()->status);
         $this->assertNotNull($order->fresh()->stock_restored_at);
         $this->assertSame(5, $souvenir->fresh()->stock);
         $this->assertDatabaseCount('payment_webhook_events', 1);
@@ -807,8 +809,8 @@ class PaymentWebhookTest extends TestCase
 
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
 
-        $this->assertSame('paid', $payment->fresh()->status);
-        $this->assertSame('processing', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Paid, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Processing, $order->fresh()->status);
     }
 
     public function test_unknown_webhook_event_is_recorded_without_mutating_payment(): void
@@ -843,8 +845,8 @@ class PaymentWebhookTest extends TestCase
 
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
 
-        $this->assertSame('pending', $payment->fresh()->status);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertDatabaseHas('payment_webhook_events', [
             'provider' => 'midtrans',
             'event_id' => 'TRX-UNKNOWN-001:ignored',
@@ -885,8 +887,8 @@ class PaymentWebhookTest extends TestCase
 
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
 
-        $this->assertSame('refunded', $payment->fresh()->status);
-        $this->assertSame('completed', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Refunded, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
     }
 
     public function test_paypal_cancel_callback_does_not_mutate_financial_state(): void
@@ -911,8 +913,8 @@ class PaymentWebhookTest extends TestCase
             ->assertRedirect(route('orders.index'))
             ->assertSessionHas('error');
 
-        $this->assertSame('pending', $payment->fresh()->status);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
     }
 
     public function test_midtrans_paid_webhook_with_wrong_amount_is_recorded_without_mutating_financial_state(): void
@@ -949,11 +951,11 @@ class PaymentWebhookTest extends TestCase
 
         $freshPayment = $payment->fresh();
         $this->assertNotNull($freshPayment);
-        $this->assertSame('pending', $freshPayment->status);
+        $this->assertSame(PaymentStatus::Pending, $freshPayment->status);
         $this->assertSame('150000.00', $freshPayment->amount);
         $this->assertSame('IDR', $freshPayment->currency);
         $this->assertNull($freshPayment->paid_at);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertDatabaseHas('payment_webhook_events', [
             'payment_id' => $payment->id,
             'provider' => 'midtrans',
@@ -994,9 +996,9 @@ class PaymentWebhookTest extends TestCase
 
         $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
 
-        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
         $this->assertSame('IDR', $payment->fresh()->currency);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertDatabaseHas('payment_webhook_events', [
             'payment_id' => $payment->id,
             'event_id' => 'TRX-WRONG-CURRENCY-001:paid',
@@ -1053,10 +1055,10 @@ class PaymentWebhookTest extends TestCase
 
         $this->postJson(route('payments.webhook.paypal'), $payload)->assertOk();
 
-        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
         $this->assertSame('13.33', $payment->fresh()->amount);
         $this->assertSame('USD', $payment->fresh()->currency);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertDatabaseHas('payment_webhook_events', [
             'payment_id' => $payment->id,
             'provider' => 'paypal',
@@ -1105,11 +1107,11 @@ class PaymentWebhookTest extends TestCase
 
         $freshPayment = $payment->fresh();
         $this->assertNotNull($freshPayment);
-        $this->assertSame('pending', $freshPayment->status);
+        $this->assertSame(PaymentStatus::Pending, $freshPayment->status);
         $this->assertSame('14.67', $freshPayment->amount);
         $this->assertNull($freshPayment->paid_at);
         $this->assertSame('14.66', $freshPayment->payload_json['capture_integrity_error']['received_amount'] ?? null);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
     }
 
     public function test_paypal_return_rejects_completed_response_without_capture_details(): void
@@ -1150,8 +1152,8 @@ class PaymentWebhookTest extends TestCase
             ->assertRedirect(route('orders.show', $order))
             ->assertSessionHas('error');
 
-        $this->assertSame('pending', $payment->fresh()->status);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertArrayNotHasKey(
             'received_amount',
             $payment->fresh()->payload_json['capture_integrity_error'] ?? []
@@ -1196,8 +1198,8 @@ class PaymentWebhookTest extends TestCase
             ->assertRedirect(route('orders.show', $order))
             ->assertSessionHas('error');
 
-        $this->assertSame('pending', $payment->fresh()->status);
-        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
         $this->assertSame(
             'PAYPAL-RETURN-OTHER-REF',
             $payment->fresh()->payload_json['capture_integrity_error']['received_provider_ref'] ?? null

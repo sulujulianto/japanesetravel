@@ -2,15 +2,19 @@
 
 namespace App\Services\Payments;
 
+use App\Enums\PaymentProvider;
 use App\Models\Payment;
+use BackedEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 final class PaymentPayload
 {
     /** @return array<string, string> */
-    public static function gateway(string $provider, PaymentGatewayResult $result): array
+    public static function gateway(PaymentProvider|string $provider, PaymentGatewayResult $result): array
     {
+        $provider = is_string($provider) ? PaymentProvider::from($provider) : $provider;
+
         return self::present([
             'provider' => self::value($provider),
             'provider_ref' => self::value($result->providerRef),
@@ -20,8 +24,9 @@ final class PaymentPayload
     }
 
     /** @return array<string, string> */
-    public static function webhook(string $provider, PaymentWebhookData $data): array
+    public static function webhook(PaymentProvider|string $provider, PaymentWebhookData $data): array
     {
+        $provider = is_string($provider) ? PaymentProvider::from($provider) : $provider;
         $payload = [
             'event_id' => self::value($data->eventId),
             'provider_ref' => self::value($data->providerRef),
@@ -30,7 +35,7 @@ final class PaymentPayload
             'currency' => self::value($data->currency),
         ];
 
-        if ($provider === 'midtrans') {
+        if ($provider === PaymentProvider::Midtrans) {
             $payload += [
                 'provider_status' => self::value($data->payload['transaction_status'] ?? null),
                 'fraud_status' => self::value($data->payload['fraud_status'] ?? null),
@@ -42,7 +47,7 @@ final class PaymentPayload
             ];
         }
 
-        if ($provider === 'paypal') {
+        if ($provider === PaymentProvider::PayPal) {
             $payload += [
                 'event_type' => self::value($data->payload['event_type'] ?? null),
                 'resource_type' => self::value($data->payload['resource_type'] ?? null),
@@ -89,6 +94,10 @@ final class PaymentPayload
 
     private static function value(mixed $value, int $limit = 255): ?string
     {
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
         if (! is_scalar($value) && ! $value instanceof \Stringable) {
             return null;
         }

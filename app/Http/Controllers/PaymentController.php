@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
+use App\Enums\PaymentWebhookStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
@@ -25,12 +29,12 @@ class PaymentController extends Controller
 
     public function midtransWebhook(Request $request, PaymentService $paymentService): Response
     {
-        return $this->handleWebhook($request, $paymentService, 'midtrans');
+        return $this->handleWebhook($request, $paymentService, PaymentProvider::Midtrans);
     }
 
     public function paypalWebhook(Request $request, PaymentService $paymentService): Response
     {
-        return $this->handleWebhook($request, $paymentService, 'paypal');
+        return $this->handleWebhook($request, $paymentService, PaymentProvider::PayPal);
     }
 
     public function paypalReturn(Request $request, PaymentService $paymentService): RedirectResponse
@@ -41,12 +45,12 @@ class PaymentController extends Controller
             return redirect()->route('orders.index')->with('error', __('Token pembayaran tidak valid.'));
         }
 
-        $payment = Payment::where('provider', 'paypal')->where('provider_ref', $providerRef)->first();
+        $payment = Payment::where('provider', PaymentProvider::PayPal->value)->where('provider_ref', $providerRef)->first();
         if (! $payment) {
             return redirect()->route('orders.index')->with('error', __('Pembayaran tidak ditemukan.'));
         }
 
-        $driver = $paymentService->driver('paypal');
+        $driver = $paymentService->driver(PaymentProvider::PayPal);
         if (! $driver instanceof PayPalCheckoutDriver) {
             return redirect()->route('orders.index')->with('error', __('Provider pembayaran tidak valid.'));
         }
@@ -66,7 +70,7 @@ class PaymentController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (! $lockedPayment || ! $lockedPayment->canTransitionTo('failed')) {
+                if (! $lockedPayment || ! $lockedPayment->canTransitionTo(PaymentStatus::Failed)) {
                     return;
                 }
 
@@ -75,7 +79,7 @@ class PaymentController extends Controller
                 unset($payload['gateway']);
 
                 $lockedPayment->update([
-                    'status' => 'failed',
+                    'status' => PaymentStatus::Failed,
                     'payload_json' => $payload,
                 ]);
             });
@@ -129,7 +133,7 @@ class PaymentController extends Controller
         return redirect()->route('orders.index')->with('error', __('Pembayaran dibatalkan.'));
     }
 
-    protected function handleWebhook(Request $request, PaymentService $paymentService, string $provider): Response
+    protected function handleWebhook(Request $request, PaymentService $paymentService, PaymentProvider $provider): Response
     {
         $driver = $paymentService->driver($provider);
 
@@ -143,7 +147,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid provider reference.'], 400);
         }
 
-        $payment = Payment::where('provider', $provider)
+        $payment = Payment::where('provider', $provider->value)
             ->where('provider_ref', $data->providerRef)
             ->first();
 
@@ -156,7 +160,7 @@ class PaymentController extends Controller
         return response()->json(['message' => 'OK']);
     }
 
-    protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, string $provider): void
+    protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, PaymentProvider $provider): void
     {
         /** @var array<string, int|string>|null $integrityFailure */
         $integrityFailure = null;
@@ -176,9 +180,9 @@ class PaymentController extends Controller
                 $inserted = PaymentWebhookEvent::query()->insertOrIgnore([
                     [
                         'payment_id' => $payment->id,
-                        'provider' => $provider,
+                        'provider' => $provider->value,
                         'event_id' => $data->eventId,
-                        'status' => $data->status,
+                        'status' => $data->status->value,
                         'payload_json' => json_encode($sanitizedPayload, JSON_THROW_ON_ERROR),
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -190,12 +194,13 @@ class PaymentController extends Controller
                 }
             }
 
-            if (! $lockedPayment || $data->status === 'ignored' || ! $lockedPayment->canTransitionTo($data->status)) {
+            $nextStatus = $data->status->paymentStatus();
+            if (! $lockedPayment || $nextStatus === null || ! $lockedPayment->canTransitionTo($nextStatus)) {
                 return false;
             }
 
             if (
-                $data->status === 'paid'
+                $nextStatus === PaymentStatus::Paid
                 && ! PaymentAmount::matches(
                     (string) $lockedPayment->amount,
                     (string) $lockedPayment->currency,
@@ -212,37 +217,37 @@ class PaymentController extends Controller
             $payload = $lockedPayment->payload_json ?? [];
             $payload['webhook'] = $sanitizedPayload;
 
-            if ($data->status !== 'pending') {
+            if ($nextStatus !== PaymentStatus::Pending) {
                 unset($payload['gateway']);
             }
 
-            if ($data->status === 'paid') {
+            if ($nextStatus === PaymentStatus::Paid) {
                 unset($payload['failure'], $payload['error'], $payload['capture_error']);
             }
 
-            $lockedPayment->status = $data->status;
+            $lockedPayment->status = $nextStatus;
             $lockedPayment->payload_json = $payload;
 
-            if ($data->status === 'paid') {
+            if ($nextStatus === PaymentStatus::Paid) {
                 $lockedPayment->paid_at = now();
             }
 
             $lockedPayment->save();
 
-            if ($data->status === 'paid') {
-                if ($order?->status === 'pending') {
-                    $order->update(['status' => 'processing']);
+            if ($nextStatus === PaymentStatus::Paid) {
+                if ($order?->status === OrderStatus::Pending) {
+                    $order->update(['status' => OrderStatus::Processing]);
                 }
 
                 return false;
             }
 
             if (
-                $order?->status === 'pending'
-                && in_array($data->status, ['failed', 'expired', 'refunded'], true)
+                $order?->status === OrderStatus::Pending
+                && $nextStatus->restoresPendingOrder()
             ) {
                 $restored = $this->orderInventory->restore($order->id);
-                $order->update(['status' => 'cancelled']);
+                $order->update(['status' => OrderStatus::Cancelled]);
 
                 return $restored;
             }
@@ -256,7 +261,7 @@ class PaymentController extends Controller
 
         if ($integrityFailure !== null) {
             Log::warning('Payment webhook failed amount or currency validation.', $integrityFailure + [
-                'provider' => $provider,
+                'provider' => $provider->value,
                 'event_id' => $data->eventId,
             ]);
         }
@@ -281,7 +286,7 @@ class PaymentController extends Controller
             $payload = $lockedPayment->payload_json ?? [];
             $payload['capture'] = PaymentPayload::capture($capture);
 
-            $valid = $capture->status === 'paid'
+            $valid = $capture->status === PaymentWebhookStatus::Paid
                 && hash_equals((string) $lockedPayment->provider_ref, $capture->providerRef)
                 && PaymentAmount::matches(
                     (string) $lockedPayment->amount,
@@ -306,24 +311,24 @@ class PaymentController extends Controller
                 $payload['gateway'],
             );
 
-            if ($lockedPayment->status === 'paid') {
+            if ($lockedPayment->status === PaymentStatus::Paid) {
                 $lockedPayment->update(['payload_json' => $payload]);
 
                 return 'already_paid';
             }
 
-            if (! $lockedPayment->canTransitionTo('paid')) {
+            if (! $lockedPayment->canTransitionTo(PaymentStatus::Paid)) {
                 return 'transition_rejected';
             }
 
             $lockedPayment->update([
-                'status' => 'paid',
+                'status' => PaymentStatus::Paid,
                 'paid_at' => now(),
                 'payload_json' => $payload,
             ]);
 
-            if ($order?->status === 'pending') {
-                $order->update(['status' => 'processing']);
+            if ($order?->status === OrderStatus::Pending) {
+                $order->update(['status' => OrderStatus::Processing]);
             }
 
             return 'applied';

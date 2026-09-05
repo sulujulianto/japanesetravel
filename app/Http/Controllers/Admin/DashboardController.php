@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -22,7 +23,7 @@ class DashboardController extends Controller
     {
         /** @var array{revenue: float|int, orders: int, paid_orders: int, low_stock: int} $metrics */
         $metrics = Cache::remember('admin:dashboard:metrics', now()->addSeconds(60), function (): array {
-            $paidStatuses = ['processing', 'completed'];
+            $paidStatuses = OrderStatus::revenueValues();
 
             return [
                 'revenue' => Order::whereIn('status', $paidStatuses)->sum('total_price'),
@@ -48,12 +49,12 @@ class DashboardController extends Controller
                     ],
                     'total' => Format::idr($order->total_price),
                     'payment' => ! $payment instanceof Payment ? null : [
-                        'label' => strtoupper((string) $payment->provider).' · '.__(strtoupper((string) $payment->status)),
-                        'status' => (string) $payment->status,
+                        'label' => strtoupper($payment->provider->value).' · '.__(strtoupper($payment->status->value)),
+                        'status' => $payment->status->value,
                     ],
                     'status' => [
-                        'label' => __(strtoupper((string) $order->status)),
-                        'value' => (string) $order->status,
+                        'label' => __(strtoupper($order->status->value)),
+                        'value' => $order->status->value,
                     ],
                     'url' => route('admin.orders.show', $order, absolute: false),
                 ];
@@ -94,7 +95,7 @@ class DashboardController extends Controller
     {
         $locale = Format::locale();
         $data = Cache::remember(CacheKeys::adminDashboardCharts($locale), now()->addSeconds(90), function () use ($locale) {
-            $paidStatuses = ['processing', 'completed'];
+            $paidStatuses = OrderStatus::revenueValues();
             $startMonth = now()->subMonths(11)->startOfMonth();
             $endMonth = now()->endOfMonth();
 
