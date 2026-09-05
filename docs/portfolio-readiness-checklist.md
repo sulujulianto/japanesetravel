@@ -1,95 +1,108 @@
 # Portfolio Readiness Checklist
 
+## Release Definition
+
+The current release target is **portfolio-ready and local-first**. Public deployment is intentionally deferred and is not a blocker as long as the repository remains reproducible, evidence-backed, and explicit about what has not been validated.
+
 Legend:
 
-- `[x]` repository artifact exists and was verified locally.
-- `[ ]` owner/manual action remains.
+- `[x]` verified repository artifact or commit-bound evidence exists.
+- `[ ]` action is still required for the local-first release.
+- **Deferred** means optional external-account work outside the current release gate.
 
 ## Repository
 
-- [x] Professional local-first README.
-- [x] MIT license.
-- [x] Project-specific Composer metadata.
-- [x] Locked Composer/npm dependencies.
-- [x] `.env.example` contains placeholders, not real secrets.
-- [x] GitHub Actions CI workflow.
-- [x] GitHub issue templates.
-- [x] Documentation index.
-- [ ] Owner action required: add a concise GitHub repository description/topics.
-- [ ] Owner action required: clean/defer stale dependency PRs after review.
+- [x] Indonesian primary README and English README exist.
+- [x] README links point to existing repository artifacts.
+- [x] MIT license and project-specific Composer metadata exist.
+- [x] Composer and npm dependency locks are committed.
+- [x] `.env.example` uses placeholders instead of real credentials.
+- [x] GitHub Actions CI and security workflows exist.
+- [x] Issue templates and a documentation index exist.
+- [ ] Add a concise GitHub repository description and relevant topics.
+- [ ] Review open dependency PRs; merge, defer, or close each one based on compatibility rather than version novelty.
 
-## Local Review
+## Reproducible Local Review
 
-- [x] MySQL/MariaDB setup documented.
-- [x] SQLite quick start documented.
-- [x] Curated local demo seed documented.
-- [x] Demo accounts documented and environment-guarded.
-- [x] Media symlink requirement documented.
-- [x] Mail/payment/WhatsApp limitations documented.
+- [x] MariaDB/MySQL setup is documented.
+- [x] SQLite quick-review setup is documented.
+- [x] Curated demo data and local demo accounts are documented.
+- [x] Demo seeders are environment-guarded.
+- [x] Media symlink and PHP-extension requirements are documented.
+- [x] Mail, payment, WhatsApp, and storage limitations are visible.
+- [ ] Re-run the documented setup from a clean clone or disposable directory before tagging the portfolio release.
 
 ## Automated Quality
 
-- [x] Feature/unit tests present.
-- [x] Pint check configured.
-- [x] PHPStan/Larastan configured.
-- [x] Composer/npm audits configured.
-- [x] Vite production build configured.
-- [x] Current baseline recorded in testing summary.
-- [ ] Owner action required: measure coverage with PCOV/Xdebug if a percentage is desired.
-- [ ] Future: reduce PHPStan baseline.
+- [x] Feature and unit tests cover public, user, admin, transaction, and security-sensitive paths.
+- [x] Laravel Pint and Larastan/PHPStan are configured.
+- [x] Vue TypeScript and ESLint gates are configured.
+- [x] Composer/npm audits and Vite production build run in CI.
+- [x] CI exercises SQLite, MariaDB 10.11, and MariaDB 11.8.
+- [x] CodeQL, dependency review, and secret scan are configured.
+- [x] The `b2cff65` snapshot records 258 tests and 2,498 assertions.
+- [ ] Run all quality and security checks for the final documentation branch.
+- [ ] Reduce the PHPStan baseline incrementally when changes form a coherent, low-risk batch.
+- [ ] Measure coverage only if a reproducible PCOV/Xdebug environment is available; no percentage is required for this release.
 
 ## Portfolio Presentation
 
-- [x] Case study exists.
-- [x] Demo video script exists.
-- [x] Screenshot checklist and naming standard exist.
-- [x] Safe CV/portfolio positioning exists in README/case study.
-- [ ] Owner action required: record demo video.
-- [ ] Owner action required: capture complete screenshot set.
-- [ ] Owner action required: add verified links to README.
+- [x] Bilingual project overview exists.
+- [x] Engineering case study exists.
+- [x] A complete 15-file screenshot set exists as historical evidence.
+- [x] Screenshot naming, provenance, and redaction rules exist.
+- [x] A 1–2 minute demo-video script exists.
+- [x] Safe portfolio/CV positioning avoids production and real-payment claims.
+- [ ] Compare screenshots with the final local commit and refresh only materially outdated views.
+- [ ] Record a localhost walkthrough if practical; this is useful but not required for the repository-only release.
 
 ## QA Evidence
 
-- [x] Test case matrix exists.
-- [x] Manual QA checklist exists.
-- [x] Regression scenarios exist.
-- [x] Evidence table/template exists.
-- [x] Bug/ticket/incident samples exist and are labelled simulated.
-- [ ] Owner action required: execute manual QA against the chosen environment.
-- [ ] Owner action required: attach real redacted evidence.
+- [x] Test-case matrix, regression scenarios, and manual checklist exist.
+- [x] Commit-bound automated evidence exists.
+- [x] Historical visual evidence identifies its capture commit.
+- [x] Simulated bug, ticket, and incident samples are explicitly labelled.
+- [ ] Execute and record a final local smoke test for public, user, and admin critical paths.
+- [ ] Confirm that all new evidence is redacted and contains no personal data or credentials.
 
-## Deployment
+## Deployment — Deferred
 
-- [x] Dockerfile and Railway scripts exist.
+Deployment assets remain useful evidence of operational awareness:
+
+- [x] Multi-stage Dockerfile and Railway scripts exist.
 - [x] Migration is separated from normal runtime.
-- [x] `/up` health endpoint is configured.
-- [x] Production-safe environment values are documented.
-- [x] Persistent media strategy is documented.
-- [x] Demo seeders are blocked outside local/testing.
-- [ ] Owner action required: create Railway services and database.
-- [ ] Owner action required: mount media volume.
-- [ ] Owner action required: run `migrate --force`.
-- [ ] Owner action required: verify public HTTPS URL and `/up`.
-- [ ] Owner action required: add real live-demo URL to README.
+- [x] `/up`, environment configuration, persistent-media strategy, and production-safe seeding are documented.
 
-## External Integrations
+The following items are **deferred and non-blocking** for the local-first release:
 
-- [x] Mail configuration requirements documented.
-- [x] WhatsApp optional state documented.
-- [x] Payment sandbox matrix documented.
-- [x] Safe Postman collection/template exists.
-- [ ] Owner action required: configure transactional mail and verify delivery.
-- [ ] Owner action required: provide an approved WhatsApp number or keep CTA disabled.
-- [ ] Owner action required: execute Midtrans sandbox validation.
-- [ ] Owner action required: execute PayPal sandbox validation.
-- [ ] Owner action required: record provider/webhook evidence.
+- creating a public hosting/database service;
+- attaching a persistent media volume;
+- running remote migrations and HTTPS smoke tests;
+- publishing a live-demo URL;
+- proving remote backup, rollback, or multi-replica behavior.
 
-## Final Publication Gate
+## External Integrations — Deferred
 
-- [ ] All P0 manual checks pass.
-- [ ] README links point only to real evidence.
-- [ ] No credentials or personal data are committed.
-- [ ] Current CI on `main` is green.
-- [ ] Known limitations remain visible.
-- [ ] Resume/CV wording does not claim production usage, real payments, or travel booking.
+- [x] Mail requirements, optional WhatsApp behavior, payment matrices, and safe Postman templates are documented.
+- [x] Automated tests cover application-side payment contracts and webhook behavior.
 
+The following items are **not claimed and are non-blocking**:
+
+- transactional email deliverability;
+- Midtrans/PayPal account-level sandbox validation;
+- real provider callback evidence;
+- an approved production WhatsApp number;
+- production monitoring or alert delivery.
+
+## Final Local-First Publication Gate
+
+- [x] No live-deployment, real-payment, travel-booking, or production-usage claim is made.
+- [x] Known limitations remain visible.
+- [x] Historical and current evidence are clearly distinguished.
+- [x] Public documentation contains no intentional credentials or personal data.
+- [ ] Final local manual smoke test is recorded.
+- [ ] Complete quality gates pass on the branch.
+- [ ] GitHub security checks pass on the pull request.
+- [ ] Repository description/topics are reviewed.
+- [ ] Final README and documentation render correctly on GitHub.
+- [ ] The merged `main` commit is tagged as the portfolio release only after the items above pass.
