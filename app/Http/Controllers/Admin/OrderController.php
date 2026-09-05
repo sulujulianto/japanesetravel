@@ -238,7 +238,7 @@ class OrderController extends Controller
     private function serializeOrder(Order $order): array
     {
         $payment = $order->getRelation('payment');
-        $user = $order->getRelation('user');
+        $customer = $this->serializeCustomer($order);
         $createdAt = $order->getAttribute('created_at');
         $totalPrice = $order->getAttribute('total_price');
         $status = (string) $order->getAttribute('status');
@@ -246,10 +246,7 @@ class OrderController extends Controller
         return [
             'id' => (int) $order->getKey(),
             'reference' => '#ORDER-'.$order->getKey(),
-            'customer' => [
-                'username' => $user instanceof User ? (string) $user->username : __('Pengguna tidak tersedia'),
-                'email' => $user instanceof User ? (string) $user->email : '',
-            ],
+            'customer' => $customer,
             'date' => Format::date($createdAt instanceof DateTimeInterface || is_string($createdAt) ? $createdAt : null),
             'total' => Format::idr(is_numeric($totalPrice) ? $totalPrice : 0),
             'payment' => ! $payment instanceof Payment ? null : [
@@ -267,7 +264,6 @@ class OrderController extends Controller
     /** @return array<string, mixed> */
     private function serializeOrderDetail(Order $order): array
     {
-        $user = $order->getRelation('user');
         $payment = $order->getRelation('payment');
         /** @var Collection<int, OrderItem> $items */
         $items = $order->getRelation('items');
@@ -280,10 +276,7 @@ class OrderController extends Controller
         return [
             'adminNote' => $this->nullableString($order->getAttribute('admin_note')),
             'createdAt' => Format::dateTime($createdAt instanceof DateTimeInterface || is_string($createdAt) ? $createdAt : null),
-            'customer' => [
-                'email' => $user instanceof User ? (string) $user->email : '',
-                'username' => $user instanceof User ? (string) $user->username : __('Pengguna tidak tersedia'),
-            ],
+            'customer' => $this->serializeCustomer($order),
             'id' => (int) $order->getKey(),
             'items' => $items->map(fn (OrderItem $item): array => $this->serializeOrderItem($item))->values()->all(),
             'latestPayment' => $payment instanceof Payment ? $this->serializePaymentStatus($payment) : null,
@@ -320,6 +313,33 @@ class OrderController extends Controller
             'province' => (string) ($snapshot['province'] ?? ''),
             'recipientName' => (string) ($snapshot['recipient_name'] ?? ''),
             'recipientPhone' => (string) ($snapshot['recipient_phone'] ?? ''),
+        ];
+    }
+
+    /** @return array{email: string, username: string} */
+    private function serializeCustomer(Order $order): array
+    {
+        $user = $order->getRelation('user');
+        if ($user instanceof User) {
+            return [
+                'email' => (string) $user->email,
+                'username' => (string) $user->username,
+            ];
+        }
+
+        $snapshot = $order->getAttribute('customer_snapshot');
+        if (! is_array($snapshot)) {
+            return [
+                'email' => '',
+                'username' => __('Pengguna tidak tersedia'),
+            ];
+        }
+
+        $username = trim((string) ($snapshot['username'] ?? ''));
+
+        return [
+            'email' => trim((string) ($snapshot['email'] ?? '')),
+            'username' => $username !== '' ? $username : __('Pengguna tidak tersedia'),
         ];
     }
 

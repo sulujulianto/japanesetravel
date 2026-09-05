@@ -2,10 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\PaymentWebhookEvent;
+use App\Models\Souvenir;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -180,7 +188,75 @@ class ProfileTest extends TestCase
 
     public function test_user_can_delete_their_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'username' => 'retained-customer',
+            'email' => 'retained-customer@example.test',
+        ]);
+        $profile = UserProfile::factory()->for($user)->create();
+        $address = UserAddress::factory()->for($user)->asDefault()->create();
+        $souvenir = Souvenir::factory()->create(['stock' => 3]);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'customer_snapshot' => [
+                'username' => $user->username,
+                'email' => $user->email,
+            ],
+            'shipping_address_id' => $address->id,
+            'shipping_address_snapshot' => [
+                'label' => $address->label,
+                'recipient_name' => $address->recipient_name,
+                'recipient_phone' => $address->recipient_phone,
+                'address_line_1' => $address->address_line_1,
+                'address_line_2' => $address->address_line_2,
+                'city' => $address->city,
+                'province' => $address->province,
+                'postal_code' => $address->postal_code,
+                'country_code' => $address->country_code,
+            ],
+            'total_price' => 100000,
+            'status' => 'completed',
+            'note' => 'Retained order',
+        ]);
+        $item = OrderItem::create([
+            'order_id' => $order->id,
+            'souvenir_id' => $souvenir->id,
+            'quantity' => 1,
+            'price' => 100000,
+            'product_name' => 'Retained souvenir',
+            'product_price' => 100000,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'RETAINED-PAYMENT',
+            'status' => 'paid',
+            'amount' => 100000,
+            'currency' => 'IDR',
+        ]);
+        $event = PaymentWebhookEvent::create([
+            'payment_id' => $payment->id,
+            'provider' => 'midtrans',
+            'event_id' => 'RETAINED-EVENT',
+            'status' => 'paid',
+            'payload_json' => ['transaction_status' => 'settlement'],
+        ]);
+        $movement = InventoryMovement::create([
+            'souvenir_id' => $souvenir->id,
+            'order_id' => $order->id,
+            'actor_id' => $user->id,
+            'type' => InventoryMovement::TYPE_ORDER_RESERVATION,
+            'quantity_delta' => -1,
+            'stock_before' => 4,
+            'stock_after' => 3,
+            'reference' => 'order:'.$order->id.':retention-test',
+            'product_name_snapshot' => ['id' => 'Suvenir tersimpan', 'en' => 'Retained souvenir'],
+            'actor_name_snapshot' => $user->username,
+        ]);
+
+        $rawCustomerSnapshot = (string) DB::table('orders')
+            ->where('id', $order->id)
+            ->value('customer_snapshot');
+        $this->assertStringNotContainsString($user->email, $rawCustomerSnapshot);
 
         $response = $this
             ->actingAs($user)
@@ -194,6 +270,34 @@ class ProfileTest extends TestCase
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
+        $this->assertDatabaseMissing('user_profiles', ['id' => $profile->id]);
+        $this->assertDatabaseMissing('user_addresses', ['id' => $address->id]);
+
+        $retainedOrder = $order->fresh();
+        $this->assertNotNull($retainedOrder);
+        $this->assertNull($retainedOrder->user_id);
+        $this->assertNull($retainedOrder->shipping_address_id);
+        $this->assertSame('retained-customer', $retainedOrder->customer_snapshot['username']);
+        $this->assertSame('retained-customer@example.test', $retainedOrder->customer_snapshot['email']);
+        $this->assertSame($address->recipient_name, $retainedOrder->shipping_address_snapshot['recipient_name']);
+        $this->assertNotNull($item->fresh());
+        $this->assertNotNull($payment->fresh());
+        $this->assertNotNull($event->fresh());
+        $this->assertSame($order->id, $movement->fresh()?->order_id);
+        $this->assertNull($movement->fresh()?->actor_id);
+
+        $this->actingAs(User::factory()->create(), 'web')
+            ->get(route('orders.show', $order))
+            ->assertForbidden();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin, 'admin')
+            ->withCookie('locale', 'en')
+            ->get(route('admin.orders.show', $order))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('order.customer.username', 'retained-customer')
+                ->where('order.customer.email', 'retained-customer@example.test')
+            );
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
