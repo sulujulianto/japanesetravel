@@ -8,6 +8,7 @@ use App\Models\PaymentWebhookEvent;
 use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\Drivers\PayPalCheckoutDriver;
 use App\Services\Payments\PaymentAmount;
+use App\Services\Payments\PaymentPayload;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
 use App\Support\CacheKeys;
@@ -56,10 +57,10 @@ class PaymentController extends Controller
             Log::warning('PayPal capture failed on return callback.', [
                 'payment_id' => $payment->id,
                 'provider_ref' => $providerRef,
-                'exception' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
 
-            DB::transaction(function () use ($payment, $exception): void {
+            DB::transaction(function () use ($payment): void {
                 $lockedPayment = Payment::query()
                     ->whereKey($payment->id)
                     ->lockForUpdate()
@@ -70,7 +71,8 @@ class PaymentController extends Controller
                 }
 
                 $payload = $lockedPayment->payload_json ?? [];
-                $payload['capture_error'] = $exception->getMessage();
+                $payload['failure'] = PaymentPayload::failure('paypal_capture_failed');
+                unset($payload['gateway']);
 
                 $lockedPayment->update([
                     'status' => 'failed',
@@ -158,8 +160,9 @@ class PaymentController extends Controller
     {
         /** @var array<string, int|string>|null $integrityFailure */
         $integrityFailure = null;
+        $sanitizedPayload = PaymentPayload::webhook($provider, $data);
 
-        $stockRestored = DB::transaction(function () use ($payment, $data, $provider, &$integrityFailure): bool {
+        $stockRestored = DB::transaction(function () use ($payment, $data, $provider, $sanitizedPayload, &$integrityFailure): bool {
             $order = Order::query()
                 ->whereKey($payment->order_id)
                 ->lockForUpdate()
@@ -176,7 +179,7 @@ class PaymentController extends Controller
                         'provider' => $provider,
                         'event_id' => $data->eventId,
                         'status' => $data->status,
-                        'payload_json' => json_encode($data->payload, JSON_THROW_ON_ERROR),
+                        'payload_json' => json_encode($sanitizedPayload, JSON_THROW_ON_ERROR),
                         'created_at' => now(),
                         'updated_at' => now(),
                     ],
@@ -200,19 +203,22 @@ class PaymentController extends Controller
                     $data->currency,
                 )
             ) {
-                $integrityFailure = [
-                    'payment_id' => $lockedPayment->id,
-                    'expected_amount' => (string) $lockedPayment->amount,
-                    'received_amount' => $data->amount,
-                    'expected_currency' => (string) $lockedPayment->currency,
-                    'received_currency' => $data->currency,
-                ];
+                $integrityFailure = ['payment_id' => $lockedPayment->id]
+                    + PaymentPayload::integrityFailure($lockedPayment, $data);
 
                 return false;
             }
 
             $payload = $lockedPayment->payload_json ?? [];
-            $payload['webhook'] = $data->payload;
+            $payload['webhook'] = $sanitizedPayload;
+
+            if ($data->status !== 'pending') {
+                unset($payload['gateway']);
+            }
+
+            if ($data->status === 'paid') {
+                unset($payload['failure'], $payload['error'], $payload['capture_error']);
+            }
 
             $lockedPayment->status = $data->status;
             $lockedPayment->payload_json = $payload;
@@ -273,7 +279,7 @@ class PaymentController extends Controller
             }
 
             $payload = $lockedPayment->payload_json ?? [];
-            $payload['capture'] = $capture->payload;
+            $payload['capture'] = PaymentPayload::capture($capture);
 
             $valid = $capture->status === 'paid'
                 && hash_equals((string) $lockedPayment->provider_ref, $capture->providerRef)
@@ -285,21 +291,20 @@ class PaymentController extends Controller
                 );
 
             if (! $valid) {
-                $payload['capture_integrity_error'] = [
-                    'expected_provider_ref' => (string) $lockedPayment->provider_ref,
-                    'received_provider_ref' => $capture->providerRef,
-                    'expected_amount' => (string) $lockedPayment->amount,
-                    'received_amount' => $capture->amount,
-                    'expected_currency' => (string) $lockedPayment->currency,
-                    'received_currency' => $capture->currency,
-                ];
+                $payload['capture_integrity_error'] = PaymentPayload::integrityFailure($lockedPayment, $capture);
 
                 $lockedPayment->update(['payload_json' => $payload]);
 
                 return 'integrity_failed';
             }
 
-            unset($payload['capture_integrity_error']);
+            unset(
+                $payload['capture_integrity_error'],
+                $payload['failure'],
+                $payload['error'],
+                $payload['capture_error'],
+                $payload['gateway'],
+            );
 
             if ($lockedPayment->status === 'paid') {
                 $lockedPayment->update(['payload_json' => $payload]);

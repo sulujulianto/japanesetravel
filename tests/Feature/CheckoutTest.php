@@ -89,6 +89,9 @@ class CheckoutTest extends TestCase
         ]);
 
         $order = Order::firstOrFail();
+        $createdPayment = Payment::firstOrFail();
+        $this->assertSame('https://pay.test/redirect', $createdPayment->payload_json['gateway']['redirect_url'] ?? null);
+        $this->assertArrayNotHasKey('token', $createdPayment->payload_json['gateway'] ?? []);
         $this->assertSame($user->username, $order->customer_snapshot['username']);
         $this->assertSame($user->email, $order->customer_snapshot['email']);
         $this->assertSame('Edo Wardana', $order->shipping_address_snapshot['recipient_name']);
@@ -203,7 +206,8 @@ class CheckoutTest extends TestCase
         $this->assertSame('cancelled', $order->status);
         $this->assertNotNull($order->stock_restored_at);
         $this->assertSame('failed', $payment->status);
-        $this->assertStringContainsString('Gateway timeout', (string) ($payment->payload_json['error'] ?? ''));
+        $this->assertSame('gateway_creation_failed', $payment->payload_json['failure']['code'] ?? null);
+        $this->assertStringNotContainsString('Gateway timeout', json_encode($payment->payload_json, JSON_THROW_ON_ERROR));
         $this->assertSame(5, $souvenir->fresh()->stock);
         $this->assertDatabaseCount('inventory_movements', 2);
         $this->assertDatabaseHas('inventory_movements', [
