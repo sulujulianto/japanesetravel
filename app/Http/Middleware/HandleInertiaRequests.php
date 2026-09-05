@@ -82,7 +82,7 @@ class HandleInertiaRequests extends Middleware
             'id' => (int) $user->getKey(),
             'username' => (string) $user->username,
             'email' => (string) $user->email,
-            'role' => (string) $user->role,
+            'role' => $user->role->value,
         ];
     }
 }

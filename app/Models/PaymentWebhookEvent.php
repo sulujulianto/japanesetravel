@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentWebhookStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property PaymentProvider $provider
+ * @property PaymentWebhookStatus $status
+ */
 class PaymentWebhookEvent extends Model
 {
     use HasFactory;
@@ -19,6 +25,8 @@ class PaymentWebhookEvent extends Model
 
     protected $casts = [
         'payload_json' => 'array',
+        'provider' => PaymentProvider::class,
+        'status' => PaymentWebhookStatus::class,
     ];
 
     public function payment()

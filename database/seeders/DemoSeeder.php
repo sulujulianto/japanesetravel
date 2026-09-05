@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -38,7 +42,7 @@ class DemoSeeder extends Seeder
             'username' => 'admin',
             'email' => 'admin@japantravel.com',
             'password' => Hash::make('password'),
-            'role' => 'admin',
+            'role' => UserRole::Admin,
             'email_verified_at' => now(),
         ]);
 
@@ -47,7 +51,7 @@ class DemoSeeder extends Seeder
                 'username' => $user['username'],
                 'email' => $user['email'],
                 'password' => Hash::make('password'),
-                'role' => 'user',
+                'role' => UserRole::User,
                 'email_verified_at' => now(),
             ]);
         });
@@ -114,8 +118,8 @@ class DemoSeeder extends Seeder
 
         mt_srand(2027);
         $souvenirs = Souvenir::all()->values();
-        $orderStatuses = ['pending', 'processing', 'completed'];
-        $pendingPaymentStatuses = ['pending', 'expired', 'failed'];
+        $orderStatuses = [OrderStatus::Pending, OrderStatus::Processing, OrderStatus::Completed];
+        $pendingPaymentStatuses = [PaymentStatus::Pending, PaymentStatus::Expired, PaymentStatus::Failed];
         for ($i = 0; $i < 18; $i++) {
             $user = $users->values()[mt_rand(0, $users->count() - 1)];
             $orderDate = now()->subDays(mt_rand(1, 120));
@@ -176,10 +180,10 @@ class DemoSeeder extends Seeder
                 $data['souvenir']->decrement('stock', $data['qty']);
             }
 
-            $provider = ['midtrans', 'paypal'][mt_rand(0, 1)];
-            $paymentStatus = $status === 'pending'
+            $provider = [PaymentProvider::Midtrans, PaymentProvider::PayPal][mt_rand(0, 1)];
+            $paymentStatus = $status === OrderStatus::Pending
                 ? $pendingPaymentStatuses[mt_rand(0, count($pendingPaymentStatuses) - 1)]
-                : 'paid';
+                : PaymentStatus::Paid;
 
             $payment = Payment::create([
                 'order_id' => $order->id,
@@ -191,17 +195,13 @@ class DemoSeeder extends Seeder
                 'payload_json' => [
                     'seeded' => true,
                 ],
-                'paid_at' => $paymentStatus === 'paid' ? $orderDate->copy()->addHours(rand(1, 24)) : null,
+                'paid_at' => $paymentStatus === PaymentStatus::Paid ? $orderDate->copy()->addHours(rand(1, 24)) : null,
             ]);
 
             $payment->forceFill([
                 'created_at' => $orderDate,
                 'updated_at' => $orderDate,
             ])->save();
-
-            if ($paymentStatus === 'paid' && $status === 'pending') {
-                $order->update(['status' => 'processing']);
-            }
         }
     }
 }

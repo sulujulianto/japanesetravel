@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController as AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InventoryController;
@@ -69,7 +70,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         $user = Auth::user();
         $data = [
             'my_orders' => Order::where('user_id', $user->id)->count(),
-            'spent' => Order::where('user_id', $user->id)->whereIn('status', ['processing', 'completed'])->sum('total_price'),
+            'spent' => Order::where('user_id', $user->id)->whereIn('status', OrderStatus::revenueValues())->sum('total_price'),
             'recent_orders' => Order::where('user_id', $user->id)->with('items.product')->latest()->take(5)->get(),
         ];
 

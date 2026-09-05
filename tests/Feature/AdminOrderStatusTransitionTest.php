@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderStatus;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -70,7 +71,7 @@ class AdminOrderStatusTransitionTest extends TestCase
         $response->assertSessionHas('error', 'The order status transition is invalid.');
 
         $order->refresh();
-        $this->assertSame('pending', $order->status);
+        $this->assertSame(OrderStatus::Pending, $order->status);
         $this->assertSame('Catatan awal', $order->admin_note);
     }
 
@@ -131,7 +132,7 @@ class AdminOrderStatusTransitionTest extends TestCase
             $response->assertSessionHas('error');
 
             $order->refresh();
-            $this->assertSame('completed', $order->status);
+            $this->assertSame(OrderStatus::Completed, $order->status);
             $this->assertSame('Completed note', $order->admin_note);
         }
     }
@@ -153,7 +154,7 @@ class AdminOrderStatusTransitionTest extends TestCase
             $response->assertSessionHas('error');
 
             $order->refresh();
-            $this->assertSame('cancelled', $order->status);
+            $this->assertSame(OrderStatus::Cancelled, $order->status);
             $this->assertSame('Cancelled note', $order->admin_note);
         }
     }
@@ -174,7 +175,7 @@ class AdminOrderStatusTransitionTest extends TestCase
         $response->assertRedirect(route('admin.login'));
 
         $order->refresh();
-        $this->assertSame('pending', $order->status);
+        $this->assertSame(OrderStatus::Pending, $order->status);
     }
 
     public function test_admin_cancellation_restores_reserved_stock_exactly_once(): void

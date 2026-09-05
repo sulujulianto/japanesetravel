@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -31,7 +35,7 @@ class DevAccountSeeder extends Seeder
             [
                 'username' => 'dev_user_demo',
                 'password' => $password,
-                'role' => 'user',
+                'role' => UserRole::User,
                 'email_verified_at' => now(),
             ]
         );
@@ -41,7 +45,7 @@ class DevAccountSeeder extends Seeder
             [
                 'username' => 'dev_admin_demo',
                 'password' => $password,
-                'role' => 'admin',
+                'role' => UserRole::Admin,
                 'email_verified_at' => now(),
             ]
         );
@@ -62,27 +66,27 @@ class DevAccountSeeder extends Seeder
 
         $samples = [
             [
-                'status' => 'pending',
-                'payment_status' => 'pending',
-                'provider' => 'midtrans',
+                'status' => OrderStatus::Pending,
+                'payment_status' => PaymentStatus::Pending,
+                'provider' => PaymentProvider::Midtrans,
                 'created_at' => now()->subDays(1),
             ],
             [
-                'status' => 'processing',
-                'payment_status' => 'paid',
-                'provider' => 'paypal',
+                'status' => OrderStatus::Processing,
+                'payment_status' => PaymentStatus::Paid,
+                'provider' => PaymentProvider::PayPal,
                 'created_at' => now()->subDays(8),
             ],
             [
-                'status' => 'completed',
-                'payment_status' => 'paid',
-                'provider' => 'midtrans',
+                'status' => OrderStatus::Completed,
+                'payment_status' => PaymentStatus::Paid,
+                'provider' => PaymentProvider::Midtrans,
                 'created_at' => now()->subDays(21),
             ],
             [
-                'status' => 'cancelled',
-                'payment_status' => 'expired',
-                'provider' => 'paypal',
+                'status' => OrderStatus::Cancelled,
+                'payment_status' => PaymentStatus::Expired,
+                'provider' => PaymentProvider::PayPal,
                 'created_at' => now()->subDays(34),
             ],
         ];
@@ -126,7 +130,7 @@ class DevAccountSeeder extends Seeder
                     'seeded' => true,
                     'purpose' => 'local visual review only',
                 ],
-                'paid_at' => $sample['payment_status'] === 'paid' ? $sample['created_at']->copy()->addHours(2) : null,
+                'paid_at' => $sample['payment_status'] === PaymentStatus::Paid ? $sample['created_at']->copy()->addHours(2) : null,
                 'created_at' => $sample['created_at'],
                 'updated_at' => $sample['created_at'],
             ]);

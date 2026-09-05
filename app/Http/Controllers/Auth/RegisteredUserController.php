@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -39,7 +40,7 @@ class RegisteredUserController extends Controller
             'username' => $request->username, // Simpan username
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'user', // Default role
+            'role' => UserRole::User, // Default role
             'avatar' => 'avatar1.png', // Default avatar
         ]);
 

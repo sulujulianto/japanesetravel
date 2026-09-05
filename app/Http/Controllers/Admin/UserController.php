@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\OrderStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserAddress;
@@ -24,7 +26,7 @@ class UserController extends Controller
     {
         $filters = $this->filters($request);
         $query = User::query()
-            ->where('role', 'user')
+            ->where('role', UserRole::User->value)
             ->with('profile')
             ->withCount(['addresses', 'orders']);
 
@@ -76,7 +78,7 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        abort_unless($user->role === 'user', 404);
+        abort_unless($user->role === UserRole::User, 404);
 
         $user->load([
             'profile',
@@ -150,7 +152,7 @@ class UserController extends Controller
             ? $this->nullableString($profile->preferred_locale)
             : null;
         $spent = $user->orders()
-            ->whereIn('status', ['processing', 'completed'])
+            ->whereIn('status', OrderStatus::revenueValues())
             ->sum('total_price');
 
         return [

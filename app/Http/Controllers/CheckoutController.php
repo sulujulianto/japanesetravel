@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -38,11 +41,11 @@ class CheckoutController extends Controller
         $userId = (int) Auth::id();
         $intent = $request->validate([
             'checkout_token' => ['required', 'uuid'],
-            'payment_provider' => ['required', Rule::in(['midtrans', 'paypal'])],
+            'payment_provider' => ['required', Rule::enum(PaymentProvider::class)],
         ]);
         $checkoutToken = (string) $intent['checkout_token'];
         $idempotencyKey = $checkoutIdempotency->hash($checkoutToken);
-        $provider = (string) $intent['payment_provider'];
+        $provider = PaymentProvider::from((string) $intent['payment_provider']);
 
         $existingOrder = $this->findIdempotentOrder($idempotencyKey);
         if ($existingOrder) {
@@ -163,7 +166,7 @@ class CheckoutController extends Controller
                     'shipping_address_id' => $shippingAddress->id,
                     'shipping_address_snapshot' => $this->shippingAddressSnapshot($shippingAddress),
                     'total_price' => $total,
-                    'status' => 'pending',
+                    'status' => OrderStatus::Pending,
                     'note' => 'Pesanan Baru',
                 ]);
 
@@ -189,7 +192,7 @@ class CheckoutController extends Controller
                     );
                 }
 
-                $providerRef = $provider === 'midtrans'
+                $providerRef = $provider === PaymentProvider::Midtrans
                     ? 'ORD-'.$order->id.'-'.Str::uuid()
                     : null;
 
@@ -197,7 +200,7 @@ class CheckoutController extends Controller
                     'order_id' => $order->id,
                     'provider' => $provider,
                     'provider_ref' => $providerRef,
-                    'status' => 'pending',
+                    'status' => PaymentStatus::Pending,
                     'amount' => $total,
                     'currency' => 'IDR',
                 ]);
@@ -244,7 +247,7 @@ class CheckoutController extends Controller
                 CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
             } else {
                 $payment->update([
-                    'status' => 'failed',
+                    'status' => PaymentStatus::Failed,
                     'payload_json' => [
                         'failure' => PaymentPayload::failure('gateway_persistence_failed'),
                     ],
@@ -288,16 +291,16 @@ class CheckoutController extends Controller
         $payment = $order->payment;
         if ($payment) {
             $redirectUrl = $this->extractRedirectUrlFromPayment($payment);
-            if ($payment->status === 'pending' && $redirectUrl !== null) {
+            if ($payment->status === PaymentStatus::Pending && $redirectUrl !== null) {
                 return redirect()->away($redirectUrl);
             }
 
-            if ($payment->status === 'paid') {
+            if ($payment->status === PaymentStatus::Paid) {
                 return redirect()->route('orders.show', $order)
                     ->with('success', __('Pembayaran pesanan ini sudah diterima.'));
             }
 
-            if ($payment->status === 'pending') {
+            if ($payment->status === PaymentStatus::Pending) {
                 return redirect()->route('orders.show', $order)
                     ->with('error', __('Pembayaran sebelumnya sedang diproses. Silakan cek kembali status pesanan.'));
             }
@@ -324,10 +327,10 @@ class CheckoutController extends Controller
                 return;
             }
 
-            if ($lockedOrder->status === 'pending') {
+            if ($lockedOrder->status === OrderStatus::Pending) {
                 $orderInventory->restore($lockedOrder->id);
                 $lockedOrder->update([
-                    'status' => 'cancelled',
+                    'status' => OrderStatus::Cancelled,
                 ]);
             }
 
@@ -335,7 +338,7 @@ class CheckoutController extends Controller
             $payload['failure'] = PaymentPayload::failure('gateway_creation_failed');
 
             $lockedPayment->update([
-                'status' => 'failed',
+                'status' => PaymentStatus::Failed,
                 'payload_json' => $payload,
             ]);
         });
@@ -414,10 +417,10 @@ class CheckoutController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_provider' => 'required|in:midtrans,paypal',
+            'payment_provider' => ['required', Rule::enum(PaymentProvider::class)],
         ]);
 
-        $provider = $validated['payment_provider'];
+        $provider = PaymentProvider::from((string) $validated['payment_provider']);
         $gatewayOrder = null;
         $payment = null;
         $reuseRedirectUrl = null;
@@ -434,19 +437,19 @@ class CheckoutController extends Controller
                 return;
             }
 
-            if ($lockedOrder->status === 'completed') {
+            if ($lockedOrder->status === OrderStatus::Completed) {
                 $retryOutcome = 'order_completed';
 
                 return;
             }
 
-            if ($lockedOrder->status === 'cancelled') {
+            if ($lockedOrder->status === OrderStatus::Cancelled) {
                 $retryOutcome = 'order_cancelled';
 
                 return;
             }
 
-            if ($lockedOrder->status !== 'pending') {
+            if ($lockedOrder->status !== OrderStatus::Pending) {
                 $retryOutcome = 'order_not_retryable';
 
                 return;
@@ -454,7 +457,7 @@ class CheckoutController extends Controller
 
             $pendingPayment = Payment::query()
                 ->where('order_id', $lockedOrder->id)
-                ->where('status', 'pending')
+                ->where('status', PaymentStatus::Pending->value)
                 ->latest('id')
                 ->lockForUpdate()
                 ->first();
@@ -470,7 +473,7 @@ class CheckoutController extends Controller
 
             $paidPaymentExists = Payment::query()
                 ->where('order_id', $lockedOrder->id)
-                ->where('status', 'paid')
+                ->where('status', PaymentStatus::Paid->value)
                 ->exists();
 
             if ($paidPaymentExists) {
@@ -482,10 +485,10 @@ class CheckoutController extends Controller
             $payment = Payment::create([
                 'order_id' => $lockedOrder->id,
                 'provider' => $provider,
-                'provider_ref' => $provider === 'midtrans'
+                'provider_ref' => $provider === PaymentProvider::Midtrans
                     ? 'ORD-'.$lockedOrder->id.'-'.Str::uuid()
                     : null,
-                'status' => 'pending',
+                'status' => PaymentStatus::Pending,
                 'amount' => $lockedOrder->total_price,
                 'currency' => 'IDR',
             ]);
@@ -536,7 +539,7 @@ class CheckoutController extends Controller
             ]);
         } catch (\Throwable) {
             $payment->update([
-                'status' => 'failed',
+                'status' => PaymentStatus::Failed,
                 'payload_json' => [
                     'failure' => PaymentPayload::failure('gateway_creation_failed'),
                 ],

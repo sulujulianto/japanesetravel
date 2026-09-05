@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\Payment;
@@ -37,7 +40,7 @@ class CheckoutTest extends TestCase
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
-            public function driver(string $provider): PaymentGatewayInterface
+            public function driver(PaymentProvider|string $provider): PaymentGatewayInterface
             {
                 return new class implements PaymentGatewayInterface
                 {
@@ -156,7 +159,7 @@ class CheckoutTest extends TestCase
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
-            public function driver(string $provider): PaymentGatewayInterface
+            public function driver(PaymentProvider|string $provider): PaymentGatewayInterface
             {
                 return new class implements PaymentGatewayInterface
                 {
@@ -203,9 +206,9 @@ class CheckoutTest extends TestCase
         $this->assertNotNull($order);
         $this->assertNotNull($payment);
 
-        $this->assertSame('cancelled', $order->status);
+        $this->assertSame(OrderStatus::Cancelled, $order->status);
         $this->assertNotNull($order->stock_restored_at);
-        $this->assertSame('failed', $payment->status);
+        $this->assertSame(PaymentStatus::Failed, $payment->status);
         $this->assertSame('gateway_creation_failed', $payment->payload_json['failure']['code'] ?? null);
         $this->assertStringNotContainsString('Gateway timeout', json_encode($payment->payload_json, JSON_THROW_ON_ERROR));
         $this->assertSame(5, $souvenir->fresh()->stock);
@@ -239,7 +242,7 @@ class CheckoutTest extends TestCase
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
-            public function driver(string $provider): PaymentGatewayInterface
+            public function driver(PaymentProvider|string $provider): PaymentGatewayInterface
             {
                 return new class implements PaymentGatewayInterface
                 {
@@ -416,7 +419,7 @@ class CheckoutTest extends TestCase
         {
             public function __construct(private readonly \ArrayObject $counter) {}
 
-            public function driver(string $provider): PaymentGatewayInterface
+            public function driver(PaymentProvider|string $provider): PaymentGatewayInterface
             {
                 return new class($this->counter) implements PaymentGatewayInterface
                 {
@@ -603,7 +606,7 @@ class CheckoutTest extends TestCase
 
         $this->assertSame(1, Payment::where('order_id', $order->id)->count());
         $this->assertTrue($payment->fresh()->is($payment));
-        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
     }
 
     public function test_retry_payment_with_pending_payment_without_redirect_url_does_not_create_duplicate_payment(): void
@@ -665,7 +668,7 @@ class CheckoutTest extends TestCase
 
         $this->app->instance(PaymentService::class, new class extends PaymentService
         {
-            public function driver(string $provider): PaymentGatewayInterface
+            public function driver(PaymentProvider|string $provider): PaymentGatewayInterface
             {
                 return new class implements PaymentGatewayInterface
                 {

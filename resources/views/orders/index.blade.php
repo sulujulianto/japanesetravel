@@ -19,21 +19,25 @@
 
             @php
                 $statusVariants = [
-                    'pending' => 'warning',
-                    'processing' => 'info',
-                    'completed' => 'success',
-                    'cancelled' => 'danger',
+                    \App\Enums\OrderStatus::Pending->value => 'warning',
+                    \App\Enums\OrderStatus::Processing->value => 'info',
+                    \App\Enums\OrderStatus::Completed->value => 'success',
+                    \App\Enums\OrderStatus::Cancelled->value => 'danger',
                 ];
                 $paymentVariants = [
-                    'pending' => 'warning',
-                    'paid' => 'success',
-                    'failed' => 'danger',
-                    'expired' => 'danger',
-                    'refunded' => 'info',
+                    \App\Enums\PaymentStatus::Pending->value => 'warning',
+                    \App\Enums\PaymentStatus::Paid->value => 'success',
+                    \App\Enums\PaymentStatus::Failed->value => 'danger',
+                    \App\Enums\PaymentStatus::Expired->value => 'danger',
+                    \App\Enums\PaymentStatus::Refunded->value => 'info',
                 ];
             @endphp
 
             @forelse ($orders as $order)
+                @php
+                    $orderStatus = $order->status->value;
+                    $paymentStatus = $order->payment?->status->value;
+                @endphp
                 <x-ui.card class="overflow-hidden p-0">
                     <div class="border-b border-slate-200/80 bg-white px-5 py-5 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
                         <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -45,12 +49,12 @@
                                 </div>
                                 <p class="text-2xl font-semibold text-[#1F2937] dark:text-[#F4F1ED]">#ORDER-{{ $order->id }}</p>
                                 <div class="flex flex-wrap gap-2">
-                                    <x-ui.badge variant="{{ $statusVariants[$order->status] ?? 'default' }}">
-                                        {{ __('Order') }} · {{ __(strtoupper($order->status)) }}
+                                    <x-ui.badge variant="{{ $statusVariants[$orderStatus] ?? 'default' }}">
+                                        {{ __('Order') }} · {{ __(strtoupper($orderStatus)) }}
                                     </x-ui.badge>
                                     @if($order->payment)
-                                        <x-ui.badge variant="{{ $paymentVariants[$order->payment->status] ?? 'default' }}">
-                                            {{ __('Payment') }} · {{ strtoupper($order->payment->provider) }} · {{ __(strtoupper($order->payment->status)) }}
+                                        <x-ui.badge variant="{{ $paymentVariants[$paymentStatus] ?? 'default' }}">
+                                            {{ __('Payment') }} · {{ strtoupper($order->payment->provider->value) }} · {{ __(strtoupper($paymentStatus)) }}
                                         </x-ui.badge>
                                     @else
                                         <x-ui.badge variant="default">{{ __('Belum ada pembayaran') }}</x-ui.badge>
