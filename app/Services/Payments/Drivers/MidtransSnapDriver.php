@@ -105,7 +105,7 @@ class MidtransSnapDriver implements PaymentGatewayInterface
         return new PaymentWebhookData(
             providerRef: (string) ($payload['order_id'] ?? ''),
             status: $status,
-            amount: (float) ($payload['gross_amount'] ?? 0),
+            amount: (string) ($payload['gross_amount'] ?? ''),
             currency: (string) ($payload['currency'] ?? 'IDR'),
             payload: $payload,
             eventId: $eventId,
