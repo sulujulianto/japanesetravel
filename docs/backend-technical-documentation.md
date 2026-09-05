@@ -1,352 +1,344 @@
-# Backend Technical Documentation
+# Dokumentasi Teknis Backend
 
-## 1) Project Overview
-Japan Travel adalah **destination discovery platform with reviews and souvenir e-commerce**.
+## 1. Ringkasan Sistem
 
-Ruang lingkup aktif saat ini:
-- Katalog destinasi (`places`) + detail + review user.
-- Toko souvenir end-to-end (cart, checkout, order, payment, webhook, admin operations).
+Japan Travel adalah aplikasi referensi full-stack dengan dua domain yang sengaja dipisahkan:
 
-Yang **belum** aktif:
-- Ticketing/booking pembelian tiket destinasi belum diimplementasikan.
+- **Travel discovery:** katalog destinasi, detail, jadwal, ulasan pengguna terverifikasi, dan pertanyaan opsional melalui WhatsApp.
+- **Souvenir commerce:** katalog produk, cart, checkout, pembayaran, histori order, inventory, serta operasional admin.
 
-## 2) Tech Stack
-- Laravel 12
-- PHP 8.3
-- MariaDB/MySQL
-- Blade
-- Tailwind CSS
-- Alpine.js
-- Vite
-- Midtrans Snap
-- PayPal Checkout
-- Sentry-ready configuration (`bootstrap/app.php` + `config/sentry.php`)
-- Dockerfile + Railway scripts (`railway/*.sh`)
+Aplikasi tidak menjual tiket dan tidak memproses booking perjalanan. Midtrans dan PayPal hanya digunakan untuk alur pembelian suvenir.
 
-## 3) Main Modules
-- User authentication & profile.
-- Admin authentication (guard terpisah).
-- Destination/place catalog.
-- Place review submission.
-- Souvenir shop listing/filtering.
-- Cart management.
-- Checkout & order creation.
-- Order history & retry payment.
-- Payment orchestration (Midtrans/PayPal).
-- Payment webhooks.
-- Admin dashboard: places, souvenirs, stock restock, order status, media upload.
+Target rilis saat ini adalah **portofolio local-first**. Repository menyediakan kontrak deployment, tetapi tidak mengklaim sudah live, menangani pembayaran nyata, atau terbukti beroperasi pada skala produksi.
 
-## 4) Architecture Overview
-- Routes: `routes/web.php`, `routes/auth.php`
-- Controllers:
-  - Public/business: `HomeController`, `ReviewController`, `ShopController`, `CartController`, `CheckoutController`, `PaymentController`
-  - Admin: `Admin/*Controller`
-- Models: `User`, `Place`, `PlaceReview`, `Souvenir`, `Order`, `OrderItem`, `Payment`, `PaymentWebhookEvent`
-- Services (payment): `PaymentService`, `PaymentGatewayResult`, `PaymentWebhookData`, drivers `MidtransSnapDriver`, `PayPalCheckoutDriver`
-- Middleware: auth redirect, admin guard, admin session cookie split, localization, security headers
-- Form Requests: admin login, restock, update order status, profile/auth defaults
-- Views: Blade pages untuk public/user/admin
-- Tests: Feature tests + Unit sanity test
-- Deployment scripts: `railway/start-web.sh`, `railway/init-app.sh`, `railway/run-worker.sh`, `railway/run-cron.sh`
+## 2. Stack dan Batas Arsitektur
 
-## 5) Authentication and Authorization
-- `web` guard untuk user biasa.
-- `admin` guard untuk area admin.
-- Route bisnis penting berada di middleware `auth:web` + `verified`.
-- `User` mengimplementasikan `MustVerifyEmail`.
-- Admin gate:
-  - `auth:admin`
-  - middleware `admin` yang memvalidasi role admin.
-- Isolasi sesi admin/user:
-  - cookie sesi terpisah (`web_cookie` vs `admin_cookie`) via `AdminSessionCookie` middleware.
+| Area | Implementasi |
+|---|---|
+| Backend | PHP 8.3, Laravel 12 |
+| Frontend modern | Inertia.js 3, Vue 3 Composition API, TypeScript |
+| Frontend server-rendered | Blade dengan JavaScript legacy yang terisolasi |
+| UI/build | Tailwind CSS, Vite |
+| Database | MariaDB/MySQL; SQLite untuk quick review dan quality job CI |
+| Payment | Midtrans Snap dan PayPal Checkout |
+| Ops opsional | Predis, Sentry Laravel, Docker/Railway assets |
+| Quality | PHPUnit, Larastan/PHPStan, Pint, vue-tsc, ESLint, Composer/npm audit |
 
-### Mail delivery untuk auth
+Frontend menggunakan migrasi hibrida yang disengaja:
 
-- Konfigurasi mail mengikuti `config/mail.php` dan environment `MAIL_*`.
-- Default `MAIL_MAILER=log` hanya menulis email ke log aplikasi; tidak ada email yang dikirim ke inbox pengguna.
-- Reset password memakai notification Laravel, sedangkan email verification bergantung pada delivery notification ke alamat user.
-- Production harus menggunakan SMTP valid atau transport provider transactional yang telah dipasang dan dikonfigurasi, misalnya Mailgun, Postmark, Resend, atau provider kompatibel lainnya.
-- `MAIL_FROM_ADDRESS` dan `MAIL_FROM_NAME` harus memakai identitas pengirim production yang sah. Secret mail hanya disimpan pada environment deployment.
-- Konfigurasi project memakai `MAIL_SCHEME` dari `config/mail.php`; `MAIL_ENCRYPTION` bukan env yang dibaca oleh konfigurasi saat ini.
+| Area | Renderer saat ini |
+|---|---|
+| Beranda publik | Inertia + Vue + TypeScript |
+| Seluruh area admin | Inertia + Vue + TypeScript |
+| Katalog destinasi/detail | Blade |
+| Shop dan cart | Blade |
+| Auth, dashboard, profil, alamat | Blade |
+| Checkout dan histori order pengguna | Blade |
 
-Smoke test production:
-1. Request reset password untuk akun test dan pastikan email diterima.
-2. Buka link reset, pastikan token valid, lalu selesaikan perubahan password.
-3. Request ulang email verification untuk user belum terverifikasi.
-4. Pastikan email diterima, signed link valid, dan status user berubah menjadi verified.
-5. Periksa spam placement dan konfigurasi domain pengirim sesuai panduan provider.
+`resources/views/app.blade.php` menjadi root Inertia, sedangkan view Blade lain tetap aktif untuk modul yang belum dimigrasikan. Kedua jalur memakai backend, brand configuration, locale, theme token, dan domain rules yang sama.
 
-## 6) Destination / Place Flow
-- `places` adalah katalog destinasi, **bukan** produk tiket.
-- Flow:
-  - Listing/home page.
-  - Place detail page.
-  - Review list per place.
-  - Review submit oleh user authenticated + verified.
-- Travel inquiry:
-  - CTA WhatsApp memakai `TRAVEL_WHATSAPP_NUMBER` dalam format internasional digit-only.
-  - Jika nomor belum tersedia, CTA ditampilkan sebagai state informasional nonaktif.
-  - Link tidak menyisipkan pesan otomatis dan platform tidak memproses booking atau checkout jasa travel.
-  - Checkout/payment aktif hanya untuk produk souvenir.
-- Hardening review:
-  - Route review memakai `throttle:6,1`.
-  - Guard anti-duplicate pada application layer memberi respons ramah sebelum insert.
-  - Unique constraint database `(place_id, user_id)` memastikan satu user hanya dapat memberi satu review per destinasi, termasuk saat request bersamaan.
+## 3. Struktur Utama
 
-## 7) Souvenir E-Commerce Flow
-- Shop listing/filter/sort.
-- Cart add/update/remove:
-  - validasi stok real-time
-  - stale item cleanup
-  - clamp quantity ke stok tersedia
-- Checkout:
-  - sanitasi cart sebelum transaksi
-  - lock stok (`lockForUpdate`) saat order creation
-  - create `orders`, `order_items`, `payments`
-- Order item snapshot:
-  - `product_name`, `product_price`, `product_image`
-  - `souvenir_id` nullable untuk kompatibilitas histori jika produk dihapus
-- Gateway failure compensation:
-  - stok dikembalikan
-  - order di-cancel
-  - payment ditandai failed
-  - cart dipertahankan agar user bisa retry
-- Retry payment:
-  - cegah duplikasi pending payment
-  - reuse pending payment redirect URL jika tersedia
-  - terminal order (completed/cancelled) ditolak
+### Routing
 
-## 8) Payment Architecture
-- `PaymentService` memilih driver berdasarkan provider (`midtrans` atau `paypal`).
-- `PaymentGatewayResult` menyatukan output create payment.
-- `PaymentWebhookData` menyatukan payload webhook lintas provider.
+- `routes/web.php`: public pages, cart, user area, admin, checkout, callback, dan webhook.
+- `routes/auth.php`: autentikasi pengguna.
+- `routes/console.php`: scheduled payment-payload pruning.
+
+### Domain models
+
+| Model | Tanggung jawab |
+|---|---|
+| `User` | Identitas login, role, relasi profil/alamat/order |
+| `UserProfile` | Data personal tambahan terenkripsi |
+| `UserAddress` | Beberapa alamat pengiriman dan default-address invariant |
+| `Place` | Konten destinasi bilingual dan jadwal |
+| `PlaceReview` | Ulasan unik per pengguna/destinasi |
+| `Souvenir` | Produk, harga, stok, dan media |
+| `Order` | Status order, checkout key, snapshot pelanggan/alamat, dan penanda pemulihan stok |
+| `OrderItem` | Snapshot produk serta referensi produk opsional |
+| `Payment` | Provider, status, amount/currency, reference, dan payload terbatas |
+| `PaymentWebhookEvent` | Idempotency dan audit webhook |
+| `InventoryMovement` | Ledger perubahan stok dan snapshot audit |
+
+### Domain enums
+
+- `OrderStatus`: `pending`, `processing`, `completed`, `cancelled`.
+- `PaymentStatus`: `pending`, `paid`, `failed`, `expired`, `refunded`.
+- `PaymentWebhookStatus`: status payment ditambah hasil nonpersisten `ignored`.
+- `PaymentProvider`: `midtrans`, `paypal`.
+- `UserRole`: `user`, `admin`.
+
+Enum menjaga string database tetap kompatibel sekaligus memusatkan daftar nilai dan aturan transisi.
+
+### Services
+
+- `Payments/PaymentService`: orkestrasi driver dan transisi payment/order.
+- `Payments/Drivers/*`: boundary Midtrans dan PayPal.
+- `Payments/PaymentAmount`: perbandingan amount/currency terkanonisasi.
+- `Payments/PaymentPayload`: whitelist dan pembatasan payload yang boleh disimpan.
+- `Inventory/InventoryService`: mutasi stok transaksional dan ledger.
+- `Orders/OrderInventoryService`: pemulihan stok order exactly-once.
+- `UserAddressService`: default-address invariant dan operasi alamat milik pengguna.
+
+## 4. Autentikasi, Otorisasi, dan Data Pengguna
+
+### Pemisahan konteks autentikasi
+
+- Guard `web` digunakan untuk pengguna biasa.
+- Guard `admin` digunakan untuk area admin.
+- Login pengguna menolak role admin; login admin menolak role user.
+- `AdminSessionCookie` memilih nama cookie berbeda untuk path user dan admin.
+- Logout satu guard tidak membatalkan guard lainnya.
+- Endpoint login memakai rate limiter terpisah.
+
+Route bisnis pengguna berada di `auth:web` dan `verified`. Route operasional admin berada di `auth:admin` dan middleware role `admin`.
+
+### Profil dan alamat
+
+- Satu pengguna memiliki maksimal satu `UserProfile` melalui unique constraint.
+- Pengguna dapat memiliki beberapa `UserAddress`.
+- Operasi alamat memverifikasi ownership di server.
+- Hanya satu alamat yang menjadi default; alamat tunggal tidak boleh dibiarkan tanpa default.
+- Admin dapat melihat data relevan secara read-only, bukan mengubah alamat pengguna.
+- Nilai personal profil dan alamat menggunakan encrypted casts saat tersimpan.
+
+### Penghapusan akun
+
+- Profil dan alamat mengikuti siklus hidup akun.
+- Order dipertahankan untuk integritas transaksi.
+- Relasi hidup ke pengguna dilepas.
+- Snapshot pelanggan terenkripsi menjaga konteks historis tanpa mempertahankan ketergantungan pada akun aktif.
+
+## 5. Destination dan Review Flow
+
+- `places` merupakan katalog destinasi, bukan inventori tiket.
+- Konten destinasi dan suvenir menggunakan nilai terjemahan ID/EN.
+- Review hanya dapat dibuat oleh pengguna authenticated dan verified.
+- Route review dibatasi dengan `throttle:6,1`.
+- Application guard memberi respons duplikasi yang ramah.
+- Unique constraint `(place_id, user_id)` menjadi lapisan terakhir terhadap request bersamaan.
+- `TRAVEL_WHATSAPP_NUMBER` opsional dan harus berupa digit internasional tanpa `+` atau spasi.
+- CTA tidak membuat travel order dan tidak mengirim transaksi ke payment gateway.
+
+## 6. Cart dan Checkout
+
+### Cart
+
+- Cart disimpan pada sesi pengguna.
+- Item yang tidak lagi tersedia dibersihkan.
+- Quantity divalidasi dan dibatasi ke stok yang tersedia.
+- Harga dan total akhir tidak dipercaya dari browser; nilai authoritative dibaca kembali dari database.
+
+### Checkout transaction
+
+Checkout hanya tersedia bagi pengguna verified dan menggunakan alamat milik pengguna. Alur inti:
+
+1. Validasi checkout token, provider, cart, dan alamat.
+2. Tolak atau replay hasil request dengan idempotency key yang sama.
+3. Mulai database transaction.
+4. Ambil produk secara deterministik dan gunakan row lock.
+5. Kurangi stok melalui `InventoryService` dan tulis ledger.
+6. Simpan order, item snapshot, customer snapshot, dan shipping-address snapshot.
+7. Buat payment `pending`.
+8. Commit transaksi internal sebelum berinteraksi dengan provider.
+9. Buat transaksi provider dan simpan hasil yang telah dibatasi.
+
+Jika pembuatan transaksi provider gagal, payment ditandai `failed`, order dibatalkan, stok dipulihkan, dan pesan error untuk pengguna tidak membocorkan exception mentah.
+
+### Checkout idempotency
+
+- Token bersifat session-scoped dan disimpan sebagai `checkout_idempotency_key`.
+- Database uniqueness mencegah dua order memakai key yang sama.
+- Replay aman mengembalikan order yang sudah dibuat.
+- Urutan penguncian produk deterministik mengurangi peluang deadlock.
+
+## 7. Inventory Ledger
+
+`InventoryService::adjust()` adalah jalur utama perubahan stok operasional:
+
+- produk di-lock dengan `lockForUpdate`;
+- stock-after tidak boleh negatif;
+- `reference` unik mencegah adjustment yang sama diterapkan dua kali;
+- ledger menyimpan delta, stock-before, stock-after, type, order, actor, product snapshot, dan metadata;
+- admin restock/deduct serta order reservation/restoration dapat diaudit melalui model yang sama.
+
+`OrderInventoryService::restore()`:
+
+- mengunci order;
+- berhenti jika `stock_restored_at` sudah terisi;
+- mengelompokkan quantity per produk;
+- mengunci produk dalam urutan ID;
+- membuat reference restoration deterministik per order/produk;
+- menandai `stock_restored_at` setelah pemulihan selesai.
+
+Kombinasi penanda order dan unique ledger reference memberikan perlindungan exactly-once pada level aplikasi/database.
+
+## 8. Payment Architecture
+
+### Provider boundary
+
+`PaymentService` memilih `MidtransSnapDriver` atau `PayPalCheckoutDriver` berdasarkan `PaymentProvider`. Driver mengonversi protocol provider menjadi:
+
+- `PaymentGatewayResult` untuk pembuatan payment;
+- `PaymentWebhookData` untuk webhook/capture terverifikasi.
+
+Controller tidak menyimpan seluruh respons provider dan tidak menentukan transisi domain secara mandiri.
 
 ### Midtrans
-- Signature verification (`sha512`) dari payload.
-- Event identity lifecycle-aware:
-  - `event_id = transaction_id + ":" + normalized_status`
-  - memungkinkan progression `pending -> paid` pada transaction yang sama.
+
+- Signature `sha512` diverifikasi menggunakan server key.
+- Event identity memasukkan transaction ID dan normalized status agar progression sah tetap dapat diproses.
+- Amount dan currency callback dibandingkan dengan payment yang diharapkan.
 
 ### PayPal
-- Checkout order creation via API.
-- Webhook signature verification via endpoint verify PayPal.
-- Webhook idempotency menggunakan event ID PayPal.
-- Return callback:
-  - capture success path guarded agar terminal order tidak dioverwrite.
-  - capture failure ditangani aman (no HTTP 500), payment gagal ditandai, user mendapat flash error aman.
 
-### Idempotency
-- Tabel `payment_webhook_events` dengan unique `(provider, event_id)`.
-- Duplicate webhook event status sama tidak dieksekusi ulang.
+- Checkout order dibuat melalui REST API.
+- Webhook diverifikasi melalui `verify-webhook-signature` menggunakan webhook ID dari environment.
+- Event ID PayPal menjadi idempotency identity.
+- Capture reference, amount, dan currency harus cocok sebelum status finansial berubah.
+- Return/cancel URL dibangun melalui named routes dan bergantung pada `APP_URL` yang benar.
 
-### Environment dan sandbox readiness
-- Credential gateway berasal dari `config/services.php`:
-  - Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`.
-  - PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_IS_PRODUCTION`, `PAYPAL_CURRENCY`, `PAYPAL_EXCHANGE_RATE`.
-- `MIDTRANS_IS_PRODUCTION=false` dan `PAYPAL_IS_PRODUCTION=false` adalah baseline sandbox. Credential sandbox dan production harus dipisahkan di environment deployment dan tidak boleh disimpan di repository.
-- `APP_URL` harus berupa origin publik HTTPS yang benar. PayPal `return_url` dan `cancel_url` dibuat melalui named route Laravel, sehingga hasil URL bergantung pada konfigurasi URL aplikasi/proxy.
-- Endpoint provider:
-  - Midtrans notification: `POST /payments/webhook/midtrans`.
-  - PayPal webhook: `POST /payments/webhook/paypal`.
-  - PayPal return/cancel: `GET /payments/paypal/return` dan `GET /payments/paypal/cancel`.
-- Midtrans memverifikasi `signature_key` menggunakan server key. Tidak ada env webhook secret Midtrans terpisah pada implementasi saat ini.
-- PayPal memverifikasi event melalui API `verify-webhook-signature`; `PAYPAL_WEBHOOK_ID` harus berasal dari webhook pada app dan mode yang sama.
-- PayPal mengonversi total IDR menggunakan `PAYPAL_CURRENCY` dan `PAYPAL_EXCHANGE_RATE`. Nilai rate saat ini bersifat konfigurasi manual dan harus diverifikasi secara operasional sebelum demo/live.
-- Automated tests memalsukan gateway/API eksternal. Test tersebut membuktikan kontrak aplikasi, signature handling, idempotency, state guard, serta stock compensation, tetapi tidak membuktikan credential atau konfigurasi dashboard provider benar.
-- Direct payment hanya untuk checkout souvenir. Konsultasi perjalanan melalui WhatsApp tidak membuat order travel dan tidak masuk ke gateway.
+### Webhook idempotency dan state guard
 
-Sandbox test matrix minimum:
+- Unique `(provider, event_id)` mencegah event identik diproses ulang.
+- Duplicate event mengembalikan hasil aman tanpa efek finansial ganda.
+- `ignored` adalah hasil parsing/non-action, bukan nilai yang disimpan sebagai `PaymentStatus`.
+- Order terminal tidak dapat direvive atau diturunkan oleh callback terlambat.
+- Transition payment mengikuti `PaymentStatus::allowedTransitions()`.
 
-| Skenario | Midtrans | PayPal | Verifikasi aplikasi |
-|---|---|---|---|
-| Create checkout | sandbox credential | sandbox credential | redirect URL tersedia; order/payment `pending` |
-| Return/cancel | provider redirect | return/cancel URL | user kembali ke deployment yang benar; tidak mengklaim paid sebelum konfirmasi |
-| Success webhook | signed settlement/capture | verified completed event | payment `paid`; pending order menjadi `processing` |
-| Failure/cancel | failed/expired/cancel event | denied/cancel event | status mengikuti guard; terminal order tidak direvive |
-| Duplicate webhook | kirim ulang event sama | kirim ulang event ID sama | tidak ada efek ganda/idempotency record tetap aman |
-| Gateway creation failure | simulasi provider gagal | simulasi provider gagal | payment `failed`, order `cancelled`, stok dikembalikan |
+### Amount dan currency integrity
 
-Operational checklist:
-1. Gunakan `APP_URL` staging HTTPS dan credential sandbox.
-2. Daftarkan webhook pada dashboard provider dan simpan PayPal sandbox webhook ID.
-3. Jalankan checkout souvenir kecil dengan test instrument resmi provider; jangan gunakan uang nyata.
-4. Verifikasi redirect, callback, webhook, status payment/order, duplicate delivery, dan stock compensation.
-5. Tinjau log aplikasi/provider untuk kegagalan signature atau callback.
-6. Untuk go-live, buat konfigurasi production terpisah dan ulangi smoke test terkontrol sebelum mengaktifkan kedua flag production.
+`PaymentAmount`:
 
-## 9) Order / Payment State Machine
-| Event / Action | Payment Status | Order Before | Order After | Allowed / Blocked |
-|---|---|---|---|---|
-| Checkout gateway create success | `pending` | n/a | `pending` | Allowed |
-| Checkout gateway create failure | `failed` | `pending` | `cancelled` + stock restored | Allowed |
-| Retry with existing pending payment + redirect URL | tetap `pending` (reuse) | `pending` | tetap `pending` | Allowed |
-| Retry after `failed/expired` payment | new payment `pending` | `pending` | tetap `pending` | Allowed |
-| Retry for `completed` order | no new payment | `completed` | tetap `completed` | Blocked |
-| Retry for `cancelled` order | no new payment | `cancelled` | tetap `cancelled` | Blocked |
-| Webhook `paid` | `paid` | `pending` | `processing` | Allowed |
-| Webhook `paid` on `processing/completed/cancelled` | `paid` | terminal/non-pending | no downgrade/revive | Guarded |
-| Webhook `failed/expired/refunded/cancelled` | status sesuai webhook | `pending` | `cancelled` | Allowed |
-| Webhook `failed/expired/refunded/cancelled` on `processing/completed` | status payment boleh berubah | non-pending | order tetap | Guarded |
-| PayPal return capture success | `paid` | `pending` | `processing` | Allowed |
-| PayPal return capture success on `completed/cancelled` | `paid` | terminal | tetap terminal | Guarded |
-| PayPal return capture failure | `failed` (jika pending) | status order apa pun | tidak dipromote | Allowed, safe failure |
-| Admin: `pending -> processing` | n/a | `pending` | `processing` | Allowed |
-| Admin: `pending -> cancelled` | n/a | `pending` | `cancelled` | Allowed |
-| Admin: `processing -> completed` | n/a | `processing` | `completed` | Allowed |
-| Admin: `processing -> cancelled` | n/a | `processing` | `cancelled` | Allowed |
-| Admin invalid transition (termasuk completed/cancelled -> lainnya) | n/a | terminal/invalid source | unchanged | Blocked |
+- menormalisasi bilangan ke dua digit desimal;
+- menolak format negatif/invalid dan precision nonzero di atas dua digit;
+- menormalisasi currency menjadi tiga huruf uppercase;
+- mensyaratkan amount dan currency sama persis setelah normalisasi.
 
-## 10) Security Hardening
-- CSRF untuk route web normal.
-- Route bisnis penting di `auth:web` + `verified`.
-- Admin route di `auth:admin` + admin middleware.
-- Payment webhook:
-  - signature verification
-  - throttle
-  - idempotency table
-- Security headers middleware (CSP, X-Frame-Options, dll).
-- Upload validation membatasi MIME, ukuran file 2 MB, dan dimensi maksimum 6000×6000 piksel sebelum optimasi WebP.
-- Penghapusan media dibatasi ke path relatif di `uploads/places` dan `uploads/souvenirs`; path traversal, absolute path, dan path di luar direktori tersebut diabaikan.
-- Quality/security gates:
-  - `composer audit` (backend dependency advisories)
-  - `npm audit` (frontend dependency advisories)
-  - PHPStan/Larastan
-  - Laravel Pint
-  - GitHub Actions CI
+PayPal dapat menggunakan currency selain IDR dengan `PAYPAL_EXCHANGE_RATE` manual. Konfigurasi tersebut harus diverifikasi secara operasional dan tidak diklaim sebagai kurs real-time.
 
-## 11) Data Integrity Hardening
-- Stock locking saat checkout (`lockForUpdate`).
-- Stock compensation saat gateway create gagal.
-- Cart stale cleanup sebelum update/checkout.
-- Order item snapshot untuk ketahanan histori.
-- `souvenir_id` nullable untuk kompatibilitas produk terhapus.
-- Retry payment duplicate prevention.
-- Admin order transition guard.
-- Webhook order terminal guard.
+## 9. State Machines
 
-## 12) Testing Strategy
-Coverage utama saat ini:
-- Auth flows (`tests/Feature/Auth/*`)
-- `AdminAccessTest`
-- `AdminSessionIsolationTest`
-- `AdminMediaUploadTest`
-- `AdminOrderStatusTransitionTest`
-- `CartTest`
-- `CheckoutTest`
-- `PaymentWebhookTest`
-- `PlaceReviewTest`
-- `OrderItemImageCompatibilityTest`
-- `LocaleTest`
-- `ProfileTest`
+### Order
 
-Current baseline:
-- Run `composer test` on the exact commit being reviewed.
-- Record the resulting test and assertion totals with the commit hash.
-- Do not reuse an older total as evidence for a newer branch.
+| From | Allowed target |
+|---|---|
+| `pending` | `pending`, `processing`, `cancelled` |
+| `processing` | `processing`, `completed`, `cancelled` |
+| `completed` | `completed` |
+| `cancelled` | `cancelled` |
 
-## 13) CI and Quality Gates
-CI menjalankan:
-- `composer validate`
-- `composer audit`
-- `npm audit --audit-level=high`
-- `php artisan test`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse --no-progress`
-- `npm run build`
+`processing` dan `completed` dihitung sebagai status pendapatan pada dashboard. `completed` dan `cancelled` bersifat terminal.
 
-## 14) Deployment Readiness
-- Dockerfile tersedia.
-- Railway scripts tersedia.
-- Status deployment Railway: **postponed** (belum go-live).
-- Detail environment dan runtime deployment tersedia di dokumen ini serta `.env.example`; `README.md` sengaja berfokus pada instalasi lokal dan ringkasan integrasi.
-- Docker multi-stage:
-  - Composer stage memasang dependency production dengan `--no-dev`, optimized autoload, dan package discovery.
-  - Node stage memakai `npm ci` serta `npm run build`.
-  - Image final memakai PHP 8.3 + Apache, extension aplikasi, Vite assets, dan permission awal Laravel.
-- Railway runtime:
-  - `start-web.sh` menjalankan `init-app.sh --runtime-only`, menyesuaikan Apache ke `$PORT`, lalu menjalankan Apache foreground.
-  - Runtime membuat direktori storage/cache, memastikan `public/storage`, dan membangun `config:cache` serta `view:cache`.
-  - Runtime sengaja tidak menjalankan migration/seed; migration dilakukan sebagai one-off `init-app.sh --migrate-only`.
-  - `route:cache` belum dijalankan oleh runtime dan merupakan optimasi follow-up, bukan asumsi deployment saat ini.
-- Laravel health endpoint tersedia pada `/up`. Dockerfile belum memiliki directive `HEALTHCHECK`, sehingga Railway perlu dikonfigurasi memakai HTTP health check tersebut.
-- Baseline database drivers:
-  - `SESSION_DRIVER=database`
-  - `CACHE_STORE=database`
-  - `QUEUE_CONNECTION=database`
-  - migration project menyediakan tabel sessions, cache, jobs, dan failed jobs.
-- `run-worker.sh` menjalankan koneksi `database` secara eksplisit serta membaca `DB_QUEUE` untuk nama queue. Mengubah `QUEUE_CONNECTION` ke Redis belum cukup tanpa menyesuaikan script pada fase terpisah.
-- Production migration menggunakan `php artisan migrate --force` tanpa demo seed.
-- Production mail wajib memakai SMTP/provider transactional yang valid; mailer `log` hanya untuk local/development dan tidak mengirim reset-password atau verification email.
-- Payment belum boleh dianggap live-ready hanya karena automated tests lulus. Deployment harus menyelesaikan sandbox matrix, memakai `APP_URL` HTTPS, mendaftarkan webhook, memisahkan credential sandbox/production, dan melakukan smoke test terkontrol sebelum mengaktifkan mode production.
-- `DatabaseSeeder` hanya menjalankan demo data pada environment `local`/`testing`.
-- `DemoSeeder` bersifat destruktif dan hanya diizinkan pada environment `local`/`testing`.
-- `DevAccountSeeder` memakai credential publik untuk visual review dan hanya diizinkan pada environment `local`/`testing`.
-- Database target yang disarankan: MySQL service (selaras lokal MariaDB/MySQL).
-- Production media strategy:
-  - `MEDIA_DISK` menentukan disk untuk upload gambar destinasi dan souvenir; `FILESYSTEM_DISK` adalah default disk Laravel untuk kebutuhan lain.
-  - Baseline Railway portfolio memakai `MEDIA_DISK=public` dan `FILESYSTEM_DISK=local`.
-  - Media tersimpan sebagai relative path di database, dengan file fisik di `storage/app/public/uploads/places` atau `storage/app/public/uploads/souvenirs`.
-  - URL publik mengandalkan symlink `public/storage` ke `storage/app/public`; runtime Railway tetap harus menjalankan `php artisan storage:link`.
-  - Railway Volume harus dipasang pada `/var/www/html/storage/app/public` agar file bertahan setelah restart/redeploy.
-  - Public disk tanpa persistent volume tidak production-safe: file dapat hilang sementara relative path tetap ada di database dan URL lama menjadi `404`.
-  - Selama memakai volume lokal, deployment ditujukan untuk satu web replica dan memerlukan backup/export volume.
-  - S3-compatible storage adalah roadmap, bukan konfigurasi yang siap dipakai sekarang. Adapter `league/flysystem-aws-s3-v3` belum terpasang dan migrasi membutuhkan konfigurasi bucket/endpoint/public URL serta pengujian tambahan.
-- Redis/Sentry:
-  - konfigurasi siap, aktivasi operasional ditunda tahap berikutnya.
+### Payment
 
-## 15) Known Limitations
-- Ticketing/booking belum diimplementasikan.
-- Belum ada test concurrency “true parallel” (misal multi-request race test).
-- Railway deployment belum dieksekusi.
-- Dockerfile belum memiliki Docker `HEALTHCHECK`; gunakan Railway HTTP health check `/up`.
-- `route:cache` belum menjadi bagian runtime preparation.
-- Railway worker saat ini hardcoded ke queue connection `database`.
-- Redis belum diaktifkan.
-- Sentry belum diaktifkan di production runtime.
-- Media production memerlukan Railway Volume; local/public tanpa volume tetap ephemeral dan baseline ini tidak mendukung multiple web replicas.
-- Payment sandbox memerlukan credential, webhook, dan konfigurasi dashboard provider eksternal.
+| From | Allowed target |
+|---|---|
+| `pending` | `paid`, `failed`, `expired`, `refunded` |
+| `failed` | `paid` |
+| `expired` | `paid` |
+| `paid` | `refunded` |
+| `refunded` | tidak ada |
 
-### Demo content
-- `DemoSeeder` hanya boleh berjalan pada environment `local`/`testing` dan mengosongkan tabel aplikasi sebelum mengisi ulang data.
-- Dataset portfolio dibuat kecil dan terkurasi: 10 destinasi, 10 produk oleh-oleh, serta maksimal tiga ulasan per destinasi.
-- Slug destinasi bersifat deterministik agar URL demo stabil setelah seed ulang.
-- Gambar demo sengaja dibiarkan kosong. Gunakan aset legal atau berlisensi dan unggah melalui admin untuk visual review.
-- Production hanya menjalankan migration; jangan menjalankan demo seed atau mengimpor SQL demo.
+Status `failed`, `expired`, dan `refunded` memicu pembatalan serta pemulihan stok hanya ketika order masih `pending`. Callback yang datang terlambat tidak boleh merusak order yang sudah diproses atau selesai.
 
-## 16) Future Roadmap
-- Perluasan gallery screenshot dan dokumentasi penggunaan untuk review portfolio.
-- Implementasi ticketing/booking system terpisah.
-- Aktivasi Redis (cache/session/queue).
-- Aktivasi Sentry production.
-- Load/performance testing (misal k6).
+## 10. Payload Minimization dan Retention
 
-## 17) Portfolio Evidence and QA Artifacts
+`PaymentPayload` hanya mempertahankan field yang disetujui, misalnya provider/event reference, status, amount, currency, provider status, dan URL redirect terbatas. Nilai nonscalar diabaikan dan string dibatasi panjangnya.
 
-Repository documentation deliberately separates implemented behavior from external/manual proof:
+- Exception mentah tidak disimpan sebagai payload pengguna.
+- Migration meredaksi payload legacy.
+- Index retention mendukung pembersihan terjadwal.
+- Command `payments:prune-payloads` mengosongkan body payload yang melewati retention period tanpa menghapus audit record payment/webhook.
+- Scheduler menjalankan command setiap hari pukul `03:10` dengan `withoutOverlapping()`.
+- Retention default berasal dari `payments.payload_retention_days` dan dapat dioverride aman antara 1–3650 hari.
 
-- `docs/deployment-checklist.md`: Railway staging configuration and smoke tests.
-- `docs/testing-summary.md`: automated coverage areas, commands, and limitations.
-- `docs/qa/test-cases-japanese-travel.md`: reusable functional test cases.
-- `docs/qa/manual-qa-checklist.md`: manual browser/staging checks.
-- `docs/qa/test-execution-evidence.md`: tester/date/environment/evidence ledger.
-- `docs/postman-api-checking.md`: safe HTTP/webhook checking boundaries.
-- `docs/troubleshooting-case-studies.md`: investigation examples based on the current architecture.
-- `docs/case-study-japanese-travel.md`: recruiter/interview-oriented technical case study.
+Scheduler harus benar-benar dijalankan oleh cron/scheduler service agar pruning terjadi di luar pengujian lokal.
 
-No manual test, provider account, live deployment, screenshot, or video is considered complete until actual evidence is attached.
+## 11. Media Safety
 
-## 18) Staging Release Contract
+- Upload dibatasi ke MIME yang disetujui, maksimum 2 MB, dan dimensi 6000×6000 sebelum pemrosesan.
+- Gambar yang didukung dikonversi ke WebP.
+- Path database bersifat relatif.
+- Penghapusan hanya diizinkan pada `uploads/places` dan `uploads/souvenirs` di media disk yang dikonfigurasi.
+- Absolute path, traversal, dan path di luar boundary diabaikan.
+- Demo asset di `public/images` tidak diperlakukan sebagai upload yang boleh dihapus admin.
 
-For the documented Railway staging approach:
+## 12. Security Controls
 
-1. Build the current Dockerfile.
-2. Configure production-safe environment values and secrets.
-3. Mount media persistence at `/var/www/html/storage/app/public`.
-4. Run `sh railway/init-app.sh --migrate-only` as a separate one-off/pre-deploy action.
-5. Start the web service with `sh railway/start-web.sh`.
-6. Configure the HTTP health check at `/up`.
-7. Do not run demo seeders.
-8. Validate mail/payment/WhatsApp only with approved external configuration.
-9. Record smoke-test evidence before adding a live URL to README.
-- Migrasi media ke object storage/S3 setelah adapter dan konfigurasi provider disiapkan.
-- Pengurangan bertahap PHPStan baseline (technical debt cleanup).
+- Password hashing dan reset-password token Laravel.
+- CSRF untuk route web normal; hanya webhook provider yang dikecualikan.
+- Server-side auth, role enforcement, ownership checks, dan Form Request validation.
+- Rate limiter pada login, review, dan webhook.
+- Eloquent/Query Builder parameterization dan mass-assignment protection.
+- Encrypted casts untuk data personal dan snapshot.
+- `SecurityHeaders` menyediakan CSP serta header browser protection lainnya.
+- Secure-cookie/HTTPS behavior dikonfigurasi untuk environment nonlokal.
+- Seeder destruktif dan akun demo ditolak di luar `local`/`testing`.
+- Dependency audit, CodeQL JavaScript/TypeScript, dependency review, dan secret scan dijalankan melalui GitHub Actions.
+
+CodeQL yang ada tidak menganalisis PHP. PHP dicakup melalui Larastan/PHPStan, test suite, dependency audit, validation, dan review kode; ini bukan pengganti PHP-focused SAST atau penetration test.
+
+## 13. Testing dan CI
+
+Baseline terverifikasi pada commit `b2cff65`:
+
+- 258 tests dan 2.498 assertions;
+- Pint;
+- Larastan/PHPStan level 6 tanpa error di luar committed baseline;
+- Vue TypeScript check dan ESLint tanpa warning;
+- Vite production build;
+- Composer dan npm audit;
+- SQLite, MariaDB 10.11, dan MariaDB 11.8;
+- CodeQL, dependency review, dan secret scan.
+
+Perintah lengkap dan batas interpretasi tersedia di [Testing Summary](testing-summary.md). Test mocked provider membuktikan kontrak internal aplikasi, bukan credential atau dashboard eksternal.
+
+## 14. Kontrak Deployment Opsional
+
+Deployment sengaja ditunda dan bukan blocker portofolio local-first. Repository tetap menyediakan:
+
+- multi-stage Dockerfile;
+- Railway web, migration, worker, dan scheduler scripts;
+- `/up` health endpoint;
+- pemisahan runtime startup dan `migrate --force`;
+- panduan volume untuk media lokal;
+- konfigurasi mail/payment/WhatsApp berbasis environment.
+
+Baseline Railway terdokumentasi:
+
+- session/cache/queue menggunakan database;
+- worker script menjalankan connection `database` secara eksplisit;
+- media `public` memerlukan volume pada `/var/www/html/storage/app/public`;
+- strategi volume lokal ditujukan untuk satu web replica;
+- object storage, Redis, dan Sentry activation belum dibuktikan secara operasional;
+- demo seeders tidak boleh dijalankan pada staging/production.
+
+Lihat [Deployment Checklist](deployment-checklist.md). Dokumen tersebut adalah runbook masa depan, bukan bukti deployment selesai.
+
+## 15. Keterbatasan yang Diketahui
+
+- Tidak ada direct travel booking/ticketing.
+- Tidak ada deployment publik atau bukti penggunaan production.
+- Tidak ada validasi akun sandbox Midtrans/PayPal dalam repository.
+- Tidak ada bukti deliverability SMTP.
+- Tidak ada true multi-process concurrency test.
+- Tidak ada browser E2E, accessibility audit, load test, atau performance budget otomatis.
+- PHPStan masih memakai baseline technical debt.
+- Dockerfile tidak mendefinisikan Docker `HEALTHCHECK`; runbook memakai Railway HTTP health check `/up`.
+- Worker Railway masih mengunci connection `database`.
+- Media lokal belum mendukung multiple web replicas.
+- Redis, Sentry runtime, dan object storage belum diaktifkan atau divalidasi.
+
+## 16. Prioritas Lanjutan
+
+Prioritas local-first:
+
+1. Jalankan manual smoke/regression test pada commit rilis.
+2. Cocokkan dan perbarui screenshot yang berubah material.
+3. Kurangi PHPStan baseline dalam batch kecil.
+4. Tambahkan browser/accessibility smoke test bila resource memungkinkan.
+5. Ukur coverage hanya pada environment yang reproducible.
+
+Deployment, sandbox provider, transactional mail, object storage, dan observability runtime tetap merupakan peningkatan opsional berbasis akun eksternal.
