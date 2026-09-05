@@ -1,131 +1,163 @@
-# Case Study: JapanTravel
+# Case Study: Japan Travel
+
+## Executive Summary
+
+Japan Travel is a local-first full-stack portfolio application that combines bilingual destination discovery with souvenir commerce. The project demonstrates production-oriented Laravel engineering without claiming to be a live travel agency, a complete booking platform, or a production payment service.
+
+The main engineering focus is not page count. It is the protection of domain invariants around authorization, stock, checkout replay, payment state, webhook idempotency, customer privacy, and historical order integrity.
 
 ## Problem
 
-A travel portfolio project can easily become either a static destination gallery or an over-scoped booking platform. JapanTravel needed a focused scope that demonstrated Laravel application skills without pretending to operate a real travel agency or production payment system.
+Travel portfolio projects often become either static galleries or unrealistic booking systems. The first option provides little backend depth; the second implies supplier contracts, live availability, pricing, cancellation, regulatory, and payment capabilities that a portfolio project cannot honestly prove.
 
-## Context
+Japan Travel needed a narrower product boundary that was useful, demonstrable, and technically substantial:
 
-The project was built as a junior-developer portfolio application on a resource-limited Linux laptop. The intended reviewer should be able to clone it, run it with SQLite or MySQL, inspect meaningful tests, and understand the operational limitations.
+- destination discovery and verified-user reviews;
+- optional travel inquiries through WhatsApp;
+- direct commerce only for souvenir products;
+- independent customer and administrator workspaces;
+- reproducible local review without paid infrastructure.
 
-The chosen product boundary is:
+## Product Scope
 
-- Destination discovery and verified-user reviews.
-- Travel inquiries through an optional WhatsApp CTA.
-- Direct commerce only for souvenir products.
-- Separate user and admin workspaces.
+### Included
 
-## Solution
+- Indonesian/English destination content, schedules, search, filters, and ratings.
+- Verified-user reviews with application and database duplicate protection.
+- Souvenir catalog, session cart, address-aware checkout, payment retry, and order history.
+- Midtrans Snap and PayPal Checkout adapters.
+- User profile and multiple shipping-address management.
+- Admin dashboards and management for users, destinations, souvenirs, inventory, and orders.
 
-JapanTravel combines:
+### Explicitly excluded
 
-- A bilingual editorial destination catalog.
-- Practical destination detail pages.
-- One-review-per-user-per-destination feedback.
-- A stock-aware souvenir cart and checkout flow.
-- Midtrans and PayPal payment abstractions.
-- User order history and payment retry controls.
-- Admin catalog, inventory, order, and dashboard tools.
+- direct travel booking or ticket sales;
+- supplier availability and dynamic travel pricing;
+- production payment, mail, monitoring, and storage claims;
+- multi-tenant commerce and multi-replica media architecture.
 
-## Implementation
+## Architecture
 
-- Laravel routes and middleware separate public, verified-user, admin, and webhook responsibilities.
-- Blade/Tailwind provides responsive light/dark interfaces.
-- Spatie Translatable stores destination and souvenir copy in Indonesian and English.
-- `Format` provides locale-aware dates, numbers, ratings, and IDR display.
-- Checkout uses a database transaction and row locks before decrementing stock.
-- Order items store product snapshots to protect historical display.
-- Gateway creation failure compensates stock and marks the order/payment safely.
-- Payment drivers implement a common interface.
-- Webhook events use provider/event uniqueness to prevent duplicate processing.
-- Admin uploads validate MIME, size, and dimensions before optional WebP conversion.
+The application uses a Laravel modern-monolith approach:
 
-## Architecture Decisions
+- Laravel 12 owns routing, authorization, validation, transactions, and domain behavior.
+- The public home page and admin workspace use Inertia, Vue 3 Composition API, and TypeScript.
+- Customer authentication, catalog, cart, checkout, order, and profile pages remain on Blade during incremental migration.
+- MariaDB/MySQL is the intended relational database family; SQLite supports quick local review and the fast CI quality job.
+- Payment providers implement a shared interface under `app/Services/Payments/`.
+- Backed enums centralize persisted order, payment, webhook, provider, and role values.
 
-### Inquiry instead of travel booking
+The hybrid frontend is deliberate. Migrating module by module with contract tests provides more evidence of safe modernization than an all-at-once rewrite that risks checkout, authentication, and localization regressions.
 
-Travel booking involves availability, pricing contracts, cancellation policy, supplier integration, and regulatory concerns. The project deliberately keeps travel services as inquiries and limits direct payment to souvenirs.
+## Key Engineering Challenges
 
-### Separate admin guard
+### 1. Independent customer and admin sessions
 
-Admin and user sessions use separate guards and cookie names. This makes authorization boundaries visible and testable without introducing a complex role/permission package.
+A role check alone does not isolate browser session behavior. The application uses separate guards, cookie names, login endpoints, and logout flows. Feature and unit tests verify that signing out one context does not invalidate the other.
 
-### Database-backed local baseline
+### 2. Stock-safe and replay-safe checkout
 
-Database sessions, cache, and queues are easy to explain and deploy for a single-replica portfolio service. Redis is documented as a future operational option rather than claimed as active.
+Checkout validates address ownership, locks inventory rows, applies deterministic stock mutations, and uses a session-scoped idempotency token. Replayed requests return the existing outcome instead of creating duplicate orders or charging stock twice.
 
-### Local media plus persistent volume
+### 3. Payment and order state integrity
 
-The initial Railway strategy uses the existing public disk with a persistent volume. It is simple for a single replica but intentionally documented as unsuitable for horizontal scaling.
+Payment state is not treated as interchangeable with order state. Domain enums define allowed values and transitions. Provider callbacks must pass signature/verification, amount, currency, event-identity, and capture-reference checks before a financial transition is accepted.
 
-### Automated tests before external claims
+### 4. Exactly-once inventory restoration
 
-Feature tests prove application contracts around stock, status transitions, authorization, and webhook handling. They do not prove external account configuration, delivery, or staging persistence; those require manual evidence.
+Terminal payment failures and administrative cancellation restore reserved stock through centralized transactional logic. An inventory ledger and uniqueness controls prevent duplicate compensation while preserving an audit trail.
 
-## Security Considerations
+### 5. Durable order history with private data
 
-- CSRF on normal web forms.
-- Narrow webhook CSRF exemptions.
-- Signature verification and webhook idempotency.
-- Login, review, and webhook rate limits.
-- Separate admin/user authentication boundaries.
-- Verified-user review requirement.
-- Database review uniqueness constraint.
-- Stock locking and failure compensation.
-- Media dimension/size checks and restricted delete paths.
-- Production guards on destructive/public-credential seeders.
-- Environment-only credentials.
+Product, customer, and shipping data can change or be deleted after checkout. Orders therefore retain immutable snapshots. Sensitive customer and address snapshots are encrypted, and deleting an account removes the live association without erasing transactional history.
 
-## Testing Approach
+### 6. Bounded payment evidence
 
-The complete suite covers authentication, localization, catalog behavior, reviews, cart, checkout, payment retries, webhooks, admin access, media handling, order transitions, formatting, public shell contracts, and centralized brand configuration. Test and assertion totals are intentionally not copied here because they change with each phase; the output of `composer test` on the reviewed commit is the source of truth.
+Raw provider responses and exceptions can contain excessive or sensitive data. Stored payment payloads are reduced to approved summaries, redacted, and expired under an explicit retention policy while audit records remain available.
 
-Pint, PHPStan/Larastan, Composer Audit, npm Audit, and the Vite production build form additional quality gates. PHPStan currently uses a baseline, which is treated as technical debt rather than hidden.
+### 7. Safe media lifecycle
 
-## Deployment Approach
+Admin uploads validate MIME type, size, and dimensions, convert supported images to WebP, and restrict deletion to approved upload paths. This protects both application resources and local filesystem boundaries.
 
-The repository includes:
+## Security and Reliability Controls
 
-- Multi-stage Docker build.
-- Railway web, migration, worker, and scheduler scripts.
-- `/up` health endpoint.
-- Persistent media volume guidance.
-- Mail/payment/WhatsApp environment notes.
-- A staging smoke-test checklist.
+- Server-side authentication, authorization, validation, CSRF protection, and password hashing.
+- Separate customer/admin authentication contexts and rate-limited login endpoints.
+- Verified-user restrictions and database uniqueness for reviews.
+- Transactional checkout, row locking, idempotency, and guarded state transitions.
+- Provider verification plus amount/currency/capture integrity checks.
+- Encrypted profile, address, customer, and shipping data at rest.
+- Restricted upload and deletion behavior.
+- Demo seeders blocked outside local/testing environments.
+- CI dependency audits, JavaScript/TypeScript CodeQL, dependency review, and secret scanning.
 
-No live deployment is claimed until a real URL and evidence are added.
+These controls demonstrate engineering practice; they do not replace an independent security assessment or real production operations.
 
-## Limitations
+## Verification Strategy
 
-- No direct travel booking or ticketing.
-- No production mail provider configured by default.
-- No live payment credentials or completed sandbox evidence in the repository.
-- Manual PayPal exchange-rate configuration.
-- No measured code coverage percentage.
-- No browser automation or accessibility audit.
-- Local media strategy targets one web replica.
-- PHPStan baseline remains.
+The verified `b2cff65` baseline completed:
 
-## What I Learned
+- 258 PHPUnit tests with 2,498 assertions;
+- Pint formatting validation;
+- Larastan/PHPStan level 6 with no findings outside the committed baseline;
+- Vue TypeScript checking and zero-warning ESLint;
+- Vite production build;
+- Composer and npm dependency audits;
+- SQLite, MariaDB 10.11, and MariaDB 11.8 CI jobs;
+- CodeQL, dependency review, and secret scanning.
 
-- How to define a smaller, defensible product scope.
-- How database transactions and row locks protect stock.
-- Why external callbacks need signature verification and idempotency.
-- Why payment state and order state should not be treated as the same value.
-- How snapshots preserve order history.
-- How deployment concerns such as storage, mail, proxy trust, and health checks affect application behavior.
-- How to distinguish automated proof from external/manual validation.
+Tests cover internal application contracts. External provider accounts, SMTP deliverability, public deployment, and remote media persistence remain outside the verified evidence boundary.
 
-## Future Improvements
+## Trade-offs
 
-- Public staging deployment with recorded smoke-test evidence.
-- Midtrans and PayPal sandbox validation.
-- Transactional mail delivery verification.
-- Browser/accessibility tests.
-- Object storage before multi-replica deployment.
-- Incremental PHPStan baseline reduction.
-- Measured coverage in CI.
+| Decision | Benefit | Cost or limitation |
+|---|---|---|
+| Inquiry-only travel services | Honest and defensible product scope | No booking engine |
+| Laravel modern monolith | Cohesive transactions and simpler local setup | Not a distributed architecture case study |
+| Incremental Vue/Inertia migration | Lower regression risk and testable contracts | Temporary Blade/Vue hybrid |
+| Separate admin guard/cookie | Explicit, testable session isolation | Additional auth configuration |
+| Database-backed operational defaults | Easy single-instance explanation | Redis/queue scaling is not demonstrated |
+| Local media storage | Simple local review | Requires object storage before horizontal scaling |
+| PHPStan baseline | Allows incremental static-analysis adoption | Accepted technical debt remains visible |
+| Local-first evidence | No hosting cost and reproducible review | Recruiters cannot use a live URL |
 
-## Interview Explanation
+## Results
 
-> “I built JapanTravel as a scoped Laravel portfolio application. Travel content and inquiries are separate from souvenir commerce, so I avoided claiming a full booking platform. The technical areas I focused on were authorization boundaries, stock-safe checkout, payment abstractions, webhook idempotency, localized presentation, admin operations, and reproducible local setup. Automated tests prove internal behavior, while the repository clearly labels deployment, payment sandbox, mail delivery, screenshots, and video as manual owner actions until evidence exists.”
+The project evolved beyond a CRUD storefront into a portfolio codebase with:
+
+- explicit transaction and payment invariants;
+- independent authorization contexts;
+- auditable inventory history;
+- durable encrypted order snapshots;
+- reproducible multi-database CI;
+- documented security boundaries and limitations;
+- a bilingual, local-first review path.
+
+The outcome is suitable as an intermediate-level full-stack engineering case study. It is not presented as a mature commercial platform or evidence of production scale.
+
+## Known Limitations
+
+- No public deployment or production-usage evidence.
+- No external Midtrans/PayPal sandbox-account evidence.
+- No transactional SMTP deliverability evidence.
+- No browser E2E suite, automated accessibility audit, load test, or performance budget.
+- No measured coverage percentage.
+- PHPStan baseline debt remains.
+- Local media targets one web replica; object storage is not implemented.
+- PayPal IDR conversion depends on a manually configured exchange rate.
+
+## Next Improvements
+
+Local-first priorities:
+
+- record a final manual regression pass on the current commit;
+- refresh materially outdated screenshots;
+- add lightweight browser and accessibility smoke checks when resources allow;
+- reduce PHPStan baseline debt in coherent batches;
+- measure coverage only in a reproducible environment.
+
+Public deployment, provider sandbox validation, transactional email, and object storage remain optional future work rather than release blockers.
+
+## Interview Summary
+
+> “I built Japan Travel as a scoped Laravel modern monolith. Travel discovery and inquiries are intentionally separate from souvenir commerce, so I do not claim a full booking platform. I focused on user/admin isolation, stock-safe and replay-safe checkout, payment integrity, webhook idempotency, exactly-once inventory restoration, encrypted historical snapshots, incremental Vue migration, and reproducible CI. The repository clearly separates automated proof from external or production validation.”

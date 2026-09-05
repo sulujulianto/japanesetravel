@@ -1,114 +1,142 @@
 # Japan Travel
 
-Japan Travel is a Laravel 12 reference application for destination discovery and souvenir commerce. It combines bilingual travel content, verified-user reviews, optional travel inquiries through WhatsApp, and an internal souvenir checkout flow. The repository is suitable for portfolio review while keeping product copy and operational boundaries realistic.
+[![CI](https://github.com/sulujulianto/japanesetravel/actions/workflows/ci.yml/badge.svg)](https://github.com/sulujulianto/japanesetravel/actions/workflows/ci.yml)
+[![Security](https://github.com/sulujulianto/japanesetravel/actions/workflows/security.yml/badge.svg)](https://github.com/sulujulianto/japanesetravel/actions/workflows/security.yml)
+[![PHP 8.3](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel 12](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
+[![Vue 3](https://img.shields.io/badge/Vue-3-42B883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Travel services are inquiry-only: the application does not sell tickets or process travel bookings. Direct checkout and payment apply only to souvenir products.
+**Bahasa Indonesia** · [English](README.en.md)
 
-## Portfolio Status
+Japan Travel adalah aplikasi referensi full-stack untuk menemukan destinasi wisata Jepang dan membeli produk suvenir. Proyek ini dibangun sebagai modern monolith berbasis Laravel, Inertia, Vue, TypeScript, dan MariaDB, dengan perhatian khusus pada konsistensi transaksi, keamanan pembayaran, pemisahan akses pengguna/admin, serta bukti engineering yang dapat diverifikasi.
 
-- **Live demo:** pending public deployment
-- **Demo video:** pending recording
-- **Current quality baseline:** verified through the automated commands in [Testing and Quality](#testing-and-quality)
-- **Positioning:** production-oriented portfolio project with documented deployment and integration limitations
+Layanan perjalanan bersifat **informasi dan pertanyaan melalui WhatsApp**. Aplikasi tidak menjual tiket atau memproses pemesanan perjalanan. Checkout dan pembayaran hanya berlaku untuk produk suvenir.
 
-Public deployment, screenshots, payment sandbox validation, and video recording require owner-controlled external accounts. The repository includes checklists and evidence templates for those steps.
+## Status Portofolio
 
-## Features
-
-- Bilingual Indonesian/English destination catalog and detail pages.
-- Verified-user destination reviews with application and database duplicate protection.
-- Optional WhatsApp travel inquiry CTA.
-- Souvenir catalog, cart, checkout, payment retry, and order history.
-- Midtrans Snap and PayPal Checkout integration structure for sandbox validation.
-- Separate user and admin authentication sessions.
-- User dashboard, profile management, password reset, and email verification.
-- Admin dashboard for revenue, orders, inventory, destinations, and souvenirs.
-- Stock locking during checkout and compensation after gateway creation failure.
-- Signed/idempotent payment webhook handling.
-- Locale-aware dates, numbers, ratings, and IDR formatting.
-- Media validation, dimension limits, WebP conversion, and restricted deletion paths.
-- Responsive light and dark interfaces.
-
-## Tech Stack
-
-- PHP 8.3 and Laravel 12
-- Blade, Tailwind CSS, Alpine.js, and Vite
-- MySQL/MariaDB or SQLite
-- Chart.js bundled through Vite
-- Midtrans PHP SDK and PayPal REST integration
-- PHPUnit, Laravel Pint, Larastan/PHPStan
-- GitHub Actions CI
-- Docker/Railway deployment assets
-
-## Architecture Notes
-
-- `routes/web.php` contains public, authenticated, admin, checkout, and webhook routes.
-- `app/Services/Payments/` isolates Midtrans and PayPal gateway behavior behind a shared interface.
-- User and admin authentication use separate guards and session cookie names.
-- Order items store product snapshots so order history remains readable if a product changes.
-- Payment webhook events use a unique provider/event identifier for idempotency.
-- `app/Support/Format.php` centralizes locale-aware presentation formatting.
-- `app/Support/Media.php` centralizes media storage, WebP conversion, and safe deletion.
-- `app/Support/Brand.php` and `config/brand.php` centralize brand identity for Blade, Inertia, admin, and payment descriptions.
-- Database-backed cache, session, and queue drivers are the documented deployment baseline.
-
-See [Backend Technical Documentation](docs/backend-technical-documentation.md) for the detailed data flow and state transitions.
-See [Design System and Rebranding Guide](docs/design-system-and-rebranding.md) for UI tokens, shell boundaries, and safe brand changes.
-
-## Screenshots
-
-The project includes curated visual evidence under [`docs/screenshots`](docs/screenshots).
-
-| View | Screenshot |
+| Area | Status |
 |---|---|
-| Homepage | [`01-homepage.png`](docs/screenshots/01-homepage.png) |
-| Destination catalog | [`02-destinations.png`](docs/screenshots/02-destinations.png) |
-| Destination detail | [`03-destination-detail.png`](docs/screenshots/03-destination-detail.png) |
-| Souvenir shop | [`05-souvenir-shop.png`](docs/screenshots/05-souvenir-shop.png) |
-| Cart | [`06-cart.png`](docs/screenshots/06-cart.png) |
-| Admin dashboard | [`10-admin-dashboard.png`](docs/screenshots/10-admin-dashboard.png) |
-| Mobile responsive view | [`14-mobile-responsive.png`](docs/screenshots/14-mobile-responsive.png) |
-| Dark mode | [`15-dark-mode.png`](docs/screenshots/15-dark-mode.png) |
+| Demo lokal | Siap dijalankan dengan data demo terkurasi |
+| Automated quality gates | Lulus pada commit `b2cff65` |
+| PHPUnit | 258 tes, 2.498 assertion |
+| CI database | SQLite, MariaDB 10.11, dan MariaDB 11.8 |
+| Screenshot | 15 tampilan tersedia di [`docs/screenshots`](docs/screenshots) |
+| Deployment publik | Ditunda; tidak diklaim sebagai aplikasi production-live |
+| Payment provider | Struktur integrasi dan pengujian otomatis tersedia; validasi akun sandbox eksternal belum diklaim |
 
-See [Screenshot Capture Checklist](docs/screenshots/README.md) for required views, filenames, viewport guidance, and README linking instructions. Do not add placeholder image links before the corresponding files exist.
+Repository ini diposisikan sebagai **proyek portofolio berorientasi production**, bukan bukti bahwa aplikasi telah menangani transaksi atau pengguna nyata. Seluruh keterbatasan operasional dicatat secara terbuka.
 
-## Local Requirements
+## Sorotan Utama
 
-- PHP 8.3 or newer
+### Pengalaman publik dan pengguna
+
+- Katalog destinasi bilingual Bahasa Indonesia/Inggris dengan pencarian, filter, pengurutan, jadwal, dan detail destinasi.
+- Ulasan destinasi khusus pengguna terverifikasi dengan perlindungan duplikasi pada aplikasi dan database.
+- Katalog suvenir, cart berbasis sesi, checkout, retry pembayaran, dan histori pesanan.
+- Profil pengguna serta beberapa alamat pengiriman dengan pemilihan alamat utama.
+- Tampilan responsif, mode terang/gelap, dan format angka/tanggal/harga sesuai locale.
+
+### Operasional admin
+
+- Login dan sesi admin terpisah dari sesi pengguna.
+- Dashboard operasional untuk pendapatan, pesanan, stok, destinasi, suvenir, dan pengguna.
+- CRUD destinasi dan suvenir dengan validasi media, konversi WebP, pembatasan dimensi, dan penghapusan aman.
+- Filter serta transisi status order yang dibatasi oleh aturan domain.
+- Inventory ledger yang mencatat restock, pengurangan, reservasi, dan pemulihan stok secara auditable.
+- Direktori pengguna read-only beserta profil, alamat, dan histori pesanan yang relevan.
+
+### Integritas transaksi dan pembayaran
+
+- Row locking dan checkout token untuk mencegah overselling serta request checkout ganda.
+- Gateway Midtrans Snap dan PayPal Checkout di balik kontrak driver bersama.
+- Verifikasi signature/webhook, idempotency event, dan guarded state transitions.
+- Validasi nominal, mata uang, dan referensi capture sebelum perubahan status finansial.
+- Pemulihan stok exactly-once pada kegagalan pembayaran terminal atau pembatalan admin.
+- Snapshot item, pelanggan, dan alamat pengiriman agar histori tetap terbaca setelah data sumber berubah atau akun dihapus.
+- Payload provider dibatasi, disanitasi, dan memiliki kebijakan retensi untuk mengurangi paparan data sensitif.
+- Native backed enums untuk status order, pembayaran, webhook, provider, dan role pengguna.
+
+## Arsitektur
+
+```mermaid
+flowchart TD
+    Browser["Browser"] --> Laravel["Laravel 12"]
+    Laravel --> Vue["Inertia + Vue 3 + TypeScript"]
+    Laravel --> Blade["Blade user/shop pages"]
+    Laravel --> DB["MariaDB / MySQL / SQLite"]
+    Laravel --> Gateway["Midtrans / PayPal"]
+```
+
+Pendekatan frontend bersifat **hibrida dan bertahap**:
+
+- Beranda publik dan area admin menggunakan Inertia, Vue 3 Composition API, dan TypeScript.
+- Katalog, autentikasi pengguna, cart, checkout, order, dan profil masih menggunakan Blade.
+- Kedua jalur memakai sumber brand, locale, tema, dan aturan backend yang sama.
+- Migrasi dilakukan per modul dengan contract test untuk membatasi risiko regresi.
+
+Keputusan arsitektur penting:
+
+- `app/Services/Payments/` memisahkan perilaku provider melalui interface dan driver.
+- `app/Enums/` menjadi sumber nilai domain persisten dan aturan transisi.
+- Guard serta nama cookie berbeda menjaga konteks login admin dan pengguna tetap independen.
+- Mutasi stok dipusatkan pada transaksi dan inventory ledger.
+- Snapshot terenkripsi memisahkan histori transaksi dari data profil yang dapat berubah.
+- `app/Support/Format.php`, `Media.php`, dan `Brand.php` memusatkan concern presentasi yang digunakan lintas frontend.
+
+Dokumentasi alur data dan state transition tersedia di [Dokumentasi Teknis Backend](docs/backend-technical-documentation.md).
+
+## Teknologi
+
+| Lapisan | Teknologi |
+|---|---|
+| Backend | PHP 8.3, Laravel 12 |
+| Frontend modern | Inertia.js 3, Vue 3.5, TypeScript 5.9 |
+| Frontend server-rendered | Blade dan JavaScript legacy terisolasi |
+| Styling dan build | Tailwind CSS 3, Vite 7 |
+| Database | MariaDB/MySQL; SQLite untuk quick review dan quality job CI |
+| Pembayaran | Midtrans PHP SDK, PayPal REST integration |
+| Observability/cache opsional | Sentry Laravel, Predis |
+| Pengujian dan analisis | PHPUnit 11, Larastan/PHPStan level 6, Pint, ESLint, vue-tsc |
+| CI dan keamanan | GitHub Actions, CodeQL, dependency review, secret scan, Composer/npm audit |
+| Packaging | Multi-stage Dockerfile dan aset konfigurasi Railway |
+
+Versi terkunci berada di `composer.lock` dan `package-lock.json`; badge di atas menunjukkan garis besar stack, bukan janji selalu menggunakan rilis mayor terbaru.
+
+## Bukti Visual
+
+| Pengalaman publik | Operasional admin |
+|---|---|
+| ![Beranda Japan Travel](docs/screenshots/01-homepage.png) | ![Dashboard admin](docs/screenshots/10-admin-dashboard.png) |
+| ![Katalog destinasi](docs/screenshots/02-destinations.png) | ![Detail pesanan admin](docs/screenshots/11-admin-order-detail.png) |
+| ![Toko suvenir](docs/screenshots/05-souvenir-shop.png) | ![Manajemen suvenir](docs/screenshots/13-admin-souvenirs.png) |
+
+Daftar lengkap 15 tampilan, termasuk checkout, tampilan mobile, dan dark mode, tersedia pada [panduan screenshot](docs/screenshots/README.md).
+
+## Menjalankan Secara Lokal
+
+### Kebutuhan
+
+- PHP 8.3 atau lebih baru
 - Composer 2
-- Node.js 20 LTS or newer
-- npm
-- MySQL/MariaDB, or SQLite for a quick local review
-- PHP extensions:
-  - `pdo_mysql` or `pdo_sqlite`
-  - `gd` with WebP support
-  - `fileinfo`
-  - `curl`
-  - `mbstring`
-  - `openssl`
-  - `xml`
-  - `zip`
-  - `intl` recommended; the formatter has a deterministic fallback
-- Writable `storage/` and `bootstrap/cache/` directories
+- Node.js 20 atau lebih baru dan npm
+- MariaDB/MySQL, atau SQLite untuk review cepat
+- Ekstensi PHP: `pdo_mysql` atau `pdo_sqlite`, `gd` dengan WebP, `fileinfo`, `curl`, `mbstring`, `openssl`, `xml`, dan `zip`
+- `intl` disarankan; formatter menyediakan fallback deterministik
 
-Docker is available for deployment parity but is not required for daily local development.
-
-## Local Setup
-
-Clone the repository and install locked dependencies:
+### Instalasi
 
 ```bash
 git clone https://github.com/sulujulianto/japanesetravel.git
 cd japanesetravel
+
 composer install
 npm ci
 cp .env.example .env
 php artisan key:generate
 ```
 
-### Option A: MySQL or MariaDB
-
-Create a database such as `japantravel`, then update `.env`:
+Untuk MariaDB/MySQL, siapkan database lalu sesuaikan `.env`:
 
 ```env
 DB_CONNECTION=mysql
@@ -119,174 +147,126 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Run migrations and the curated local demo seed:
-
-```bash
-php artisan migrate --seed
-```
-
-### Option B: SQLite Quick Start
+Alternatif SQLite untuk review cepat:
 
 ```bash
 touch database/database.sqlite
 ```
-
-Set:
 
 ```env
 DB_CONNECTION=sqlite
 DB_DATABASE=/absolute/path/to/japanesetravel/database/database.sqlite
 ```
 
-Then run:
+Siapkan aplikasi dan data demo lokal:
 
 ```bash
 php artisan migrate --seed
-```
-
-> `migrate --seed` is for disposable local/testing data. `DemoSeeder` clears application tables and is guarded against staging/production execution.
-
-Create the dedicated local visual-review accounts and sample orders:
-
-```bash
 php artisan db:seed --class=DevAccountSeeder
 php artisan storage:link
-```
-
-Start Laravel and Vite in separate terminals:
-
-```bash
-php artisan serve
-```
-
-```bash
-npm run dev
-```
-
-For a compiled asset check:
-
-```bash
 npm run build
+```
+
+Jalankan aplikasi:
+
+```bash
 php artisan serve
 ```
 
-## Demo Accounts
+Untuk pengembangan frontend, jalankan `npm run dev` pada terminal kedua.
 
-These credentials are local/testing-only and are rejected by their seeder in other environments.
+> `DemoSeeder`, `DevAccountSeeder`, dan `migrate --seed` hanya untuk lingkungan lokal/testing. Seeder menolak eksekusi pada staging/production.
 
-| Role | Email | Password | Login |
+### Akun demo lokal
+
+| Role | Email | Password | URL |
 |---|---|---|---|
-| User | `user.demo@japantravel.test` | `Password123!` | `/login` |
+| Pengguna | `user.demo@japantravel.test` | `Password123!` | `/login` |
 | Admin | `admin.demo@japantravel.test` | `Password123!` | `/admin/login` |
 
-The curated dataset contains 10 destinations, 10 souvenirs, and 15 reviews. Local demo images are sourced from Unsplash and documented in [`docs/asset-sources.md`](docs/asset-sources.md); replace them through the admin interface with assets you own or are licensed to use.
+Dataset terkurasi berisi 10 destinasi, 10 suvenir, dan 15 ulasan. Kredensial tersebut hanya untuk data lokal/testing dan bukan akun pada layanan publik.
 
-## Testing and Quality
+## Pengujian dan Quality Gates
 
-Do not copy a test count into portfolio claims without rerunning the complete suite. The commands below are the source of truth for the current branch.
+Snapshot terverifikasi terakhir:
+
+- Commit: [`b2cff65`](https://github.com/sulujulianto/japanesetravel/commit/b2cff650df07a41fd666e4da45bed490148f841b)
+- PHPUnit: **258 tes, 2.498 assertion**
+- PHPStan: tidak ada temuan baru di luar baseline yang diterima
+- Vue TypeScript, ESLint, Pint, build produksi, Composer audit, dan npm audit: lulus
+- CI: SQLite serta MariaDB 10.11/11.8
+- Security workflow: CodeQL, dependency review, dan secret scan
+
+Jalankan ulang seluruh pemeriksaan sebelum mengutip angka tersebut untuk commit lain:
 
 ```bash
-composer validate
-composer audit
+composer validate --strict
+composer audit --locked
 npm audit --audit-level=high
+npm run type-check
+npm run lint
 npm run build
 php artisan test
-./vendor/bin/pint --test
-./vendor/bin/phpstan analyse --no-progress
+vendor/bin/pint --test
+vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+git diff --check
 ```
 
-GitHub Actions runs dependency installation, asset build, formatting, static analysis, tests, and dependency audits.
+PHPStan menggunakan baseline yang tersimpan. Oleh karena itu, hasil hijau berarti tidak ada error di luar technical debt yang telah diterima—bukan berarti repository memiliki nol temuan laten. Angka lama tetap disimpan sebagai [bukti historis yang terikat commit](docs/qa/test-execution-evidence.md).
 
-No coverage percentage is claimed because a coverage driver is not part of the default lightweight setup. See [Testing Summary](docs/testing-summary.md) for coverage instructions and current gaps.
+## Kontrol Keamanan
 
-## Optional Integrations
+- Password hashing, CSRF protection, server-side authorization, dan validasi Form Request.
+- Guard, cookie sesi, login, dan logout terpisah untuk pengguna serta admin.
+- Rate limit pada login, ulasan, dan webhook.
+- Email verification untuk tindakan pengguna yang sensitif.
+- Query Eloquent/Query Builder terparameterisasi dan pembatasan mass assignment.
+- Validasi file, konversi WebP, batas ukuran/dimensi, dan pembatasan direktori penghapusan.
+- Data profil, alamat, serta snapshot pelanggan/alamat dienkripsi saat tersimpan.
+- Idempotency dan verifikasi integritas pada checkout serta callback pembayaran.
+- Header keamanan dan HTTPS enforcement untuk lingkungan nonlokal.
+- Audit dependency, CodeQL untuk JavaScript/TypeScript, dan secret scanning dalam workflow GitHub.
 
-### Mail
+Kontrol tersebut mengurangi risiko umum tetapi tidak menggantikan penetration test, validasi provider resmi, monitoring produksi, backup, atau pengujian operasional nyata.
 
-Local development uses `MAIL_MAILER=log`; reset and verification messages are written to `storage/logs/laravel.log`. Real delivery requires a valid SMTP or transactional provider configuration.
+## Dokumentasi
 
-### WhatsApp Travel Inquiry
+| Dokumen | Tujuan |
+|---|---|
+| [Indeks dokumentasi](docs/README.md) | Peta seluruh dokumentasi proyek |
+| [Studi kasus](docs/case-study-japanese-travel.md) | Masalah, keputusan, trade-off, dan hasil |
+| [Dokumentasi teknis backend](docs/backend-technical-documentation.md) | Model domain, transaksi, dan alur pembayaran |
+| [Ringkasan pengujian](docs/testing-summary.md) | Cakupan, quality gates, dan keterbatasan pengujian |
+| [Checklist kesiapan portofolio](docs/portfolio-readiness-checklist.md) | Bukti selesai dan pekerjaan manual tersisa |
+| [Manual QA](docs/qa/manual-qa-checklist.md) | Pemeriksaan regresi berbasis pengguna |
+| [Postman/API guide](docs/postman-api-checking.md) | Template pemeriksaan endpoint dan provider |
+| [Design system](docs/design-system-and-rebranding.md) | Token UI, brand source, dan batas migrasi frontend |
 
-`TRAVEL_WHATSAPP_NUMBER` is optional and must contain international digits without `+` or spaces. The CTA stays disabled when it is empty. It does not create a travel booking or payment.
+## Batasan yang Diketahui
 
-### Payment Sandbox
+- Tidak ada deployment publik dan tidak ada klaim penggunaan production nyata.
+- Midtrans/PayPal diuji dengan mock/contract pada automated tests; akun sandbox eksternal belum divalidasi.
+- Pengujian email memverifikasi perilaku Laravel, bukan deliverability SMTP atau spam placement.
+- Belum ada browser E2E, audit aksesibilitas, load test, atau performance budget otomatis.
+- Tidak ada persentase code coverage karena driver PCOV/Xdebug tidak menjadi kebutuhan default.
+- PHPStan masih memakai baseline untuk technical debt yang diketahui.
+- Penyimpanan media lokal ditujukan untuk satu web replica; object storage belum diterapkan.
+- Kurs konversi PayPal untuk IDR menggunakan nilai konfigurasi manual.
+- Artefak Postman adalah template request, bukan bukti eksekusi terhadap provider eksternal.
 
-Catalog, admin, and cart review do not require gateway credentials. Checkout testing requires Midtrans or PayPal sandbox credentials, a public HTTPS callback URL, and registered webhook configuration. Automated tests mock provider calls and do not prove that an external account is configured correctly.
+## Roadmap Local-First
 
-### Media
+- Menyelesaikan manual regression QA pada lingkungan lokal yang terdokumentasi.
+- Memperbarui screenshot setelah perubahan UI yang material.
+- Merekam walkthrough 1–2 menit dari localhost jika diperlukan untuk portofolio.
+- Meninjau pembaruan dependency secara selektif tanpa memaksakan major upgrade.
+- Mengurangi PHPStan baseline secara bertahap dan mengukur coverage bila resource tersedia.
+- Mempertahankan deployment, provider sandbox, transactional email, dan object storage sebagai peningkatan opsional berbasis akun eksternal.
 
-Local uploads use the `public` media disk and require `php artisan storage:link`. Railway deployment with local media requires a persistent volume mounted at `/var/www/html/storage/app/public`.
+## Lisensi
 
-## Deployment Notes
+Proyek ini tersedia di bawah [MIT License](LICENSE).
 
-The repository is deployment-ready in the sense that it contains a multi-stage Dockerfile, Railway runtime scripts, environment documentation, and a manual staging checklist. It is **not** presented as an active or fully production-proven deployment.
+## Pengembang
 
-Key rules:
-
-- Run migrations separately with `php artisan migrate --force`.
-- Do not run `DemoSeeder`, `DevAccountSeeder`, or `migrate --seed` in staging/production.
-- Configure Railway health checks against `/up`.
-- Mount persistent media storage before testing uploads.
-- Keep payment flags in sandbox mode until provider validation is complete.
-- Configure a real mail provider before testing password reset or verification delivery.
-
-See [Deployment Checklist](docs/deployment-checklist.md).
-
-## Security Notes
-
-- User and admin authentication use separate guards and session cookies.
-- Standard forms use CSRF protection; only payment webhook endpoints are exempted.
-- Login, review, and webhook routes are rate-limited.
-- Payment webhooks verify provider signatures and record idempotency events.
-- Checkout locks stock and restores it when gateway creation fails.
-- Media uploads are limited to 2 MB and 6000 x 6000 pixels before processing.
-- Media deletion is restricted to approved upload directories.
-- A database constraint enforces one review per user and destination.
-- Demo seeders are restricted to local/testing environments.
-
-These controls reduce common portfolio risks but do not replace a real security review, provider validation, monitoring, backups, or operational testing.
-
-## Known Limitations
-
-- No live deployment, complete screenshot set, or recorded demo is currently claimed.
-- Travel ticketing and direct travel booking are outside project scope.
-- Payment integrations require external sandbox configuration.
-- Real email delivery is not configured by default.
-- PayPal IDR conversion uses a manually configured exchange rate.
-- Media persistence requires a Railway Volume; S3 support is not installed.
-- The local-volume deployment model is intended for a single web replica.
-- There is no measured code coverage percentage.
-- Postman artifacts are request templates, not proof of executed provider tests.
-- The PHPStan baseline contains known type-analysis debt documented for future cleanup.
-
-## Roadmap
-
-- Complete owner-controlled staging deployment and smoke-test evidence.
-- Record the 1–2 minute project walkthrough.
-- Add desktop/mobile/light/dark screenshots.
-- Execute Midtrans and PayPal sandbox matrices.
-- Configure transactional email and verify deliverability.
-- Add measured coverage using PCOV or Xdebug on a suitable environment.
-- Reduce the PHPStan baseline incrementally.
-- Evaluate object storage before multi-replica deployment.
-
-## Portfolio Evidence and Documentation
-
-- [Documentation Index](docs/README.md)
-- [Deployment Checklist](docs/deployment-checklist.md)
-- [Demo Video Script](docs/demo-video-script.md)
-- [Testing Summary](docs/testing-summary.md)
-- [Case Study](docs/case-study-japanese-travel.md)
-- [QA Test Cases](docs/qa/test-cases-japanese-travel.md)
-- [Manual QA Checklist](docs/qa/manual-qa-checklist.md)
-- [Postman/API Checking Guide](docs/postman-api-checking.md)
-- [Troubleshooting Case Studies](docs/troubleshooting-case-studies.md)
-- [SQL Inspection Examples](docs/sql-inspection-examples.md)
-- [Project Workflow](docs/project-workflow.md)
-- [GitHub Issues Backlog](docs/github-issues-backlog.md)
-- [Portfolio Readiness Checklist](docs/portfolio-readiness-checklist.md)
-- [Backend Technical Documentation](docs/backend-technical-documentation.md)
-
-## License
-
-This project is available under the [MIT License](LICENSE).
+Dikembangkan oleh [Sulu Edward Julianto](https://github.com/sulujulianto) sebagai studi kasus full-stack dan bukti praktik engineering berbasis Laravel.

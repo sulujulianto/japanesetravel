@@ -1,36 +1,42 @@
-# Railway Staging Deployment Checklist
+# Railway Deployment Runbook
 
-This checklist prepares JapanTravel for a public portfolio/staging deployment. It does not claim that deployment or external integrations have been completed.
+## Status
 
-## Current Runtime Contract
+**Deferred and optional for the current local-first portfolio release.**
 
-- The Dockerfile builds Composer production dependencies and Vite assets in separate stages.
+This document preserves a future Railway deployment contract. Empty checkboxes are not portfolio-release blockers, and their presence must not be interpreted as proof that hosting, provider accounts, or production operations have been completed.
+
+## Runtime Contract
+
+- The multi-stage Dockerfile builds production Composer dependencies and Vite assets separately.
 - `railway/start-web.sh` performs runtime directory/cache preparation and starts Apache.
-- Normal web startup does **not** run migrations or seeders.
-- Migrations must run separately with:
+- Normal startup does not run migrations or seeders.
+- Migrations run as a separate one-off action:
 
 ```bash
 sh railway/init-app.sh --migrate-only
 ```
 
-- Laravel exposes the health endpoint at `GET /up`.
+- Laravel exposes `GET /up` for HTTP health checks.
 - `railway/run-worker.sh` explicitly uses the `database` queue connection.
-- `railway/run-cron.sh` runs Laravel's scheduler worker.
+- `railway/run-cron.sh` runs the Laravel scheduler worker.
+- Payment payload retention requires the scheduler to execute `payments:prune-payloads`.
 
 ## 1. Owner Account Preparation
 
-- [ ] **Owner action required:** create a Railway account and project.
-- [ ] Connect the GitHub repository `sulujulianto/japanesetravel`.
+- [ ] Create a Railway account and project.
+- [ ] Connect `sulujulianto/japanesetravel` at an explicitly reviewed commit.
 - [ ] Create a MySQL-compatible database service.
-- [ ] Decide whether worker and scheduler services are needed for the first demo.
-- [ ] Do not import `japantravel.sql` or execute demo seeders against staging data.
+- [ ] Decide whether worker and scheduler services are required.
+- [ ] Record the selected plan limits and expected cost before enabling resources.
+- [ ] Do not import an old demo SQL dump or execute demo seeders on remote data.
 
-## 2. Required Application Environment
+## 2. Application Environment
 
-Set secrets through Railway variables, never in committed files.
+Store secrets in Railway variables, never in committed files:
 
 ```env
-APP_NAME=JapanTravel
+APP_NAME=Japan Travel
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:generated-value
@@ -49,141 +55,131 @@ FILESYSTEM_DISK=local
 MEDIA_DISK=public
 ```
 
-Generate `APP_KEY` locally once and store the output as a Railway secret:
+Generate `APP_KEY` once and store it as a secret:
 
 ```bash
 php artisan key:generate --show
 ```
 
-Do not regenerate it on each deploy.
+Do not regenerate the key during normal deploys; doing so would invalidate encrypted data and sessions.
 
 ## 3. Database
 
-- [ ] Configure `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`, or the provider's supported database URL.
-- [ ] Confirm the database is reachable from the application service.
-- [ ] Run the one-off migration command:
-
-```bash
-sh railway/init-app.sh --migrate-only
-```
-
-- [ ] Confirm the command reports successful migrations.
-- [ ] Do **not** run `migrate:fresh`, `migrate --seed`, `DemoSeeder`, or `DevAccountSeeder`.
-- [ ] Create any staging reviewer accounts manually with temporary credentials and rotate/remove them after review.
+- [ ] Configure `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` or a supported database URL.
+- [ ] Confirm network access from the application service.
+- [ ] Run `sh railway/init-app.sh --migrate-only` as a separate deploy step.
+- [ ] Confirm migrations completed without running seeds.
+- [ ] Never run `migrate:fresh`, `migrate --seed`, `DemoSeeder`, or `DevAccountSeeder` remotely.
+- [ ] Create temporary reviewer accounts manually and remove or rotate them after review.
 
 ## 4. Persistent Media
 
 - [ ] Create a Railway Volume.
-- [ ] Mount it at:
-
-```text
-/var/www/html/storage/app/public
-```
-
-- [ ] Keep `MEDIA_DISK=public`.
-- [ ] Confirm runtime creates the `public/storage` symlink.
+- [ ] Mount it at `/var/www/html/storage/app/public`.
+- [ ] Keep `MEDIA_DISK=public` and confirm `public/storage` is a valid symlink.
 - [ ] Use one web replica while relying on a local volume.
-- [ ] Configure a volume backup/export procedure.
+- [ ] Document a volume backup/export procedure.
 
-Smoke test:
+Persistence smoke test:
 
-1. Upload one destination image.
-2. Upload one souvenir image.
-3. Save both public URLs.
-4. Restart/redeploy the service.
-5. Confirm both URLs still return `200`.
-6. Replace one image and confirm the old path is removed.
-7. Delete a test item and confirm its valid uploaded media is removed.
+1. Upload one destination and one souvenir image.
+2. Save both public URLs.
+3. Restart or redeploy the service.
+4. Confirm both URLs still return `200`.
+5. Replace one image and confirm the previous upload is removed safely.
+6. Delete a test record and confirm only its approved upload path is removed.
 
-## 5. Health Check and Networking
+## 5. Health, Proxy, and Cookies
 
-- [ ] Set Railway HTTP health check path to `/up`.
-- [ ] Verify `https://your-domain/up` returns a successful response.
-- [ ] Confirm `APP_URL` uses the final HTTPS origin.
-- [ ] Verify user/admin cookies are marked Secure in the browser.
-- [ ] Verify generated PayPal return/cancel URLs use HTTPS.
+- [ ] Configure Railway HTTP health path `/up`.
+- [ ] Confirm the public HTTPS `/up` response succeeds.
+- [ ] Set `APP_URL` to the final origin.
+- [ ] Confirm trusted-proxy handling produces HTTPS URLs.
+- [ ] Verify separate user/admin cookies are Secure and have the intended attributes.
+- [ ] Verify generated PayPal return/cancel URLs use the public HTTPS origin.
 
-Docker does not currently define a `HEALTHCHECK`; Railway's HTTP health check is the documented mechanism.
+The Dockerfile does not define Docker `HEALTHCHECK`; Railway's HTTP check is the documented mechanism.
 
-## 6. Mail
+## 6. Mail and WhatsApp
 
-Local `MAIL_MAILER=log` does not deliver email.
+`MAIL_MAILER=log` does not send email.
 
-- [ ] **Owner action required:** choose a transactional SMTP/mail provider.
-- [ ] Configure `MAIL_MAILER`, host, port, username, password, scheme, and sender identity.
-- [ ] Request a password reset and confirm delivery.
-- [ ] Register an unverified user, resend verification, and confirm the signed link works.
-- [ ] Check spam placement and provider logs.
+- [ ] Configure an approved transactional SMTP/mail provider.
+- [ ] Verify password reset and email-verification delivery.
+- [ ] Review sender-domain authentication and spam placement.
+- [ ] Set `TRAVEL_WHATSAPP_NUMBER` only for an approved number using international digits.
+- [ ] Leave the number empty when no approved contact exists.
+- [ ] Confirm no copy implies direct booking or travel payment.
 
-## 7. WhatsApp Inquiry
+## 7. Payment Sandbox
 
-- [ ] Set `TRAVEL_WHATSAPP_NUMBER` to international digits without `+` or spaces if the CTA should be active.
-- [ ] Leave it empty if there is no approved business number.
-- [ ] Confirm the CTA does not add an automatic message.
-- [ ] Confirm no copy implies direct travel booking or ticket payment.
-
-## 8. Payment Sandbox
-
-Keep both production flags disabled for staging:
+Keep production flags disabled:
 
 ```env
 MIDTRANS_IS_PRODUCTION=false
 PAYPAL_IS_PRODUCTION=false
 ```
 
-- [ ] **Owner action required:** add valid sandbox credentials.
+- [ ] Add sandbox credentials through environment secrets.
 - [ ] Register `POST /payments/webhook/midtrans` with Midtrans.
-- [ ] Register `POST /payments/webhook/paypal` with PayPal and set `PAYPAL_WEBHOOK_ID`.
-- [ ] Test a low-value souvenir checkout with official sandbox instruments.
-- [ ] Confirm redirect/callback URLs return to the HTTPS deployment.
-- [ ] Confirm paid webhook changes `pending` order to `processing`.
-- [ ] Replay the same webhook and confirm no duplicate effect.
-- [ ] Test failure/cancel and confirm stock/order behavior.
-- [ ] Verify the manually configured PayPal exchange rate before any demonstration.
-- [ ] Never use real money for portfolio validation.
+- [ ] Register `POST /payments/webhook/paypal` with PayPal and set the matching `PAYPAL_WEBHOOK_ID`.
+- [ ] Test checkout using official sandbox instruments and no real money.
+- [ ] Confirm amount, currency, reference, redirect, return, and callback behavior.
+- [ ] Replay an event and confirm no duplicate financial or inventory effect.
+- [ ] Test terminal failure/refund handling and exactly-once stock restoration.
+- [ ] Verify the manually configured PayPal exchange rate before demonstration.
+- [ ] Redact credentials, personal data, signatures, and raw provider payloads from evidence.
 
-## 9. Worker and Scheduler
+## 8. Worker and Scheduler
 
-The first portfolio deployment may omit these if no asynchronous application work depends on them, but database-backed mail/queue choices must match actual usage.
+- [ ] Create a worker service with `sh railway/run-worker.sh` only if asynchronous work requires it.
+- [ ] Keep the database queue connection unless the script and documentation are changed together.
+- [ ] Create a scheduler service with `sh railway/run-cron.sh` if scheduled pruning must run.
+- [ ] Confirm `payments:prune-payloads` executes at the intended retention boundary.
+- [ ] Review `failed_jobs`, scheduler output, and service logs.
 
-- [ ] If enabled, create a worker service using `sh railway/run-worker.sh`.
-- [ ] Keep `QUEUE_CONNECTION=database`; the current worker script hardcodes that connection.
-- [ ] Optionally create a scheduler service using `sh railway/run-cron.sh`.
-- [ ] Check `failed_jobs` and service logs after smoke testing.
+## 9. Application Smoke Test
 
-## 10. Application Smoke Test
+- [ ] `/` renders in Indonesian and English.
+- [ ] Destination search/filter/detail work.
+- [ ] User registration, verification, login, and password reset work.
+- [ ] User/admin sessions remain independent.
+- [ ] Verified users can manage owned profile/address data and submit one review.
+- [ ] Shop, cart, address-aware checkout, and payment retry work.
+- [ ] Users cannot read other users' orders or addresses.
+- [ ] Admin can inspect users and manage destinations, souvenirs, inventory, and valid order transitions.
+- [ ] Duplicate checkout and webhook delivery do not create duplicate effects.
+- [ ] Uploads survive restart/redeploy.
+- [ ] `/up` remains healthy and logs contain no raw secrets/provider payloads.
 
-- [ ] `/` renders in ID and EN.
-- [ ] `/places` search/filter and destination detail work.
-- [ ] User registration/login/email verification flow works.
-- [ ] Verified user can submit one review and cannot duplicate it.
-- [ ] `/shop` and `/cart` work.
-- [ ] Checkout sandbox flow reaches the selected provider.
-- [ ] User sees only their own orders.
-- [ ] `/admin/login` works with an approved staging admin.
-- [ ] Normal user cannot access admin routes.
-- [ ] Admin can manage destinations and souvenirs.
-- [ ] Admin can inspect orders and update valid statuses.
-- [ ] Upload persists after restart/redeploy.
-- [ ] `/up` remains healthy.
-- [ ] Application logs do not expose secrets or raw credentials.
+## 10. Evidence
 
-## 11. Evidence to Capture
-
-- [ ] Public URL.
-- [ ] Railway service status and `/up` response.
-- [ ] Migration command result with secrets redacted.
+- [ ] Public URL and deployed commit SHA.
+- [ ] Service status and `/up` result.
+- [ ] Migration output with secrets redacted.
 - [ ] Media persistence before/after redeploy.
 - [ ] Mail delivery evidence with personal data redacted.
-- [ ] Sandbox payment IDs with sensitive values redacted.
-- [ ] CI run URL.
-- [ ] Completed manual QA execution table.
+- [ ] Sandbox provider IDs and callbacks with sensitive fields redacted.
+- [ ] CI/security workflow URLs for the deployed commit.
+- [ ] Completed manual QA execution row.
 
-## 12. Rollback and Safety
+Until these items exist, README and portfolio copy must continue to state that deployment and external integrations are unverified.
 
-- [ ] Record the deployed commit SHA.
-- [ ] Back up database and media volume before destructive maintenance.
-- [ ] Roll back application image without rolling back schema blindly.
-- [ ] Never run demo seeders as a recovery action.
-- [ ] Keep payment production flags disabled until a dedicated go-live review.
+## 11. Rollback and Safety
 
+- [ ] Record the deployed image/commit before every release.
+- [ ] Back up database and media before destructive maintenance.
+- [ ] Test restore steps with nonpersonal data.
+- [ ] Roll back application code without blindly reversing schema migrations.
+- [ ] Never use demo seeders as a recovery method.
+- [ ] Keep payment production flags disabled until a dedicated go-live review passes.
+- [ ] Define access, retention, monitoring, and incident ownership before accepting real users.
+
+## Known Operational Limits
+
+- Local-volume media supports one web replica, not horizontal scaling.
+- Object storage, Redis, and production Sentry are not configured or validated.
+- The worker script currently selects the database connection explicitly.
+- Docker `HEALTHCHECK` and runtime `route:cache` are not configured.
+- Provider sandbox and SMTP behavior require owner-controlled external accounts.
+- This runbook documents preparation; it is not a claim of production readiness.
