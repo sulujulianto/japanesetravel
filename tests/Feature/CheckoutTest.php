@@ -89,12 +89,18 @@ class CheckoutTest extends TestCase
         ]);
 
         $order = Order::firstOrFail();
+        $this->assertSame($user->username, $order->customer_snapshot['username']);
+        $this->assertSame($user->email, $order->customer_snapshot['email']);
         $this->assertSame('Edo Wardana', $order->shipping_address_snapshot['recipient_name']);
         $this->assertSame('Jalan Sakura Nomor 10', $order->shipping_address_snapshot['address_line_1']);
 
         $rawSnapshot = (string) DB::table('orders')->where('id', $order->id)->value('shipping_address_snapshot');
         $this->assertStringNotContainsString('Edo Wardana', $rawSnapshot);
         $this->assertStringNotContainsString('Jalan Sakura Nomor 10', $rawSnapshot);
+
+        $rawCustomerSnapshot = (string) DB::table('orders')->where('id', $order->id)->value('customer_snapshot');
+        $this->assertStringNotContainsString((string) $user->username, $rawCustomerSnapshot);
+        $this->assertStringNotContainsString((string) $user->email, $rawCustomerSnapshot);
 
         $address->update(['recipient_name' => 'Nama Baru']);
         $address->delete();

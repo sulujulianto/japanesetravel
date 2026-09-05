@@ -24,6 +24,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'customer_snapshot',
         'checkout_idempotency_key',
         'shipping_address_id',
         'shipping_address_snapshot',
@@ -40,6 +41,7 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'customer_snapshot' => 'encrypted:array',
             'shipping_address_snapshot' => 'encrypted:array',
             'stock_restored_at' => 'datetime',
         ];

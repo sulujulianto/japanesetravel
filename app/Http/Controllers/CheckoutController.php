@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
+use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\Inventory\InventoryService;
 use App\Services\Orders\OrderInventoryService;
@@ -85,6 +86,15 @@ class CheckoutController extends Controller
         try {
             // Mulai Simpan ke Database (Pakai Transaction Biar Aman)
             [$order, $payment, $created] = DB::transaction(function () use ($cart, $idempotencyKey, $inventory, $provider, $shippingAddressId, $userId) {
+                $customer = User::query()
+                    ->whereKey($userId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $customer) {
+                    throw new \RuntimeException(__('Akun pengguna tidak lagi tersedia.'));
+                }
+
                 $shippingAddress = UserAddress::query()
                     ->where('user_id', $userId)
                     ->whereKey($shippingAddressId)
@@ -146,7 +156,8 @@ class CheckoutController extends Controller
 
                 // 1. Buat Nota Utama
                 $order = Order::create([
-                    'user_id' => $userId,
+                    'user_id' => $customer->getKey(),
+                    'customer_snapshot' => $this->customerSnapshot($customer),
                     'checkout_idempotency_key' => $idempotencyKey,
                     'shipping_address_id' => $shippingAddress->id,
                     'shipping_address_snapshot' => $this->shippingAddressSnapshot($shippingAddress),
@@ -599,6 +610,15 @@ class CheckoutController extends Controller
             'province' => (string) $address->province,
             'postal_code' => (string) $address->postal_code,
             'country_code' => (string) $address->country_code,
+        ];
+    }
+
+    /** @return array{username: string, email: string} */
+    private function customerSnapshot(User $customer): array
+    {
+        return [
+            'username' => (string) $customer->username,
+            'email' => (string) $customer->email,
         ];
     }
 }
