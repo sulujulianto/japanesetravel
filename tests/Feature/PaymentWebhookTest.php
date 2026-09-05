@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -717,6 +718,17 @@ class PaymentWebhookTest extends TestCase
         $this->assertNotNull($order->fresh()->stock_restored_at);
         $this->assertSame(5, $souvenir->fresh()->stock);
         $this->assertDatabaseCount('payment_webhook_events', 1);
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'order_id' => $order->id,
+            'actor_id' => null,
+            'type' => InventoryMovement::TYPE_ORDER_RESTORATION,
+            'quantity_delta' => 2,
+            'stock_before' => 3,
+            'stock_after' => 5,
+            'reference' => 'order:'.$order->id.':restoration:souvenir:'.$souvenir->id,
+        ]);
     }
 
     public function test_late_pending_webhook_does_not_downgrade_paid_payment(): void

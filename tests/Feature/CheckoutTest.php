@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Souvenir;
@@ -118,6 +119,17 @@ class CheckoutTest extends TestCase
             'quantity' => 2,
         ]);
 
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'order_id' => $order->id,
+            'actor_id' => $user->id,
+            'type' => InventoryMovement::TYPE_ORDER_RESERVATION,
+            'quantity_delta' => -2,
+            'stock_before' => 5,
+            'stock_after' => 3,
+            'reference' => 'order:'.$order->id.':reservation:souvenir:'.$souvenir->id,
+        ]);
+
         $this->assertSame(3, $souvenir->fresh()->stock);
     }
 
@@ -187,6 +199,16 @@ class CheckoutTest extends TestCase
         $this->assertSame('failed', $payment->status);
         $this->assertStringContainsString('Gateway timeout', (string) ($payment->payload_json['error'] ?? ''));
         $this->assertSame(5, $souvenir->fresh()->stock);
+        $this->assertDatabaseCount('inventory_movements', 2);
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'order_id' => $order->id,
+            'type' => InventoryMovement::TYPE_ORDER_RESTORATION,
+            'quantity_delta' => 2,
+            'stock_before' => 3,
+            'stock_after' => 5,
+            'reference' => 'order:'.$order->id.':restoration:souvenir:'.$souvenir->id,
+        ]);
     }
 
     public function test_checkout_failure_restores_stock_for_all_items(): void
@@ -446,6 +468,14 @@ class CheckoutTest extends TestCase
             'checkout_idempotency_key' => hash('sha256', $checkoutToken),
         ]);
         $this->assertSame(3, $souvenir->fresh()->stock);
+        $order = Order::query()->firstOrFail();
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseHas('inventory_movements', [
+            'order_id' => $order->id,
+            'type' => InventoryMovement::TYPE_ORDER_RESERVATION,
+            'quantity_delta' => -2,
+            'reference' => 'order:'.$order->id.':reservation:souvenir:'.$souvenir->id,
+        ]);
     }
 
     public function test_checkout_rejects_a_token_that_does_not_match_the_active_session(): void

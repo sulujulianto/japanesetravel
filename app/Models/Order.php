@@ -75,6 +75,12 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasMany<InventoryMovement, $this> */
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
     public function canTransitionTo(string $nextStatus): bool
     {
         return in_array($nextStatus, $this->allowedStatusUpdates(), true);

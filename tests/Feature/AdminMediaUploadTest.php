@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
 use App\Models\Place;
 use App\Models\Souvenir;
 use App\Models\User;
@@ -112,6 +113,15 @@ class AdminMediaUploadTest extends TestCase
 
             $this->assertStringEndsWith('.webp', $souvenir->image);
             Storage::disk('public')->assertExists($souvenir->image);
+            $this->assertDatabaseHas('inventory_movements', [
+                'souvenir_id' => $souvenir->id,
+                'actor_id' => $admin->id,
+                'type' => InventoryMovement::TYPE_INITIAL_STOCK,
+                'quantity_delta' => 5,
+                'stock_before' => 0,
+                'stock_after' => 5,
+                'reference' => 'souvenir:'.$souvenir->id.':initial-stock',
+            ]);
         }
     }
 
@@ -150,6 +160,14 @@ class AdminMediaUploadTest extends TestCase
         $this->assertNotSame($oldPath, $souvenir->image);
         Storage::disk('public')->assertMissing($oldPath);
         Storage::disk('public')->assertExists($souvenir->image);
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'actor_id' => $admin->id,
+            'type' => InventoryMovement::TYPE_ADMIN_CORRECTION,
+            'quantity_delta' => 2,
+            'stock_before' => 10,
+            'stock_after' => 12,
+        ]);
     }
 
     public function test_admin_media_upload_rejects_images_over_dimension_limit(): void

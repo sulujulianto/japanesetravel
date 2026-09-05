@@ -2,16 +2,20 @@
 
 namespace App\Services\Orders;
 
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Souvenir;
+use App\Services\Inventory\InventoryService;
 use Illuminate\Support\Facades\DB;
 
 class OrderInventoryService
 {
-    public function restore(int $orderId): bool
+    public function __construct(private readonly InventoryService $inventory) {}
+
+    public function restore(int $orderId, ?int $actorId = null): bool
     {
-        return DB::transaction(function () use ($orderId): bool {
+        return DB::transaction(function () use ($actorId, $orderId): bool {
             $order = Order::query()
                 ->whereKey($orderId)
                 ->lockForUpdate()
@@ -40,7 +44,14 @@ class OrderInventoryService
                 foreach ($itemQuantities as $souvenirId => $quantity) {
                     $souvenir = $souvenirs->get((int) $souvenirId);
                     if ($souvenir) {
-                        $souvenir->increment('stock', $quantity);
+                        $this->inventory->adjust(
+                            souvenirId: (int) $souvenir->getKey(),
+                            quantityDelta: $quantity,
+                            type: InventoryMovement::TYPE_ORDER_RESTORATION,
+                            reference: 'order:'.$order->id.':restoration:souvenir:'.$souvenir->getKey(),
+                            orderId: (int) $order->getKey(),
+                            actorId: $actorId,
+                        );
                     }
                 }
             }

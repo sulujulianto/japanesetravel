@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Souvenir;
 use App\Models\UserAddress;
+use App\Services\Inventory\InventoryService;
 use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\PaymentService;
 use App\Support\CacheKeys;
@@ -28,6 +30,7 @@ class CheckoutController extends Controller
         Request $request,
         PaymentService $paymentService,
         OrderInventoryService $orderInventory,
+        InventoryService $inventory,
         CheckoutIdempotency $checkoutIdempotency
     ) {
         $userId = (int) Auth::id();
@@ -81,7 +84,7 @@ class CheckoutController extends Controller
 
         try {
             // Mulai Simpan ke Database (Pakai Transaction Biar Aman)
-            [$order, $payment, $created] = DB::transaction(function () use ($cart, $idempotencyKey, $provider, $shippingAddressId, $userId) {
+            [$order, $payment, $created] = DB::transaction(function () use ($cart, $idempotencyKey, $inventory, $provider, $shippingAddressId, $userId) {
                 $shippingAddress = UserAddress::query()
                     ->where('user_id', $userId)
                     ->whereKey($shippingAddressId)
@@ -164,7 +167,14 @@ class CheckoutController extends Controller
                         'product_image' => $data['souvenir']->image,
                     ]);
 
-                    $data['souvenir']->decrement('stock', $data['qty']);
+                    $inventory->adjust(
+                        souvenirId: (int) $data['souvenir']->getKey(),
+                        quantityDelta: -$data['qty'],
+                        type: InventoryMovement::TYPE_ORDER_RESERVATION,
+                        reference: 'order:'.$order->id.':reservation:souvenir:'.$data['souvenir']->getKey(),
+                        orderId: (int) $order->getKey(),
+                        actorId: $userId,
+                    );
                 }
 
                 $providerRef = $provider === 'midtrans'

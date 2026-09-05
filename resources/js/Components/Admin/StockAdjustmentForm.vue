@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<{
 
 const activeAction = ref<AdjustmentAction | null>(null);
 const form = useForm({
+    adjustment_token: globalThis.crypto.randomUUID(),
     amount: 10,
 });
 
@@ -29,7 +30,10 @@ const submit = (action: AdjustmentAction): void => {
 
     form.post(action === 'add' ? props.item.restockUrl : props.item.deductUrl, {
         preserveScroll: true,
-        onSuccess: () => form.reset(),
+        onSuccess: () => {
+            form.reset('amount');
+            form.adjustment_token = globalThis.crypto.randomUUID();
+        },
         onFinish: () => {
             activeAction.value = null;
         },

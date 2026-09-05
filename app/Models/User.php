@@ -75,4 +75,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(PlaceReview::class);
     }
+
+    /** @return HasMany<InventoryMovement, $this> */
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class, 'actor_id');
+    }
 }

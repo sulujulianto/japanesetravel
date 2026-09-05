@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\InventoryMovement;
 use App\Models\Souvenir;
+use App\Services\Inventory\InventoryService;
 use App\Support\AdminPagination;
 use App\Support\AdminShell;
 use App\Support\CacheKeys;
@@ -11,6 +13,9 @@ use App\Support\Format;
 use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -52,7 +57,7 @@ class SouvenirController extends Controller
     }
 
     // 3. SIMPAN BARANG
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, InventoryService $inventory): RedirectResponse
     {
         $validated = $request->validate([
             'name_id' => 'required|string|max:255',
@@ -82,16 +87,29 @@ class SouvenirController extends Controller
             $imagePath = Media::storeUploadedImage($request->file('image'), 'uploads/souvenirs');
         }
 
-        Souvenir::create([
-            'name' => [
-                'id' => $validated['name_id'],
-                'en' => $validated['name_en'],
-            ],
-            'description' => $description,
-            'price' => $validated['price'],
-            'stock' => $validated['stock'],
-            'image' => $imagePath,
-        ]);
+        DB::transaction(function () use ($description, $imagePath, $inventory, $validated): void {
+            $souvenir = Souvenir::create([
+                'name' => [
+                    'id' => $validated['name_id'],
+                    'en' => $validated['name_en'],
+                ],
+                'description' => $description,
+                'price' => $validated['price'],
+                'stock' => 0,
+                'image' => $imagePath,
+            ]);
+
+            $initialStock = (int) $validated['stock'];
+            if ($initialStock > 0) {
+                $inventory->adjust(
+                    souvenirId: (int) $souvenir->getKey(),
+                    quantityDelta: $initialStock,
+                    type: InventoryMovement::TYPE_INITIAL_STOCK,
+                    reference: 'souvenir:'.$souvenir->getKey().':initial-stock',
+                    actorId: (int) Auth::guard('admin')->id(),
+                );
+            }
+        });
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
@@ -105,8 +123,11 @@ class SouvenirController extends Controller
     }
 
     // 5. UPDATE BARANG
-    public function update(Request $request, Souvenir $souvenir): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Souvenir $souvenir,
+        InventoryService $inventory
+    ): RedirectResponse {
         $validated = $request->validate([
             'name_id' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
@@ -134,16 +155,33 @@ class SouvenirController extends Controller
             'en' => $validated['description_en'],
         ];
 
-        $souvenir->update([
-            'name' => [
-                'id' => $validated['name_id'],
-                'en' => $validated['name_en'],
-            ],
-            'description' => $description,
-            'price' => $validated['price'],
-            'stock' => $validated['stock'],
-            'image' => $souvenir->image,
-        ]);
+        DB::transaction(function () use ($description, $inventory, $souvenir, $validated): void {
+            $lockedSouvenir = Souvenir::query()
+                ->whereKey($souvenir->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedSouvenir->update([
+                'name' => [
+                    'id' => $validated['name_id'],
+                    'en' => $validated['name_en'],
+                ],
+                'description' => $description,
+                'price' => $validated['price'],
+                'image' => $souvenir->image,
+            ]);
+
+            $quantityDelta = (int) $validated['stock'] - (int) $lockedSouvenir->stock;
+            if ($quantityDelta !== 0) {
+                $inventory->adjust(
+                    souvenirId: (int) $lockedSouvenir->getKey(),
+                    quantityDelta: $quantityDelta,
+                    type: InventoryMovement::TYPE_ADMIN_CORRECTION,
+                    reference: 'admin:souvenir-update:'.Str::uuid(),
+                    actorId: (int) Auth::guard('admin')->id(),
+                );
+            }
+        });
 
         CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
 
