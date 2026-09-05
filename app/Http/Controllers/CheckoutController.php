@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\Inventory\InventoryService;
 use App\Services\Orders\OrderInventoryService;
+use App\Services\Payments\PaymentPayload;
 use App\Services\Payments\PaymentService;
 use App\Support\CacheKeys;
 use App\Support\CheckoutIdempotency;
@@ -229,7 +230,7 @@ class CheckoutController extends Controller
             $gatewayCreated = true;
 
             $payload = $payment->payload_json ?? [];
-            $payload['gateway'] = $result->payload;
+            $payload['gateway'] = PaymentPayload::gateway($provider, $result);
 
             $payment->update([
                 'provider_ref' => $result->providerRef,
@@ -237,15 +238,15 @@ class CheckoutController extends Controller
                 'amount' => $result->amount ?? $payment->amount,
                 'currency' => $result->currency ?? $payment->currency,
             ]);
-        } catch (\Throwable $exception) {
+        } catch (\Throwable) {
             if (! $gatewayCreated) {
-                $this->compensateFailedCheckout($order, $payment, $exception, $orderInventory);
+                $this->compensateFailedCheckout($order, $payment, $orderInventory);
                 CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
             } else {
                 $payment->update([
                     'status' => 'failed',
                     'payload_json' => [
-                        'error' => $exception->getMessage(),
+                        'failure' => PaymentPayload::failure('gateway_persistence_failed'),
                     ],
                 ]);
             }
@@ -309,10 +310,9 @@ class CheckoutController extends Controller
     protected function compensateFailedCheckout(
         Order $order,
         Payment $payment,
-        \Throwable $exception,
         OrderInventoryService $orderInventory
     ): void {
-        DB::transaction(function () use ($order, $payment, $exception, $orderInventory) {
+        DB::transaction(function () use ($order, $payment, $orderInventory) {
             $lockedOrder = Order::whereKey($order->id)
                 ->lockForUpdate()
                 ->first();
@@ -332,7 +332,7 @@ class CheckoutController extends Controller
             }
 
             $payload = $lockedPayment->payload_json ?? [];
-            $payload['error'] = $exception->getMessage();
+            $payload['failure'] = PaymentPayload::failure('gateway_creation_failed');
 
             $lockedPayment->update([
                 'status' => 'failed',
@@ -526,7 +526,7 @@ class CheckoutController extends Controller
             $result = $paymentService->driver($provider)->createPayment($gatewayOrder ?? $order->loadMissing('items', 'user'), $payment);
 
             $payload = $payment->payload_json ?? [];
-            $payload['gateway'] = $result->payload;
+            $payload['gateway'] = PaymentPayload::gateway($provider, $result);
 
             $payment->update([
                 'provider_ref' => $result->providerRef,
@@ -534,11 +534,11 @@ class CheckoutController extends Controller
                 'amount' => $result->amount ?? $payment->amount,
                 'currency' => $result->currency ?? $payment->currency,
             ]);
-        } catch (\Throwable $exception) {
+        } catch (\Throwable) {
             $payment->update([
                 'status' => 'failed',
                 'payload_json' => [
-                    'error' => $exception->getMessage(),
+                    'failure' => PaymentPayload::failure('gateway_creation_failed'),
                 ],
             ]);
 

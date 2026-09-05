@@ -6,6 +6,7 @@ use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentWebhookEvent;
 use App\Models\Souvenir;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,6 +37,9 @@ class PaymentWebhookTest extends TestCase
             'status' => 'pending',
             'amount' => 150000,
             'currency' => 'IDR',
+            'payload_json' => [
+                'gateway' => ['redirect_url' => 'https://pay.test/pending-token'],
+            ],
         ]);
 
         config([
@@ -50,6 +54,8 @@ class PaymentWebhookTest extends TestCase
             'status_code' => '200',
             'gross_amount' => $grossAmount,
             'signature_key' => $signature,
+            'customer_email' => 'private-customer@example.test',
+            'masked_card' => '481111-1111',
             'transaction_status' => 'settlement',
             'fraud_status' => 'accept',
             'currency' => 'IDR',
@@ -78,6 +84,18 @@ class PaymentWebhookTest extends TestCase
             'event_id' => 'TRX-TEST-001:paid',
             'payment_id' => $payment->id,
         ]);
+
+        $storedEventPayload = PaymentWebhookEvent::firstOrFail()->payload_json;
+        $freshPaymentPayload = $payment->fresh()->payload_json;
+        $storedPaymentPayload = $freshPaymentPayload['webhook'] ?? [];
+        $this->assertArrayNotHasKey('gateway', $freshPaymentPayload);
+        foreach ([$storedEventPayload, $storedPaymentPayload] as $storedPayload) {
+            $encoded = json_encode($storedPayload, JSON_THROW_ON_ERROR);
+            $this->assertStringNotContainsString('signature_key', $encoded);
+            $this->assertStringNotContainsString('private-customer@example.test', $encoded);
+            $this->assertStringNotContainsString('481111-1111', $encoded);
+            $this->assertStringContainsString('TRX-TEST-001:paid', $encoded);
+        }
     }
 
     public function test_midtrans_pending_then_settlement_with_same_transaction_id_is_processed(): void
@@ -407,10 +425,18 @@ class PaymentWebhookTest extends TestCase
             'event_type' => 'CHECKOUT.ORDER.COMPLETED',
             'resource' => [
                 'id' => $payment->provider_ref,
+                'status' => 'COMPLETED',
                 'amount' => [
                     'value' => '13.33',
                     'currency_code' => 'USD',
                 ],
+                'shipping' => [
+                    'name' => ['full_name' => 'Private Customer'],
+                    'address' => ['address_line_1' => 'Private Street 123'],
+                ],
+            ],
+            'payer' => [
+                'email_address' => 'paypal-private@example.test',
             ],
         ];
 
@@ -436,6 +462,15 @@ class PaymentWebhookTest extends TestCase
             'event_id' => 'WH-TEST-001',
             'payment_id' => $payment->id,
         ]);
+
+        $storedEventPayload = PaymentWebhookEvent::firstOrFail()->payload_json;
+        $storedPaymentPayload = $payment->fresh()->payload_json['webhook'] ?? [];
+        foreach ([$storedEventPayload, $storedPaymentPayload] as $storedPayload) {
+            $encoded = json_encode($storedPayload, JSON_THROW_ON_ERROR);
+            $this->assertStringNotContainsString('paypal-private@example.test', $encoded);
+            $this->assertStringNotContainsString('Private Street 123', $encoded);
+            $this->assertStringContainsString('WH-TEST-001', $encoded);
+        }
     }
 
     public function test_paypal_return_capture_failure_does_not_throw_500_and_marks_payment_failed(): void
@@ -495,7 +530,12 @@ class PaymentWebhookTest extends TestCase
 
         $freshPayment = $payment->fresh();
         $this->assertNotNull($freshPayment);
-        $this->assertStringContainsString('PayPal gagal menangkap pembayaran.', (string) ($freshPayment->payload_json['capture_error'] ?? ''));
+        $this->assertSame('paypal_capture_failed', $freshPayment->payload_json['failure']['code'] ?? null);
+        $this->assertArrayNotHasKey('gateway', $freshPayment->payload_json);
+        $this->assertStringNotContainsString(
+            'PayPal gagal menangkap pembayaran.',
+            json_encode($freshPayment->payload_json, JSON_THROW_ON_ERROR)
+        );
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
@@ -557,6 +597,9 @@ class PaymentWebhookTest extends TestCase
             'id' => $order->id,
             'status' => 'processing',
         ]);
+        $storedCapture = json_encode($payment->fresh()->payload_json['capture'] ?? [], JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('capture-private@example.test', $storedCapture);
+        $this->assertStringNotContainsString('Capture Private Street', $storedCapture);
     }
 
     public function test_paypal_return_capture_success_does_not_downgrade_completed_order(): void
@@ -1109,7 +1152,10 @@ class PaymentWebhookTest extends TestCase
 
         $this->assertSame('pending', $payment->fresh()->status);
         $this->assertSame('pending', $order->fresh()->status);
-        $this->assertSame('', $payment->fresh()->payload_json['capture_integrity_error']['received_amount'] ?? null);
+        $this->assertArrayNotHasKey(
+            'received_amount',
+            $payment->fresh()->payload_json['capture_integrity_error'] ?? []
+        );
     }
 
     public function test_paypal_return_rejects_capture_for_different_provider_reference(): void
@@ -1170,8 +1216,14 @@ class PaymentWebhookTest extends TestCase
         return [
             'id' => $providerRef ?? $payment->provider_ref,
             'status' => 'COMPLETED',
+            'payer' => [
+                'email_address' => 'capture-private@example.test',
+            ],
             'purchase_units' => [
                 [
+                    'shipping' => [
+                        'address' => ['address_line_1' => 'Capture Private Street'],
+                    ],
                     'payments' => [
                         'captures' => [
                             [
