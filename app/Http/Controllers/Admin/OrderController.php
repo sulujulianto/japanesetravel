@@ -19,6 +19,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -138,7 +139,10 @@ class OrderController extends Controller
 
             $stockRestored = false;
             if ($nextStatus === 'cancelled' && $lockedOrder->status !== 'cancelled') {
-                $stockRestored = $orderInventory->restore($lockedOrder->id);
+                $stockRestored = $orderInventory->restore(
+                    $lockedOrder->id,
+                    (int) Auth::guard('admin')->id()
+                );
             }
 
             $lockedOrder->update([

@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
 use App\Models\Souvenir;
 use App\Models\User;
 use App\Support\CacheKeys;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -32,6 +34,7 @@ class AdminInertiaInventoryTest extends TestCase
             ->has('inventory.data', 0)
             ->where('inventory.pagination.currentPage', 1)
             ->where('inventory.pagination.total', 0)
+            ->has('movements', 0)
         );
     }
 
@@ -90,6 +93,51 @@ class AdminInertiaInventoryTest extends TestCase
         );
     }
 
+    public function test_inventory_movements_are_localized_and_serialized_for_audit(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'username' => 'inventory-auditor',
+        ]);
+        $souvenir = Souvenir::factory()->create([
+            'name' => ['id' => 'Teh Sakura', 'en' => 'Sakura Tea'],
+            'stock' => 6,
+        ]);
+        InventoryMovement::create([
+            'souvenir_id' => $souvenir->id,
+            'actor_id' => $admin->id,
+            'type' => InventoryMovement::TYPE_ADMIN_RESTOCK,
+            'quantity_delta' => 4,
+            'stock_before' => 2,
+            'stock_after' => 6,
+            'reference' => 'admin-audit-reference',
+            'product_name_snapshot' => ['id' => 'Teh Sakura', 'en' => 'Sakura Tea'],
+            'actor_name_snapshot' => 'inventory-auditor',
+            'metadata' => ['source' => 'test'],
+        ]);
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->withCookie('locale', 'en')
+            ->get(route('admin.inventory.low-stock'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('movements', 1)
+            ->where('movements.0.productName', 'Sakura Tea')
+            ->where('movements.0.type', InventoryMovement::TYPE_ADMIN_RESTOCK)
+            ->where('movements.0.typeLabel', 'Admin restock')
+            ->where('movements.0.quantityDelta', 4)
+            ->where('movements.0.quantityDeltaLabel', '+4')
+            ->where('movements.0.stockBefore', '2')
+            ->where('movements.0.stockAfter', '6')
+            ->where('movements.0.actor', 'inventory-auditor')
+            ->where('movements.0.orderReference', '—')
+            ->where('movements.0.reference', 'admin-audit-reference')
+            ->missing('movements.0.metadata')
+            ->missing('movements.0.souvenir')
+        );
+    }
+
     public function test_low_stock_threshold_is_normalized_to_at_least_one(): void
     {
         $included = Souvenir::factory()->create(['stock' => 1]);
@@ -127,14 +175,17 @@ class AdminInertiaInventoryTest extends TestCase
     public function test_admin_can_restock_souvenir_and_cache_is_invalidated(): void
     {
         Cache::put(CacheKeys::SOUVENIRS_VERSION, 7);
+        $admin = $this->createAdmin();
         $souvenir = Souvenir::factory()->create(['stock' => 2]);
         $returnUrl = route('admin.inventory.low-stock', ['threshold' => 5]);
+        $adjustmentToken = (string) Str::uuid();
 
         $response = $this
-            ->actingAs($this->createAdmin(), 'admin')
+            ->actingAs($admin, 'admin')
             ->withCookie('locale', 'en')
             ->from($returnUrl)
             ->post(route('admin.inventory.restock', $souvenir), [
+                'adjustment_token' => $adjustmentToken,
                 'amount' => 4,
             ]);
 
@@ -142,6 +193,16 @@ class AdminInertiaInventoryTest extends TestCase
         $response->assertSessionHas('success', 'Stock added successfully.');
         $this->assertSame(6, (int) $souvenir->refresh()->stock);
         $this->assertSame(8, CacheKeys::version(CacheKeys::SOUVENIRS_VERSION));
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'order_id' => null,
+            'actor_id' => $admin->id,
+            'type' => InventoryMovement::TYPE_ADMIN_RESTOCK,
+            'quantity_delta' => 4,
+            'stock_before' => 2,
+            'stock_after' => 6,
+            'reference' => 'admin:'.$admin->id.':souvenir:'.$souvenir->id.':'.$adjustmentToken,
+        ]);
     }
 
     public function test_restock_rejects_amounts_outside_allowed_range(): void
@@ -155,6 +216,7 @@ class AdminInertiaInventoryTest extends TestCase
                 ->actingAs($this->createAdmin(), 'admin')
                 ->from($returnUrl)
                 ->post(route('admin.inventory.restock', $souvenir), [
+                    'adjustment_token' => (string) Str::uuid(),
                     'amount' => $amount,
                 ]);
 
@@ -168,14 +230,17 @@ class AdminInertiaInventoryTest extends TestCase
     public function test_admin_can_reduce_stock_to_zero_and_cache_is_invalidated(): void
     {
         Cache::put(CacheKeys::SOUVENIRS_VERSION, 7);
+        $admin = $this->createAdmin();
         $souvenir = Souvenir::factory()->create(['stock' => 4]);
         $returnUrl = route('admin.inventory.low-stock', ['threshold' => 5]);
+        $adjustmentToken = (string) Str::uuid();
 
         $response = $this
-            ->actingAs($this->createAdmin(), 'admin')
+            ->actingAs($admin, 'admin')
             ->withCookie('locale', 'en')
             ->from($returnUrl)
             ->post(route('admin.inventory.deduct', $souvenir), [
+                'adjustment_token' => $adjustmentToken,
                 'amount' => 4,
             ]);
 
@@ -183,6 +248,15 @@ class AdminInertiaInventoryTest extends TestCase
         $response->assertSessionHas('success', 'Stock reduced successfully.');
         $this->assertSame(0, (int) $souvenir->refresh()->stock);
         $this->assertSame(8, CacheKeys::version(CacheKeys::SOUVENIRS_VERSION));
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'actor_id' => $admin->id,
+            'type' => InventoryMovement::TYPE_ADMIN_DEDUCTION,
+            'quantity_delta' => -4,
+            'stock_before' => 4,
+            'stock_after' => 0,
+            'reference' => 'admin:'.$admin->id.':souvenir:'.$souvenir->id.':'.$adjustmentToken,
+        ]);
     }
 
     public function test_stock_reduction_rejects_an_amount_above_current_stock(): void
@@ -196,6 +270,7 @@ class AdminInertiaInventoryTest extends TestCase
             ->withCookie('locale', 'en')
             ->from($returnUrl)
             ->post(route('admin.inventory.deduct', $souvenir), [
+                'adjustment_token' => (string) Str::uuid(),
                 'amount' => 4,
             ]);
 
@@ -205,6 +280,7 @@ class AdminInertiaInventoryTest extends TestCase
         ]);
         $this->assertSame(3, (int) $souvenir->refresh()->stock);
         $this->assertSame(7, CacheKeys::version(CacheKeys::SOUVENIRS_VERSION));
+        $this->assertDatabaseCount('inventory_movements', 0);
     }
 
     public function test_stock_reduction_rejects_amounts_outside_allowed_range(): void
@@ -218,6 +294,7 @@ class AdminInertiaInventoryTest extends TestCase
                 ->actingAs($this->createAdmin(), 'admin')
                 ->from($returnUrl)
                 ->post(route('admin.inventory.deduct', $souvenir), [
+                    'adjustment_token' => (string) Str::uuid(),
                     'amount' => $amount,
                 ]);
 
@@ -226,6 +303,58 @@ class AdminInertiaInventoryTest extends TestCase
             $this->assertSame(20_000, (int) $souvenir->refresh()->stock);
             $this->assertSame(7, CacheKeys::version(CacheKeys::SOUVENIRS_VERSION));
         }
+    }
+
+    public function test_repeated_admin_adjustment_token_changes_stock_and_cache_once(): void
+    {
+        Cache::put(CacheKeys::SOUVENIRS_VERSION, 7);
+        $admin = $this->createAdmin();
+        $souvenir = Souvenir::factory()->create(['stock' => 2]);
+        $adjustmentToken = (string) Str::uuid();
+        $payload = [
+            'adjustment_token' => $adjustmentToken,
+            'amount' => 4,
+        ];
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.inventory.restock', $souvenir), $payload)
+            ->assertSessionHas('success');
+
+        $this->post(route('admin.inventory.restock', $souvenir), $payload)
+            ->assertSessionHas('success');
+
+        $this->assertSame(6, (int) $souvenir->refresh()->stock);
+        $this->assertSame(8, CacheKeys::version(CacheKeys::SOUVENIRS_VERSION));
+        $this->assertDatabaseCount('inventory_movements', 1);
+        $this->assertDatabaseHas('inventory_movements', [
+            'reference' => 'admin:'.$admin->id.':souvenir:'.$souvenir->id.':'.$adjustmentToken,
+        ]);
+    }
+
+    public function test_inventory_history_survives_product_deletion_with_snapshot(): void
+    {
+        $admin = $this->createAdmin();
+        $souvenir = Souvenir::factory()->create([
+            'name' => ['id' => 'Teh Sakura', 'en' => 'Sakura Tea'],
+            'stock' => 2,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.inventory.restock', $souvenir), [
+                'adjustment_token' => (string) Str::uuid(),
+                'amount' => 4,
+            ])
+            ->assertSessionHas('success');
+
+        $movement = InventoryMovement::query()->firstOrFail();
+        $souvenir->delete();
+        $admin->delete();
+        $movement->refresh();
+
+        $this->assertNull($movement->souvenir_id);
+        $this->assertNull($movement->actor_id);
+        $this->assertSame($admin->username, $movement->actor_name_snapshot);
+        $this->assertEquals(['id' => 'Teh Sakura', 'en' => 'Sakura Tea'], $movement->product_name_snapshot);
     }
 
     private function createAdmin(): User

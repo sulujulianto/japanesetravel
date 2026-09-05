@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Souvenir;
@@ -199,6 +200,15 @@ class AdminOrderStatusTransitionTest extends TestCase
 
         $this->assertSame(5, $souvenir->fresh()->stock);
         $this->assertNotNull($order->fresh()->stock_restored_at);
+        $this->assertDatabaseHas('inventory_movements', [
+            'souvenir_id' => $souvenir->id,
+            'order_id' => $order->id,
+            'actor_id' => $admin->id,
+            'type' => InventoryMovement::TYPE_ORDER_RESTORATION,
+            'quantity_delta' => 2,
+            'stock_before' => 3,
+            'stock_after' => 5,
+        ]);
 
         $this->actingAs($admin, 'admin')
             ->put(route('admin.orders.update', $order), [
@@ -208,6 +218,7 @@ class AdminOrderStatusTransitionTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(5, $souvenir->fresh()->stock);
+        $this->assertDatabaseCount('inventory_movements', 1);
     }
 
     private function createAdmin(): User

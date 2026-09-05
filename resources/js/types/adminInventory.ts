@@ -5,6 +5,7 @@ import type { Pagination } from './pagination';
 export interface AdminInventoryCopy extends AdminShellCopy {
     add: string;
     adjustment: string;
+    actor: string;
     amount: string;
     description: string;
     emptyDescription: string;
@@ -13,17 +14,26 @@ export interface AdminInventoryCopy extends AdminShellCopy {
     filterDescription: string;
     filterLabel: string;
     filterTitle: string;
+    historyDescription: string;
+    historyEmpty: string;
+    historyTitle: string;
     next: string;
+    order: string;
     previous: string;
     price: string;
     product: string;
+    quantityChange: string;
+    recordedAt: string;
+    reference: string;
     remaining: string;
     reset: string;
     resultsDescription: string;
     resultsTitle: string;
     show: string;
     subtract: string;
+    stockChange: string;
     title: string;
+    type: string;
 }
 
 export interface AdminInventoryFilters {
@@ -49,4 +59,19 @@ export type AdminInventoryRoutes = AdminShellRoutes;
 export interface AdminInventoryResult {
     data: AdminInventoryListItem[];
     pagination: Pagination;
+}
+
+export interface AdminInventoryMovement {
+    actor: string;
+    createdAt: string;
+    id: number;
+    orderReference: string;
+    productName: string;
+    quantityDelta: number;
+    quantityDeltaLabel: string;
+    reference: string;
+    stockAfter: string;
+    stockBefore: string;
+    type: string;
+    typeLabel: string;
 }

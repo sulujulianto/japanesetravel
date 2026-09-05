@@ -17,6 +17,7 @@ class InventoryAdjustmentRequest extends FormRequest
     {
         return [
             'amount' => ['required', 'integer', 'min:1', 'max:10000'],
+            'adjustment_token' => ['required', 'uuid'],
         ];
     }
 }

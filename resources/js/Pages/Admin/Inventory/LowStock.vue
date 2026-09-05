@@ -9,6 +9,7 @@ import AdminLayout from '../../../Layouts/AdminLayout.vue';
 import type {
     AdminInventoryCopy,
     AdminInventoryFilters,
+    AdminInventoryMovement,
     AdminInventoryResult,
     AdminInventoryRoutes,
 } from '../../../types/adminInventory';
@@ -20,6 +21,7 @@ const props = defineProps<{
     copy: AdminInventoryCopy;
     filters: AdminInventoryFilters;
     inventory: AdminInventoryResult;
+    movements: AdminInventoryMovement[];
     routes: AdminInventoryRoutes;
 }>();
 
@@ -174,6 +176,73 @@ const resetFilter = (): void => {
                     :summary="inventory.pagination.summary"
                 />
             </div>
+        </section>
+
+        <section class="mt-6 overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)]" aria-labelledby="inventory-history-heading">
+            <div class="border-b border-[var(--admin-border)] px-5 py-4 sm:px-6">
+                <h2 id="inventory-history-heading" class="text-base font-semibold">{{ copy.historyTitle }}</h2>
+                <p class="mt-1 text-sm text-[var(--admin-muted)]">{{ copy.historyDescription }}</p>
+            </div>
+
+            <div v-if="movements.length" class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-[var(--admin-border)] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-muted)]">
+                            <th class="px-6 py-3">{{ copy.recordedAt }}</th>
+                            <th class="px-4 py-3">{{ copy.product }}</th>
+                            <th class="px-4 py-3">{{ copy.type }}</th>
+                            <th class="px-4 py-3">{{ copy.quantityChange }}</th>
+                            <th class="px-4 py-3">{{ copy.stockChange }}</th>
+                            <th class="px-4 py-3">{{ copy.actor }}</th>
+                            <th class="px-6 py-3">{{ copy.reference }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[var(--admin-border)]">
+                        <tr v-for="movement in movements" :key="movement.id">
+                            <td class="whitespace-nowrap px-6 py-4 text-[var(--admin-muted)]">{{ movement.createdAt }}</td>
+                            <td class="px-4 py-4 font-semibold">{{ movement.productName }}</td>
+                            <td class="whitespace-nowrap px-4 py-4">{{ movement.typeLabel }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 font-semibold" :class="movement.quantityDelta > 0 ? 'text-[var(--admin-success)]' : 'text-[var(--admin-danger)]'">
+                                {{ movement.quantityDeltaLabel }}
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-4">{{ movement.stockBefore }} → {{ movement.stockAfter }}</td>
+                            <td class="whitespace-nowrap px-4 py-4">{{ movement.actor }}</td>
+                            <td class="px-6 py-4">
+                                <p class="font-mono text-xs">{{ movement.reference }}</p>
+                                <p v-if="movement.orderReference !== '—'" class="mt-1 text-xs text-[var(--admin-muted)]">{{ copy.order }} {{ movement.orderReference }}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div v-if="movements.length" class="space-y-3 p-4 lg:hidden">
+                <article v-for="movement in movements" :key="movement.id" class="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-muted-surface)] p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-semibold">{{ movement.productName }}</p>
+                            <p class="mt-1 text-xs text-[var(--admin-muted)]">{{ movement.typeLabel }} · {{ movement.createdAt }}</p>
+                        </div>
+                        <p class="font-semibold" :class="movement.quantityDelta > 0 ? 'text-[var(--admin-success)]' : 'text-[var(--admin-danger)]'">
+                            {{ movement.quantityDeltaLabel }}
+                        </p>
+                    </div>
+                    <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--admin-border)] pt-3 text-sm">
+                        <div>
+                            <dt class="text-xs text-[var(--admin-muted)]">{{ copy.stockChange }}</dt>
+                            <dd class="mt-1 font-semibold">{{ movement.stockBefore }} → {{ movement.stockAfter }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-[var(--admin-muted)]">{{ copy.actor }}</dt>
+                            <dd class="mt-1 font-semibold">{{ movement.actor }}</dd>
+                        </div>
+                    </dl>
+                    <p class="mt-3 break-all font-mono text-xs text-[var(--admin-muted)]">{{ movement.reference }}</p>
+                    <p v-if="movement.orderReference !== '—'" class="mt-1 text-xs text-[var(--admin-muted)]">{{ copy.order }} {{ movement.orderReference }}</p>
+                </article>
+            </div>
+
+            <p v-else class="px-6 py-10 text-center text-sm text-[var(--admin-muted)]">{{ copy.historyEmpty }}</p>
         </section>
     </AdminLayout>
 </template>
