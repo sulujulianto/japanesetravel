@@ -381,8 +381,8 @@ class PaymentWebhookTest extends TestCase
             'provider' => 'paypal',
             'provider_ref' => 'PAYPAL-ORDER-123',
             'status' => 'pending',
-            'amount' => 200000,
-            'currency' => 'IDR',
+            'amount' => 13.33,
+            'currency' => 'USD',
         ]);
 
         config([
@@ -407,7 +407,7 @@ class PaymentWebhookTest extends TestCase
             'resource' => [
                 'id' => $payment->provider_ref,
                 'amount' => [
-                    'value' => '100.00',
+                    'value' => '13.33',
                     'currency_code' => 'USD',
                 ],
             ],
@@ -520,7 +520,7 @@ class PaymentWebhookTest extends TestCase
             'provider' => 'paypal',
             'provider_ref' => 'PAYPAL-RETURN-SUCCESS-001',
             'status' => 'pending',
-            'amount' => 220000,
+            'amount' => 14.67,
             'currency' => 'USD',
         ]);
 
@@ -534,10 +534,10 @@ class PaymentWebhookTest extends TestCase
             'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
                 'access_token' => 'test-token',
             ], 200),
-            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
-                'status' => 'COMPLETED',
-                'id' => $payment->provider_ref,
-            ], 201),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response(
+                $this->completedPayPalCapture($payment),
+                201
+            ),
         ]);
 
         $response = $this->actingAs($user)
@@ -576,7 +576,7 @@ class PaymentWebhookTest extends TestCase
             'provider' => 'paypal',
             'provider_ref' => 'PAYPAL-RETURN-COMPLETED-001',
             'status' => 'pending',
-            'amount' => 230000,
+            'amount' => 15.33,
             'currency' => 'USD',
         ]);
 
@@ -590,10 +590,10 @@ class PaymentWebhookTest extends TestCase
             'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
                 'access_token' => 'test-token',
             ], 200),
-            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
-                'status' => 'COMPLETED',
-                'id' => $payment->provider_ref,
-            ], 201),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response(
+                $this->completedPayPalCapture($payment),
+                201
+            ),
         ]);
 
         $response = $this->actingAs($user)
@@ -632,7 +632,7 @@ class PaymentWebhookTest extends TestCase
             'provider' => 'paypal',
             'provider_ref' => 'PAYPAL-RETURN-CANCELLED-001',
             'status' => 'pending',
-            'amount' => 240000,
+            'amount' => 16,
             'currency' => 'USD',
         ]);
 
@@ -646,10 +646,10 @@ class PaymentWebhookTest extends TestCase
             'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
                 'access_token' => 'test-token',
             ], 200),
-            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
-                'status' => 'COMPLETED',
-                'id' => $payment->provider_ref,
-            ], 201),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response(
+                $this->completedPayPalCapture($payment),
+                201
+            ),
         ]);
 
         $response = $this->actingAs($user)
@@ -858,5 +858,322 @@ class PaymentWebhookTest extends TestCase
 
         $this->assertSame('pending', $payment->fresh()->status);
         $this->assertSame('pending', $order->fresh()->status);
+    }
+
+    public function test_midtrans_paid_webhook_with_wrong_amount_is_recorded_without_mutating_financial_state(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 150000,
+            'status' => 'pending',
+            'note' => 'Wrong Midtrans amount test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-WRONG-AMOUNT',
+            'status' => 'pending',
+            'amount' => 150000,
+            'currency' => 'IDR',
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = '149999.00';
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'settlement',
+            'currency' => 'IDR',
+            'transaction_id' => 'TRX-WRONG-AMOUNT-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $freshPayment = $payment->fresh();
+        $this->assertNotNull($freshPayment);
+        $this->assertSame('pending', $freshPayment->status);
+        $this->assertSame('150000.00', $freshPayment->amount);
+        $this->assertSame('IDR', $freshPayment->currency);
+        $this->assertNull($freshPayment->paid_at);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'payment_id' => $payment->id,
+            'provider' => 'midtrans',
+            'event_id' => 'TRX-WRONG-AMOUNT-001:paid',
+            'status' => 'paid',
+        ]);
+    }
+
+    public function test_midtrans_paid_webhook_with_wrong_currency_is_recorded_without_mutating_financial_state(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 150000,
+            'status' => 'pending',
+            'note' => 'Wrong Midtrans currency test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'midtrans',
+            'provider_ref' => 'ORD-WRONG-CURRENCY',
+            'status' => 'pending',
+            'amount' => 150000,
+            'currency' => 'IDR',
+        ]);
+        config(['services.midtrans.server_key' => 'test-server-key']);
+
+        $grossAmount = '150000.00';
+        $payload = [
+            'order_id' => $payment->provider_ref,
+            'status_code' => '200',
+            'gross_amount' => $grossAmount,
+            'signature_key' => hash('sha512', $payment->provider_ref.'200'.$grossAmount.'test-server-key'),
+            'transaction_status' => 'settlement',
+            'currency' => 'USD',
+            'transaction_id' => 'TRX-WRONG-CURRENCY-001',
+        ];
+
+        $this->postJson(route('payments.webhook.midtrans'), $payload)->assertOk();
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('IDR', $payment->fresh()->currency);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'payment_id' => $payment->id,
+            'event_id' => 'TRX-WRONG-CURRENCY-001:paid',
+        ]);
+    }
+
+    public function test_paypal_paid_webhook_with_wrong_currency_is_recorded_without_mutating_financial_state(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 200000,
+            'status' => 'pending',
+            'note' => 'Wrong PayPal currency test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-WRONG-CURRENCY',
+            'status' => 'pending',
+            'amount' => 13.33,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.webhook_id' => 'paypal-webhook',
+            'services.paypal.is_production' => false,
+        ]);
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ]),
+            'https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature' => Http::response([
+                'verification_status' => 'SUCCESS',
+            ]),
+        ]);
+
+        $payload = [
+            'id' => 'WH-WRONG-CURRENCY-001',
+            'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
+            'resource' => [
+                'id' => 'CAPTURE-WRONG-CURRENCY-001',
+                'supplementary_data' => [
+                    'related_ids' => ['order_id' => $payment->provider_ref],
+                ],
+                'amount' => [
+                    'value' => '13.33',
+                    'currency_code' => 'EUR',
+                ],
+            ],
+        ];
+
+        $this->postJson(route('payments.webhook.paypal'), $payload)->assertOk();
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('13.33', $payment->fresh()->amount);
+        $this->assertSame('USD', $payment->fresh()->currency);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseHas('payment_webhook_events', [
+            'payment_id' => $payment->id,
+            'provider' => 'paypal',
+            'event_id' => 'WH-WRONG-CURRENCY-001',
+            'status' => 'paid',
+        ]);
+    }
+
+    public function test_paypal_return_rejects_completed_capture_with_wrong_amount(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 220000,
+            'status' => 'pending',
+            'note' => 'Wrong PayPal return amount test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-WRONG-AMOUNT',
+            'status' => 'pending',
+            'amount' => 14.67,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ]),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response(
+                $this->completedPayPalCapture($payment, amount: '14.66'),
+                201
+            ),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('payments.paypal.return', ['token' => $payment->provider_ref]))
+            ->assertRedirect(route('orders.show', $order))
+            ->assertSessionHas('error');
+
+        $freshPayment = $payment->fresh();
+        $this->assertNotNull($freshPayment);
+        $this->assertSame('pending', $freshPayment->status);
+        $this->assertSame('14.67', $freshPayment->amount);
+        $this->assertNull($freshPayment->paid_at);
+        $this->assertSame('14.66', $freshPayment->payload_json['capture_integrity_error']['received_amount'] ?? null);
+        $this->assertSame('pending', $order->fresh()->status);
+    }
+
+    public function test_paypal_return_rejects_completed_response_without_capture_details(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 220000,
+            'status' => 'pending',
+            'note' => 'Missing PayPal capture details test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-MISSING-CAPTURE',
+            'status' => 'pending',
+            'amount' => 14.67,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ]),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response([
+                'id' => $payment->provider_ref,
+                'status' => 'COMPLETED',
+            ], 201),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('payments.paypal.return', ['token' => $payment->provider_ref]))
+            ->assertRedirect(route('orders.show', $order))
+            ->assertSessionHas('error');
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame('', $payment->fresh()->payload_json['capture_integrity_error']['received_amount'] ?? null);
+    }
+
+    public function test_paypal_return_rejects_capture_for_different_provider_reference(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'total_price' => 220000,
+            'status' => 'pending',
+            'note' => 'Wrong PayPal reference test',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'paypal',
+            'provider_ref' => 'PAYPAL-RETURN-EXPECTED-REF',
+            'status' => 'pending',
+            'amount' => 14.67,
+            'currency' => 'USD',
+        ]);
+
+        config([
+            'services.paypal.client_id' => 'paypal-client',
+            'services.paypal.client_secret' => 'paypal-secret',
+            'services.paypal.is_production' => false,
+        ]);
+        Http::fake([
+            'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response([
+                'access_token' => 'test-token',
+            ]),
+            'https://api-m.sandbox.paypal.com/v2/checkout/orders/*/capture' => Http::response(
+                $this->completedPayPalCapture($payment, providerRef: 'PAYPAL-RETURN-OTHER-REF'),
+                201
+            ),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('payments.paypal.return', ['token' => $payment->provider_ref]))
+            ->assertRedirect(route('orders.show', $order))
+            ->assertSessionHas('error');
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(
+            'PAYPAL-RETURN-OTHER-REF',
+            $payment->fresh()->payload_json['capture_integrity_error']['received_provider_ref'] ?? null
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function completedPayPalCapture(
+        Payment $payment,
+        ?string $amount = null,
+        ?string $currency = null,
+        ?string $providerRef = null,
+    ): array {
+        return [
+            'id' => $providerRef ?? $payment->provider_ref,
+            'status' => 'COMPLETED',
+            'purchase_units' => [
+                [
+                    'payments' => [
+                        'captures' => [
+                            [
+                                'id' => 'CAPTURE-'.$payment->id,
+                                'status' => 'COMPLETED',
+                                'amount' => [
+                                    'value' => $amount ?? (string) $payment->amount,
+                                    'currency_code' => $currency ?? $payment->currency,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
 use App\Services\Orders\OrderInventoryService;
 use App\Services\Payments\Drivers\PayPalCheckoutDriver;
+use App\Services\Payments\PaymentAmount;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\PaymentWebhookData;
 use App\Support\CacheKeys;
@@ -88,33 +89,32 @@ class PaymentController extends Controller
         $message = __('Pembayaran berhasil diproses.');
 
         if ($status === 'COMPLETED') {
-            DB::transaction(function () use ($payment, $response): void {
-                $order = Order::query()
-                    ->whereKey($payment->order_id)
-                    ->lockForUpdate()
-                    ->first();
-                $lockedPayment = Payment::query()
-                    ->whereKey($payment->id)
-                    ->lockForUpdate()
-                    ->first();
+            $capture = $driver->parseCapture($response);
+            $outcome = $this->applyPayPalCapture($payment, $capture);
 
-                if (! $lockedPayment || ! $lockedPayment->canTransitionTo('paid')) {
-                    return;
-                }
-
-                $payload = $lockedPayment->payload_json ?? [];
-                $payload['capture'] = $response;
-
-                $lockedPayment->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'payload_json' => $payload,
+            if ($outcome === 'integrity_failed') {
+                Log::warning('PayPal capture failed payment integrity validation.', [
+                    'payment_id' => $payment->id,
+                    'expected_provider_ref' => $payment->provider_ref,
+                    'received_provider_ref' => $capture->providerRef,
+                    'expected_amount' => (string) $payment->amount,
+                    'received_amount' => $capture->amount,
+                    'expected_currency' => $payment->currency,
+                    'received_currency' => $capture->currency,
                 ]);
 
-                if ($order?->status === 'pending') {
-                    $order->update(['status' => 'processing']);
-                }
-            });
+                return $this->redirectToOrderError(
+                    $payment,
+                    __('Data pembayaran PayPal tidak sesuai dengan tagihan. Hubungi admin untuk pemeriksaan.')
+                );
+            }
+
+            if (! in_array($outcome, ['applied', 'already_paid'], true)) {
+                return $this->redirectToOrderError(
+                    $payment,
+                    __('Gagal memproses pembayaran PayPal. Silakan coba lagi atau hubungi admin.')
+                );
+            }
         } elseif ($status !== 'COMPLETED') {
             $message = __('Pembayaran sedang diproses.');
         }
@@ -156,7 +156,10 @@ class PaymentController extends Controller
 
     protected function applyWebhookUpdate(Payment $payment, PaymentWebhookData $data, string $provider): void
     {
-        $stockRestored = DB::transaction(function () use ($payment, $data, $provider): bool {
+        /** @var array<string, int|string>|null $integrityFailure */
+        $integrityFailure = null;
+
+        $stockRestored = DB::transaction(function () use ($payment, $data, $provider, &$integrityFailure): bool {
             $order = Order::query()
                 ->whereKey($payment->order_id)
                 ->lockForUpdate()
@@ -188,12 +191,30 @@ class PaymentController extends Controller
                 return false;
             }
 
+            if (
+                $data->status === 'paid'
+                && ! PaymentAmount::matches(
+                    (string) $lockedPayment->amount,
+                    (string) $lockedPayment->currency,
+                    $data->amount,
+                    $data->currency,
+                )
+            ) {
+                $integrityFailure = [
+                    'payment_id' => $lockedPayment->id,
+                    'expected_amount' => (string) $lockedPayment->amount,
+                    'received_amount' => $data->amount,
+                    'expected_currency' => (string) $lockedPayment->currency,
+                    'received_currency' => $data->currency,
+                ];
+
+                return false;
+            }
+
             $payload = $lockedPayment->payload_json ?? [];
             $payload['webhook'] = $data->payload;
 
             $lockedPayment->status = $data->status;
-            $lockedPayment->amount = $data->amount ?: $lockedPayment->amount;
-            $lockedPayment->currency = $data->currency ?: $lockedPayment->currency;
             $lockedPayment->payload_json = $payload;
 
             if ($data->status === 'paid') {
@@ -226,6 +247,82 @@ class PaymentController extends Controller
         if ($stockRestored) {
             CacheKeys::bump(CacheKeys::SOUVENIRS_VERSION);
         }
+
+        if ($integrityFailure !== null) {
+            Log::warning('Payment webhook failed amount or currency validation.', $integrityFailure + [
+                'provider' => $provider,
+                'event_id' => $data->eventId,
+            ]);
+        }
+    }
+
+    protected function applyPayPalCapture(Payment $payment, PaymentWebhookData $capture): string
+    {
+        return DB::transaction(function () use ($payment, $capture): string {
+            $order = Order::query()
+                ->whereKey($payment->order_id)
+                ->lockForUpdate()
+                ->first();
+            $lockedPayment = Payment::query()
+                ->whereKey($payment->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedPayment) {
+                return 'missing';
+            }
+
+            $payload = $lockedPayment->payload_json ?? [];
+            $payload['capture'] = $capture->payload;
+
+            $valid = $capture->status === 'paid'
+                && hash_equals((string) $lockedPayment->provider_ref, $capture->providerRef)
+                && PaymentAmount::matches(
+                    (string) $lockedPayment->amount,
+                    (string) $lockedPayment->currency,
+                    $capture->amount,
+                    $capture->currency,
+                );
+
+            if (! $valid) {
+                $payload['capture_integrity_error'] = [
+                    'expected_provider_ref' => (string) $lockedPayment->provider_ref,
+                    'received_provider_ref' => $capture->providerRef,
+                    'expected_amount' => (string) $lockedPayment->amount,
+                    'received_amount' => $capture->amount,
+                    'expected_currency' => (string) $lockedPayment->currency,
+                    'received_currency' => $capture->currency,
+                ];
+
+                $lockedPayment->update(['payload_json' => $payload]);
+
+                return 'integrity_failed';
+            }
+
+            unset($payload['capture_integrity_error']);
+
+            if ($lockedPayment->status === 'paid') {
+                $lockedPayment->update(['payload_json' => $payload]);
+
+                return 'already_paid';
+            }
+
+            if (! $lockedPayment->canTransitionTo('paid')) {
+                return 'transition_rejected';
+            }
+
+            $lockedPayment->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'payload_json' => $payload,
+            ]);
+
+            if ($order?->status === 'pending') {
+                $order->update(['status' => 'processing']);
+            }
+
+            return 'applied';
+        });
     }
 
     protected function redirectToOrder(Payment $payment, string $message): RedirectResponse

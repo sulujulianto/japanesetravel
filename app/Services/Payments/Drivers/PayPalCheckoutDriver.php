@@ -141,15 +141,15 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
 
         $amountValue = Arr::get($resource, 'amount.value')
             ?? Arr::get($resource, 'purchase_units.0.amount.value')
-            ?? 0;
+            ?? '';
         $currency = Arr::get($resource, 'amount.currency_code')
             ?? Arr::get($resource, 'purchase_units.0.amount.currency_code')
-            ?? $this->currency;
+            ?? '';
 
         return new PaymentWebhookData(
             providerRef: (string) $providerRef,
             status: $status,
-            amount: (float) $amountValue,
+            amount: (string) $amountValue,
             currency: (string) $currency,
             payload: $payload,
             eventId: (string) ($payload['id'] ?? ''),
@@ -169,6 +169,27 @@ class PayPalCheckoutDriver implements PaymentGatewayInterface
         }
 
         return $response->json() ?? [];
+    }
+
+    /** @param array<string, mixed> $response */
+    public function parseCapture(array $response): PaymentWebhookData
+    {
+        $captures = Arr::get($response, 'purchase_units.0.payments.captures', []);
+        $capture = is_array($captures) && count($captures) === 1 && is_array($captures[0] ?? null)
+            ? $captures[0]
+            : [];
+
+        $completed = ($response['status'] ?? '') === 'COMPLETED'
+            && ($capture['status'] ?? '') === 'COMPLETED';
+
+        return new PaymentWebhookData(
+            providerRef: (string) ($response['id'] ?? ''),
+            status: $completed ? 'paid' : 'ignored',
+            amount: (string) Arr::get($capture, 'amount.value', ''),
+            currency: (string) Arr::get($capture, 'amount.currency_code', ''),
+            payload: $response,
+            eventId: (string) ($capture['id'] ?? ''),
+        );
     }
 
     protected function getAccessToken(): string
